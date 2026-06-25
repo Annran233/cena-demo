@@ -1,0 +1,823 @@
+{
+  "fetched_at": "2026-06-25T18:02:40.862Z",
+  "total": 81,
+  "hotspots": [
+    "塘沽外滩",
+    "泰达开发区",
+    "北塘",
+    "大港",
+    "汉沽"
+  ],
+  "pois": [
+    {
+      "originalId": "B0FFHH5YKV",
+      "name": "公共厕所",
+      "lat": 39.248351,
+      "lng": 117.784067,
+      "address": "二纬路与三经路交叉口东北120米",
+      "typecode": "200300",
+      "distance": 73,
+      "source_hotspot": "汉沽"
+    },
+    {
+      "originalId": "B0FFHLTCVU",
+      "name": "公共厕所",
+      "lat": 39.249522,
+      "lng": 117.781641,
+      "address": "三经路与八仙路交叉口西120米",
+      "typecode": "200300",
+      "distance": 189,
+      "source_hotspot": "汉沽"
+    },
+    {
+      "originalId": "B0KUXMTQ2J",
+      "name": "公共厕所",
+      "lat": 39.103101,
+      "lng": 117.745958,
+      "address": "安正路240号",
+      "typecode": "200300",
+      "distance": 230,
+      "source_hotspot": "北塘"
+    },
+    {
+      "originalId": "B0I6BOZNN9",
+      "name": "泰达风尚馆-女洗手间",
+      "lat": 39.022894,
+      "lng": 117.701997,
+      "address": "第二大街62号泰达风尚馆4层",
+      "typecode": "200302",
+      "distance": 377,
+      "source_hotspot": "塘沽外滩"
+    },
+    {
+      "originalId": "B0FFM3DD0H",
+      "name": "公共厕所",
+      "lat": 39.021065,
+      "lng": 117.705849,
+      "address": "北海西路与第二大街交叉口南120米",
+      "typecode": "200300",
+      "distance": 438,
+      "source_hotspot": "塘沽外滩"
+    },
+    {
+      "originalId": "B0FFHCBKHY",
+      "name": "公共厕所",
+      "lat": 39.244716,
+      "lng": 117.784476,
+      "address": "三纬路与润茗路交叉口北100米",
+      "typecode": "200300",
+      "distance": 476,
+      "source_hotspot": "汉沽"
+    },
+    {
+      "originalId": "B0FFHH3JNF",
+      "name": "公共厕所",
+      "lat": 39.252766,
+      "lng": 117.787043,
+      "address": "二经路与留庄路交叉口西北150米",
+      "typecode": "200300",
+      "distance": 511,
+      "source_hotspot": "汉沽"
+    },
+    {
+      "originalId": "B0FFH44YNH",
+      "name": "卫生间(鸿泰·千佰汇)",
+      "lat": 39.028281,
+      "lng": 117.700363,
+      "address": "开发区第三大街32号鸿泰·千佰汇4F层",
+      "typecode": "200300",
+      "distance": 570,
+      "source_hotspot": "塘沽外滩"
+    },
+    {
+      "originalId": "B0JRLL9X4F",
+      "name": "公共厕所",
+      "lat": 39.099135,
+      "lng": 117.749689,
+      "address": "海晨道与芳林路交叉口东40米",
+      "typecode": "200300",
+      "distance": 609,
+      "source_hotspot": "北塘"
+    },
+    {
+      "originalId": "B0FFHP2G26",
+      "name": "鸿泰·千佰汇商业广场-洗手间",
+      "lat": 39.028415,
+      "lng": 117.699566,
+      "address": "开发区第三大街32号鸿泰·千佰汇2F层",
+      "typecode": "200300",
+      "distance": 634,
+      "source_hotspot": "塘沽外滩"
+    },
+    {
+      "originalId": "B0FFHK34VS",
+      "name": "公共厕所",
+      "lat": 39.248642,
+      "lng": 117.791121,
+      "address": "一经路与七星路交叉口西南140米",
+      "typecode": "200300",
+      "distance": 637,
+      "source_hotspot": "汉沽"
+    },
+    {
+      "originalId": "B0FFLJYNBJ",
+      "name": "麦当劳(开发区第三大街店)-洗手间",
+      "lat": 39.028669,
+      "lng": 117.699588,
+      "address": "滨海新区经济开发区第三大街32号鸿泰千佰汇购物广场1楼",
+      "typecode": "200300",
+      "distance": 650,
+      "source_hotspot": "塘沽外滩"
+    },
+    {
+      "originalId": "B0FFGIQE1W",
+      "name": "公共厕所",
+      "lat": 39.021996,
+      "lng": 117.712269,
+      "address": "北海东路与发达街交叉口北40米",
+      "typecode": "200300",
+      "distance": 679,
+      "source_hotspot": "塘沽外滩"
+    },
+    {
+      "originalId": "B0L1D5TW3F",
+      "name": "公共厕所",
+      "lat": 39.022166,
+      "lng": 117.69774,
+      "address": "新城西路与广达街交叉口南100米",
+      "typecode": "200300",
+      "distance": 736,
+      "source_hotspot": "塘沽外滩"
+    },
+    {
+      "originalId": "B0LB1D2TJN",
+      "name": "鸿泰·千佰汇商业广场-女洗手间",
+      "lat": 39.028769,
+      "lng": 117.698428,
+      "address": "第三大街32号鸿泰·千佰汇商业广场F2",
+      "typecode": "200300",
+      "distance": 737,
+      "source_hotspot": "塘沽外滩"
+    },
+    {
+      "originalId": "B0FFJ3XMZK",
+      "name": "鸿泰·千佰汇商业广场-男洗手间",
+      "lat": 39.028783,
+      "lng": 117.698412,
+      "address": "第三大街32号鸿泰·千佰汇商业广场F2",
+      "typecode": "200300",
+      "distance": 739,
+      "source_hotspot": "塘沽外滩"
+    },
+    {
+      "originalId": "B0FFHFC5ZU",
+      "name": "无障碍洗手间(鸿泰·千佰汇)",
+      "lat": 39.028793,
+      "lng": 117.698373,
+      "address": "开发区第三大街32号鸿泰·千佰汇2F层",
+      "typecode": "200303",
+      "distance": 742,
+      "source_hotspot": "塘沽外滩"
+    },
+    {
+      "originalId": "B0FFH1ARXV",
+      "name": "公共厕所",
+      "lat": 39.028818,
+      "lng": 117.698387,
+      "address": "开发区第三大街32号鸿泰·千佰汇2F层",
+      "typecode": "200300",
+      "distance": 743,
+      "source_hotspot": "塘沽外滩"
+    },
+    {
+      "originalId": "B0FFFDU32X",
+      "name": "鸿泰·千佰汇商业广场-洗手间",
+      "lat": 39.028822,
+      "lng": 117.698384,
+      "address": "开发区第三大街32号鸿泰·千佰汇4F层",
+      "typecode": "200300",
+      "distance": 743,
+      "source_hotspot": "塘沽外滩"
+    },
+    {
+      "originalId": "B0GDVU7TQK",
+      "name": "公共厕所",
+      "lat": 39.095296,
+      "lng": 117.743527,
+      "address": "碧水道与安正路交叉口东南200米",
+      "typecode": "200300",
+      "distance": 748,
+      "source_hotspot": "北塘"
+    },
+    {
+      "originalId": "B0K3JRCRED",
+      "name": "公共厕所",
+      "lat": 39.097211,
+      "lng": 117.737559,
+      "address": "芳菲路99号",
+      "typecode": "200300",
+      "distance": 752,
+      "source_hotspot": "北塘"
+    },
+    {
+      "originalId": "B0K3M1U3MT",
+      "name": "卫生间(鸿泰·千佰汇)",
+      "lat": 39.028838,
+      "lng": 117.698244,
+      "address": "开发区第三大街32号鸿泰·千佰汇3F层",
+      "typecode": "200300",
+      "distance": 754,
+      "source_hotspot": "塘沽外滩"
+    },
+    {
+      "originalId": "B0FFHBRFJM",
+      "name": "河西公园-公共厕所",
+      "lat": 39.248809,
+      "lng": 117.792786,
+      "address": "一经路河西公园(西北角)",
+      "typecode": "200300",
+      "distance": 780,
+      "source_hotspot": "汉沽"
+    },
+    {
+      "originalId": "B0FFIXO8I6",
+      "name": "肯德基(鸿泰餐厅)-洗手间",
+      "lat": 39.029279,
+      "lng": 117.698202,
+      "address": "巢湖路与第三大街交叉口南60米",
+      "typecode": "200300",
+      "distance": 786,
+      "source_hotspot": "塘沽外滩"
+    },
+    {
+      "originalId": "B0FFHMSNBV",
+      "name": "公共厕所",
+      "lat": 39.032118,
+      "lng": 117.705839,
+      "address": "花园街泰达热带植物园(泰丰公园附近)",
+      "typecode": "200300",
+      "distance": 795,
+      "source_hotspot": "塘沽外滩"
+    },
+    {
+      "originalId": "B0FFH8D2S9",
+      "name": "公共厕所",
+      "lat": 39.242337,
+      "lng": 117.788658,
+      "address": "三纬路与二经路交叉口东南200米",
+      "typecode": "200300",
+      "distance": 851,
+      "source_hotspot": "汉沽"
+    },
+    {
+      "originalId": "B0I3TRH7N5",
+      "name": "无障碍公共厕所",
+      "lat": 39.242239,
+      "lng": 117.788663,
+      "address": "二经路与三纬路交叉口东南180米",
+      "typecode": "200300",
+      "distance": 861,
+      "source_hotspot": "汉沽"
+    },
+    {
+      "originalId": "B0H2PCQWO5",
+      "name": "公共厕所",
+      "lat": 39.245211,
+      "lng": 117.793574,
+      "address": "一经路汉沽体育馆对过河西公园画廊景区",
+      "typecode": "200300",
+      "distance": 945,
+      "source_hotspot": "汉沽"
+    },
+    {
+      "originalId": "B0FFHLT6EC",
+      "name": "公共厕所",
+      "lat": 39.072302,
+      "lng": 117.719783,
+      "address": "海通街与泰康路交叉口东南40米",
+      "typecode": "200300",
+      "distance": 968,
+      "source_hotspot": "泰达开发区"
+    },
+    {
+      "originalId": "B0016117C6",
+      "name": "公共厕所",
+      "lat": 39.030893,
+      "lng": 117.696869,
+      "address": "第四大街95号附近",
+      "typecode": "200300",
+      "distance": 989,
+      "source_hotspot": "塘沽外滩"
+    },
+    {
+      "originalId": "B0FFHHXDZN",
+      "name": "天津滨海假日酒店-洗手间",
+      "lat": 39.018915,
+      "lng": 117.696914,
+      "address": "中国··天津··天津经济技术开发区第一大街86号",
+      "typecode": "200300",
+      "distance": 1001,
+      "source_hotspot": "塘沽外滩"
+    },
+    {
+      "originalId": "B0FFIG36BU",
+      "name": "公共厕所",
+      "lat": 39.239256,
+      "lng": 117.786815,
+      "address": "汉茶路星达里",
+      "typecode": "200300",
+      "distance": 1113,
+      "source_hotspot": "汉沽"
+    },
+    {
+      "originalId": "B0FFI6TU5I",
+      "name": "公共厕所(天津生态城第一社区中心)",
+      "lat": 39.106224,
+      "lng": 117.731653,
+      "address": "和畅路与和睦路交口天津生态城第一社区中心F4层",
+      "typecode": "200300",
+      "distance": 1140,
+      "source_hotspot": "北塘"
+    },
+    {
+      "originalId": "B0FFKZIR9K",
+      "name": "公共厕所",
+      "lat": 39.101075,
+      "lng": 117.730535,
+      "address": "和畅路与中天大道交口附近永定洲公园内(南侧)",
+      "typecode": "200300",
+      "distance": 1141,
+      "source_hotspot": "北塘"
+    },
+    {
+      "originalId": "B0G3AUGARA",
+      "name": "公共厕所",
+      "lat": 39.096669,
+      "lng": 117.755209,
+      "address": "瑞龙城西南侧230米",
+      "typecode": "200300",
+      "distance": 1159,
+      "source_hotspot": "北塘"
+    },
+    {
+      "originalId": "B0HUNLBXTW",
+      "name": "男洗手间(九号线广场)",
+      "lat": 39.0189,
+      "lng": 117.716393,
+      "address": "第二大街91号宏晋时代广场2F层",
+      "typecode": "200301",
+      "distance": 1166,
+      "source_hotspot": "塘沽外滩"
+    },
+    {
+      "originalId": "B001610Q31",
+      "name": "公共厕所",
+      "lat": 39.254496,
+      "lng": 117.796222,
+      "address": "寨上汉沽区汉沽环卫所(滨河路东)汉沽环境卫生管理所(滨河路)附近",
+      "typecode": "200300",
+      "distance": 1238,
+      "source_hotspot": "汉沽"
+    },
+    {
+      "originalId": "B0JAGRHEN3",
+      "name": "公共厕所",
+      "lat": 39.252232,
+      "lng": 117.798047,
+      "address": "青少年宫右手边小广场",
+      "typecode": "200300",
+      "distance": 1284,
+      "source_hotspot": "汉沽"
+    },
+    {
+      "originalId": "B0FFGIQCYM",
+      "name": "公共厕所",
+      "lat": 39.019412,
+      "lng": 117.718581,
+      "address": "发达街泰达城市公园(西侧)",
+      "typecode": "200300",
+      "distance": 1296,
+      "source_hotspot": "塘沽外滩"
+    },
+    {
+      "originalId": "B0FFF47YYA",
+      "name": "公共厕所",
+      "lat": 39.111907,
+      "lng": 117.735418,
+      "address": "中津大道与和畅路交叉口西北100米",
+      "typecode": "200300",
+      "distance": 1313,
+      "source_hotspot": "北塘"
+    },
+    {
+      "originalId": "B0FFHSQD31",
+      "name": "公共厕所",
+      "lat": 39.019674,
+      "lng": 117.691881,
+      "address": "顺达街8号A-102附近",
+      "typecode": "200300",
+      "distance": 1314,
+      "source_hotspot": "塘沽外滩"
+    },
+    {
+      "originalId": "B0FFIG35TD",
+      "name": "公共厕所",
+      "lat": 39.237162,
+      "lng": 117.782544,
+      "address": "汉茶路与三经路交叉口南160米",
+      "typecode": "200300",
+      "distance": 1317,
+      "source_hotspot": "汉沽"
+    },
+    {
+      "originalId": "B0FFI8Q09J",
+      "name": "女洗手间(泰达时尚购物中心C区)",
+      "lat": 39.032199,
+      "lng": 117.717621,
+      "address": "时尚西路18号泰达时尚购物中心C区F3层",
+      "typecode": "200302",
+      "distance": 1328,
+      "source_hotspot": "塘沽外滩"
+    },
+    {
+      "originalId": "B0FFI8Q08B",
+      "name": "无障碍洗手间(泰达时尚购物中心C区)",
+      "lat": 39.032151,
+      "lng": 117.717669,
+      "address": "时尚西路18号泰达时尚购物中心C区B1层",
+      "typecode": "200303",
+      "distance": 1328,
+      "source_hotspot": "塘沽外滩"
+    },
+    {
+      "originalId": "B0FFI8Q08H",
+      "name": "无障碍洗手间(泰达时尚购物中心C区)",
+      "lat": 39.032158,
+      "lng": 117.717668,
+      "address": "时尚西路18号泰达时尚购物中心C区F1层",
+      "typecode": "200303",
+      "distance": 1328,
+      "source_hotspot": "塘沽外滩"
+    },
+    {
+      "originalId": "B0FFI8Q08D",
+      "name": "女洗手间(泰达时尚购物中心C区)",
+      "lat": 39.032157,
+      "lng": 117.717698,
+      "address": "时尚西路18号泰达时尚购物中心C区B1层",
+      "typecode": "200302",
+      "distance": 1330,
+      "source_hotspot": "塘沽外滩"
+    },
+    {
+      "originalId": "B0FFI8Q08S",
+      "name": "男洗手间(泰达时尚购物中心C区)",
+      "lat": 39.032143,
+      "lng": 117.717738,
+      "address": "时尚西路18号泰达时尚购物中心C区B1层",
+      "typecode": "200301",
+      "distance": 1332,
+      "source_hotspot": "塘沽外滩"
+    },
+    {
+      "originalId": "B0FFHCMRA3",
+      "name": "公共厕所",
+      "lat": 39.237075,
+      "lng": 117.78553,
+      "address": "五纬路与秀茶路交叉口北200米",
+      "typecode": "200300",
+      "distance": 1332,
+      "source_hotspot": "汉沽"
+    },
+    {
+      "originalId": "B0G13U2POS",
+      "name": "公共厕所",
+      "lat": 39.114307,
+      "lng": 117.749009,
+      "address": "中天大道与中生大道交叉口西南120米",
+      "typecode": "200300",
+      "distance": 1444,
+      "source_hotspot": "北塘"
+    },
+    {
+      "originalId": "B0FFGJ2A3L",
+      "name": "公共厕所",
+      "lat": 39.112371,
+      "lng": 117.732797,
+      "address": "中津大道与和韵路交叉口南260米",
+      "typecode": "200300",
+      "distance": 1488,
+      "source_hotspot": "北塘"
+    },
+    {
+      "originalId": "B0G3AZCSQQ",
+      "name": "公共卫生间",
+      "lat": 39.093532,
+      "lng": 117.757482,
+      "address": "安明路461号",
+      "typecode": "200300",
+      "distance": 1520,
+      "source_hotspot": "北塘"
+    },
+    {
+      "originalId": "B0FFHLTCM4",
+      "name": "公共厕所",
+      "lat": 39.241184,
+      "lng": 117.799136,
+      "address": "汉沽图书馆(汉沽百货大楼西南)",
+      "typecode": "200300",
+      "distance": 1584,
+      "source_hotspot": "汉沽"
+    },
+    {
+      "originalId": "B0FFHH5M66",
+      "name": "公共厕所",
+      "lat": 39.254744,
+      "lng": 117.800575,
+      "address": "寨上世纪客都超市西南(新开北路)",
+      "typecode": "200300",
+      "distance": 1585,
+      "source_hotspot": "汉沽"
+    },
+    {
+      "originalId": "B0I6TGNMBB",
+      "name": "公共卫生间",
+      "lat": 39.253905,
+      "lng": 117.802677,
+      "address": [],
+      "typecode": "200300",
+      "distance": 1720,
+      "source_hotspot": "汉沽"
+    },
+    {
+      "originalId": "B0IRZH11SJ",
+      "name": "二百间无障碍公共厕所",
+      "lat": 39.240761,
+      "lng": 117.801382,
+      "address": "新开中路与福顺街交叉口西北100米",
+      "typecode": "200300",
+      "distance": 1773,
+      "source_hotspot": "汉沽"
+    },
+    {
+      "originalId": "B0FFFDNP69",
+      "name": "公共厕所",
+      "lat": 39.241765,
+      "lng": 117.802143,
+      "address": "汉沽街道新开南路8号汉沽商场1楼",
+      "typecode": "200300",
+      "distance": 1776,
+      "source_hotspot": "汉沽"
+    },
+    {
+      "originalId": "B0FFHMU93N",
+      "name": "公共厕所",
+      "lat": 39.247535,
+      "lng": 117.806156,
+      "address": "红霞路与府北街交叉口东南60米",
+      "typecode": "200300",
+      "distance": 1936,
+      "source_hotspot": "汉沽"
+    },
+    {
+      "originalId": "B0FFFA8ESE",
+      "name": "寨上富顺街公共卫生间",
+      "lat": 39.239834,
+      "lng": 117.802998,
+      "address": "福顺街与新开中路交叉口东80米",
+      "typecode": "200300",
+      "distance": 1946,
+      "source_hotspot": "汉沽"
+    },
+    {
+      "originalId": "B0FFH4TCWJ",
+      "name": "公共厕所(第三社区卫生服务中心)",
+      "lat": 39.119036,
+      "lng": 117.749617,
+      "address": "和畅路532号第三社区卫生服务中心F3层",
+      "typecode": "200300",
+      "distance": 1964,
+      "source_hotspot": "北塘"
+    },
+    {
+      "originalId": "B0FFIGCM3F",
+      "name": "公共厕所",
+      "lat": 39.266402,
+      "lng": 117.779067,
+      "address": "G25长深高速附近",
+      "typecode": "200300",
+      "distance": 1984,
+      "source_hotspot": "汉沽"
+    },
+    {
+      "originalId": "B0FFHC2V3N",
+      "name": "公共厕所",
+      "lat": 39.064254,
+      "lng": 117.686942,
+      "address": "第九大街与洞庭路交叉口东40米",
+      "typecode": "200300",
+      "distance": 2032,
+      "source_hotspot": "泰达开发区"
+    },
+    {
+      "originalId": "B0HUNUA6D8",
+      "name": "男洗手间(天津市第五中心医院生态城医院)",
+      "lat": 39.12011,
+      "lng": 117.748928,
+      "address": "和畅路3333号天津市第五中心医院生态城医院F2层",
+      "typecode": "200301",
+      "distance": 2066,
+      "source_hotspot": "北塘"
+    },
+    {
+      "originalId": "B0FFI7WA6S",
+      "name": "公共厕所(天津市第五中心医院生态城医院)",
+      "lat": 39.12013,
+      "lng": 117.748911,
+      "address": "和畅路3333号天津市第五中心医院生态城医院F3层",
+      "typecode": "200300",
+      "distance": 2067,
+      "source_hotspot": "北塘"
+    },
+    {
+      "originalId": "B0FFI7WA6B",
+      "name": "公共厕所(天津市第五中心医院生态城医院)",
+      "lat": 39.12014,
+      "lng": 117.748899,
+      "address": "和畅路3333号天津市第五中心医院生态城医院F1层",
+      "typecode": "200300",
+      "distance": 2068,
+      "source_hotspot": "北塘"
+    },
+    {
+      "originalId": "B0FFI7WA6C",
+      "name": "公共厕所(天津医科大学中新生态城医院)",
+      "lat": 39.120107,
+      "lng": 117.749102,
+      "address": "和畅路3333号天津医科大学中新生态城医院F2层",
+      "typecode": "200300",
+      "distance": 2069,
+      "source_hotspot": "北塘"
+    },
+    {
+      "originalId": "B0FFI7WA6M",
+      "name": "公共厕所(天津市第五中心医院生态城医院)",
+      "lat": 39.120106,
+      "lng": 117.749109,
+      "address": "和畅路3333号天津市第五中心医院生态城医院F3层",
+      "typecode": "200300",
+      "distance": 2069,
+      "source_hotspot": "北塘"
+    },
+    {
+      "originalId": "B0HUN7B256",
+      "name": "女洗手间(天津市第五中心医院生态城医院)",
+      "lat": 39.120143,
+      "lng": 117.748903,
+      "address": "和畅路3333号天津市第五中心医院生态城医院F10层",
+      "typecode": "200302",
+      "distance": 2069,
+      "source_hotspot": "北塘"
+    },
+    {
+      "originalId": "B0HUN7AUUR",
+      "name": "女洗手间(天津市第五中心医院生态城医院)",
+      "lat": 39.120146,
+      "lng": 117.748896,
+      "address": "和畅路3333号天津市第五中心医院生态城医院F2层",
+      "typecode": "200302",
+      "distance": 2069,
+      "source_hotspot": "北塘"
+    },
+    {
+      "originalId": "B0FFL0BU35",
+      "name": "男洗手间(天津市第五中心医院生态城医院)",
+      "lat": 39.12017,
+      "lng": 117.748901,
+      "address": "和畅路3333号天津市第五中心医院生态城医院F10层",
+      "typecode": "200301",
+      "distance": 2072,
+      "source_hotspot": "北塘"
+    },
+    {
+      "originalId": "B0FFI7WA6K",
+      "name": "公共厕所(天津市第五中心医院生态城医院)",
+      "lat": 39.120378,
+      "lng": 117.748696,
+      "address": "和畅路3333号天津市第五中心医院生态城医院F2层",
+      "typecode": "200300",
+      "distance": 2090,
+      "source_hotspot": "北塘"
+    },
+    {
+      "originalId": "B0FFI7WA6O",
+      "name": "公共厕所(天津市第五中心医院生态城医院)",
+      "lat": 39.120381,
+      "lng": 117.748693,
+      "address": "和畅路3333号天津市第五中心医院生态城医院F3层",
+      "typecode": "200300",
+      "distance": 2091,
+      "source_hotspot": "北塘"
+    },
+    {
+      "originalId": "B0J36DFT2B",
+      "name": "印象海堤公共洗手间",
+      "lat": 39.113414,
+      "lng": 117.762941,
+      "address": "海富园附近",
+      "typecode": "200300",
+      "distance": 2091,
+      "source_hotspot": "北塘"
+    },
+    {
+      "originalId": "B0FFI7WA6E",
+      "name": "公共厕所(天津市第五中心医院生态城医院)",
+      "lat": 39.120391,
+      "lng": 117.748722,
+      "address": "和畅路3333号天津市第五中心医院生态城医院F1层",
+      "typecode": "200300",
+      "distance": 2092,
+      "source_hotspot": "北塘"
+    },
+    {
+      "originalId": "B001611UU8",
+      "name": "公共卫生间",
+      "lat": 39.241408,
+      "lng": 117.806001,
+      "address": "牌坊街天津市滨海新区汉沽中医医院",
+      "typecode": "200300",
+      "distance": 2094,
+      "source_hotspot": "汉沽"
+    },
+    {
+      "originalId": "B0FFI7WA7B",
+      "name": "公共厕所(天津市第五中心医院生态城医院)",
+      "lat": 39.120421,
+      "lng": 117.748735,
+      "address": "和畅路3333号天津市第五中心医院生态城医院F8层",
+      "typecode": "200300",
+      "distance": 2096,
+      "source_hotspot": "北塘"
+    },
+    {
+      "originalId": "B0FFHK2QHT",
+      "name": "公共厕所",
+      "lat": 39.257485,
+      "lng": 117.805467,
+      "address": "东风北路与东滨街交叉口西南160米",
+      "typecode": "200300",
+      "distance": 2096,
+      "source_hotspot": "汉沽"
+    },
+    {
+      "originalId": "B0FFFA8DVI",
+      "name": "公共卫生间",
+      "lat": 39.235927,
+      "lng": 117.801348,
+      "address": "新开南路81号附近",
+      "typecode": "200300",
+      "distance": 2100,
+      "source_hotspot": "汉沽"
+    },
+    {
+      "originalId": "B0JDHPRNC0",
+      "name": "公共厕所",
+      "lat": 39.05398,
+      "lng": 117.692849,
+      "address": "第七大街与黄海路交叉口东200米",
+      "typecode": "200300",
+      "distance": 2347,
+      "source_hotspot": "泰达开发区"
+    },
+    {
+      "originalId": "B0FFJATTO5",
+      "name": "公共厕所",
+      "lat": 39.054357,
+      "lng": 117.691343,
+      "address": "第七大街26号",
+      "typecode": "200300",
+      "distance": 2394,
+      "source_hotspot": "泰达开发区"
+    },
+    {
+      "originalId": "B0FFHC3E6Q",
+      "name": "公共厕所",
+      "lat": 39.05811,
+      "lng": 117.684186,
+      "address": "洞庭路148号北60米",
+      "typecode": "200300",
+      "distance": 2569,
+      "source_hotspot": "泰达开发区"
+    },
+    {
+      "originalId": "B0FFH6C6RY",
+      "name": "公共厕所",
+      "lat": 39.069699,
+      "lng": 117.674324,
+      "address": "共发大道天津金元宝滨海农产品交易市场",
+      "typecode": "200300",
+      "distance": 2981,
+      "source_hotspot": "泰达开发区"
+    }
+  ]
+}

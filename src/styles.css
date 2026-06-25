@@ -1,0 +1,1567 @@
+/* ============================================================
+   styles.css — 厕哪 UI 设计系统（MD3 Material Design 3）
+   视觉风格：Google Material Design 3 风格约束
+   设计原则：移动端优先 · 3色语义 · 组件化 · 响应式
+   移植友好：BEM 命名 + CSS 变量 → 可直接映射小程序组件
+   ============================================================
+   小程序移植映射（wxss/acss）：
+   - :root 变量 → page { --md-primary: ... }
+   - 4px 间距基准 → 2rpx = 1px 换算
+   - BEM 类名 → 组件 class 直接复用
+   - env(safe-area-inset-*) → wx.getSystemInfoSync().safeArea
+   - 100dvh → 100vh（小程序不支持 dvh）
+   - :focus-within → 小程序需用 JS class toggle 替代（见各组件注释）
+   - ::before state layer → 小程序需用额外 view 节点替代
+   约束兼容：
+   - 不使用 backdrop-filter（小程序不支持）
+   - 不使用 color-mix()（小程序不支持）
+   - 不使用 :has()（小程序不支持）
+   ============================================================ */
+
+/* ============ 1. MD3 Design Tokens（MD3 设计变量） ============ */
+/* MD3 tonal palette 体系，对齐 Google Material Design 3 规范 */
+:root {
+  /* --- MD3 Primary（Google Blue 主色） --- */
+  --md-primary:              #4285f4;  /* 主色 — Google Blue */
+  --md-on-primary:           #ffffff;  /* 主色上的文字/图标 */
+  --md-primary-container:    #d1e4ff;  /* 主色容器底色（浅蓝） */
+  --md-on-primary-container: #001d36;  /* 主色容器上的文字（深蓝） */
+  --md-primary-hover:        #3b78e7;  /* 主色悬停态（深一档） */
+
+  /* --- MD3 Secondary（中性辅助色） --- */
+  --md-secondary:              #5f6368;  /* 辅助色 — Google Neutral */
+  --md-on-secondary:           #ffffff;  /* 辅助色上的文字 */
+  --md-secondary-container:    #e8eaed;  /* 辅助色容器底色 */
+  --md-on-secondary-container: #1a1c1e;  /* 辅助色容器上的文字 */
+
+  /* --- MD3 Tertiary（紫色第三色，用于实时来源标记） --- */
+  --md-tertiary:              #7b61ff;  /* 第三色 — Purple */
+  --md-on-tertiary:           #ffffff;  /* 第三色上的文字 */
+  --md-tertiary-container:    #f3e8fd;  /* 第三色容器底色 */
+  --md-on-tertiary-container: #25005a;  /* 第三色容器上的文字 */
+
+  /* --- MD3 Error（错误/危险色） --- */
+  --md-error:              #d93025;  /* 错误色 — Google Red */
+  --md-on-error:           #ffffff;  /* 错误色上的文字 */
+  --md-error-container:    #fce8e6;  /* 错误色容器底色 */
+  --md-on-error-container: #410e0b;  /* 错误色容器上的文字 */
+
+  /* --- MD3 Surface（表面色阶，从浅到深 5 级） --- */
+  --md-surface:                    #fdfcff;  /* 基础表面（页面背景） */
+  --md-on-surface:                 #1a1c1e;  /* 表面上的主文字 */
+  --md-on-surface-variant:         #42474e;  /* 表面上的辅助文字 */
+  --md-surface-container-lowest:   #ffffff;  /* 最低层容器（纯白） */
+  --md-surface-container-low:      #f7f9fc;  /* 低层容器 */
+  --md-surface-container:          #f1f3f8;  /* 中层容器 */
+  --md-surface-container-high:     #ebeef3;  /* 高层容器 */
+  --md-surface-container-highest:  #e6e9ee;  /* 最高层容器 */
+
+  /* --- MD3 Outline（描边色） --- */
+  --md-outline:         #73777f;  /* 标准描边 */
+  --md-outline-variant: #c3c7cf;  /* 变体描边（更浅） */
+
+  /* --- MD3 Inverse（反色，用于 Snackbar 等） --- */
+  --md-inverse-surface:    #2f3033;  /* 反色表面（深色） */
+  --md-inverse-on-surface: #f0f1f3;  /* 反色表面上的文字 */
+  --md-inverse-primary:    #aac7ff;  /* 反色主色 */
+
+  /* --- 语义色（3色体系，技评§13.3 定义，户外强光高对比） --- */
+  /* 保持不变：HTML 内联样式引用了这些变量 */
+  --c-ok:        #00C853;            /* 能用 — Marker 绿，户外强光可辨 */
+  --c-fail:      #FF1744;            /* 不能用 — Marker 红，色相+亮度双差异 */
+  --c-uncertain: rgba(255,23,68,0.5);/* 不确定 — 半透明红，表达不确定性 */
+  --c-stale:     #9E9E9E;            /* 信息不可靠 — Marker 灰，降级提示 */
+
+  /* --- 筛选标签专用色（保持不变，HTML 内联样式引用） --- */
+  --c-accessible: #722ed1;           /* 无障碍 — 紫 */
+  --c-family:     #13c2c2;           /* 第三卫生间 — 青 */
+  --c-water:      #1890ff;           /* 房车水源 — 蓝 */
+
+  /* --- Legacy Aliases（向后兼容映射，HTML/JS 内联样式引用） --- */
+  --c-primary:       var(--md-primary);           /* 主色别名 */
+  --c-primary-hover: var(--md-primary-hover);     /* 主色悬停别名 */
+  --c-primary-light: var(--md-primary-container); /* 主色浅底别名 */
+  --c-success:       #34a853;                      /* 成功/上报（Google Green） */
+  --c-danger:        var(--md-error);             /* 危险/删除别名 */
+  --c-warning:       #fbbc05;                      /* 警告 — Google Yellow */
+  --c-purple:        var(--md-tertiary);          /* 实时搜索来源标记别名 */
+  --c-amap:          var(--md-primary);           /* 高德来源链接色（JS 内联引用） */
+
+  /* --- Legacy 中性色别名 → 映射到 MD3 Surface 体系 --- */
+  --bg:           var(--md-surface);                   /* 页面背景 */
+  --bg-card:      var(--md-surface-container-lowest);  /* 卡片/面板背景 */
+  --bg-muted:     var(--md-surface-container);         /* 静音/禁用背景 */
+  --text:         var(--md-on-surface);                /* 主文字 */
+  --text-sub:     var(--md-on-surface-variant);        /* 辅助文字 */
+  --text-hint:    #9aa0a6;                             /* 提示文字（MD3 无对应 token，保持原值） */
+  --border:       var(--md-outline-variant);           /* 分割线 */
+  --border-light: #e8eaed;                             /* 轻分割线（保持原值） */
+  --ring:         var(--md-primary);                   /* 焦点环 */
+
+  /* --- MD3 Type Scale（字号体系，display/headline/title/body/label 各 3 级） --- */
+  --md-display-lg-size: 57px;  --md-display-lg-lh: 64px;  /* 大标题用 */
+  --md-display-md-size: 45px;  --md-display-md-lh: 52px;
+  --md-display-sm-size: 36px;  --md-display-sm-lh: 44px;
+  --md-headline-lg-size: 32px; --md-headline-lg-lh: 40px; /* 区块标题用 */
+  --md-headline-md-size: 28px; --md-headline-md-lh: 36px;
+  --md-headline-sm-size: 24px; --md-headline-sm-lh: 32px;
+  --md-title-lg-size: 22px;    --md-title-lg-lh: 28px;    /* 卡片标题用 */
+  --md-title-md-size: 16px;    --md-title-md-lh: 24px;
+  --md-title-sm-size: 14px;    --md-title-sm-lh: 20px;
+  --md-body-lg-size: 16px;     --md-body-lg-lh: 24px;     /* 正文用 */
+  --md-body-md-size: 14px;     --md-body-md-lh: 20px;
+  --md-body-sm-size: 12px;     --md-body-sm-lh: 16px;
+  --md-label-lg-size: 14px;    --md-label-lg-lh: 20px;    /* 按钮文字用 */
+  --md-label-md-size: 12px;    --md-label-md-lh: 16px;
+  --md-label-sm-size: 11px;    --md-label-sm-lh: 16px;
+
+  /* Legacy 字号别名 → 映射到相近 MD3 type scale token */
+  --fs-xs:   var(--md-label-sm-size);  /* 11px — label-sm */
+  --fs-sm:   var(--md-body-sm-size);   /* 12px — body-sm/label-md */
+  --fs-base: var(--md-body-md-size);   /* 14px — body-md/title-sm/label-lg */
+  --fs-md:   15px;                      /* 15px — MD3 无精确对应，保持原值 */
+  --fs-lg:   17px;                      /* 17px — MD3 无精确对应，保持原值 */
+  --fs-xl:   18px;                      /* 18px — MD3 无精确对应，保持原值 */
+  --fs-2xl:  20px;                      /* 20px — MD3 无精确对应，保持原值 */
+
+  /* --- MD3 Shape（圆角体系） --- */
+  --md-shape-xs:   4px;    /* 小组件圆角（Chip 等） */
+  --md-shape-sm:   8px;    /* 小卡片圆角 */
+  --md-shape-md:   12px;   /* 中卡片/FAB 圆角 */
+  --md-shape-lg:   16px;   /* 大卡片圆角 */
+  --md-shape-xl:   28px;   /* Bottom Sheet 圆角 */
+  --md-shape-full: 999px;  /* 全圆角（按钮/搜索栏） */
+
+  /* Legacy 圆角别名 → 映射到 MD3 shape token */
+  --r-sm:   var(--md-shape-sm);    /* 8px（原 6px，升级到 MD3 标准） */
+  --r-md:   var(--md-shape-md);    /* 12px（原 8px，升级到 MD3 标准） */
+  --r-lg:   var(--md-shape-lg);    /* 16px（原 12px，升级到 MD3 标准） */
+  --r-xl:   var(--md-shape-xl);    /* 28px（原 16px，升级到 MD3 Bottom Sheet 标准） */
+  --r-full: var(--md-shape-full);  /* 999px */
+
+  /* --- MD3 Elevation（阴影层级 Level 0-5，MD3 标准阴影公式） --- */
+  --md-elevation-0: none;                                              /* L0 无阴影 */
+  --md-elevation-1: 0 1px 2px rgba(0,0,0,0.3), 0 1px 3px 1px rgba(0,0,0,0.15);  /* L1 TopBar */
+  --md-elevation-2: 0 1px 2px rgba(0,0,0,0.3), 0 2px 6px 2px rgba(0,0,0,0.15);  /* L2 Menu */
+  --md-elevation-3: 0 1px 3px rgba(0,0,0,0.3), 0 4px 8px 3px rgba(0,0,0,0.15);  /* L3 FAB */
+  --md-elevation-4: 0 2px 3px rgba(0,0,0,0.3), 0 6px 10px 4px rgba(0,0,0,0.15); /* L4 Modal */
+  --md-elevation-5: 0 4px 4px rgba(0,0,0,0.3), 0 8px 12px 6px rgba(0,0,0,0.15); /* L5 最高 */
+
+  /* Legacy 阴影别名 → 映射到 MD3 elevation */
+  --shadow-xs:  var(--md-elevation-1);  /* TopBar 微阴影 */
+  --shadow-sm:  var(--md-elevation-1);  /* 图例阴影 */
+  --shadow-md:  var(--md-elevation-2);  /* 搜索建议阴影 */
+  --shadow-lg:  var(--md-elevation-3);  /* 筛选下拉阴影 */
+  --shadow-xl:  0 -2px 12px rgba(0,0,0,0.15), 0 -4px 20px rgba(0,0,0,0.08);  /* 向上投影，Bottom Sheet 专用 */
+  --shadow-fab: var(--md-elevation-3);  /* FAB 阴影 */
+
+  /* --- MD3 State Layer（状态层透明度） --- */
+  /* 用于 ::before 伪元素，currentColor + opacity 实现 MD3 标准状态层 */
+  --md-state-hover:    0.08;  /* 悬停状态层透明度 */
+  --md-state-focus:    0.12;  /* 焦点状态层透明度 */
+  --md-state-pressed:  0.12;  /* 按压状态层透明度 */
+
+  /* --- MD3 Motion（动画缓动与时长） --- */
+  --md-easing-standard:   cubic-bezier(0.2, 0, 0, 1);    /* 标准缓动 */
+  --md-easing-emphasized: cubic-bezier(0.3, 0, 0, 1);    /* 强调缓动 */
+  --md-dur-short:   100ms;  /* 短动画（状态层） */
+  --md-dur-medium:  200ms;  /* 中动画（面板滑出） */
+  --md-dur-long:    300ms;  /* 长动画（页面过渡） */
+
+  /* Legacy 动画别名 → 映射到 MD3 motion */
+  --ease:      var(--md-easing-standard);  /* 标准缓动别名 */
+  --dur-fast:  var(--md-dur-short);         /* 快动画别名（原 .15s → 100ms） */
+  --dur-normal: var(--md-dur-medium);       /* 正常动画别名（原 .25s → 200ms） */
+
+  /* --- 间距系统（4px 基准，保持不变，小程序替换为 rpx） --- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+
+  /* --- 安全区域（适配刘海屏/底部安全区，保持不变） --- */
+  --safe-top:    env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ============ 2. Reset & Base（重置与基础样式） ============ */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%;
+  overflow: hidden;                     /* 防止页面整体滚动 */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: var(--md-on-surface);           /* 主文字色 */
+  background: var(--md-surface);          /* 页面背景 */
+  -webkit-tap-highlight-color: transparent;  /* 移除移动端点击高亮 */
+  -webkit-font-smoothing: antialiased;       /* 字体抗锯齿 */
+  overscroll-behavior: none;             /* 禁止页面弹性滚动，防止下拉/上滑露出空白 */
+}
+
+/* ============ 3. App Shell（应用骨架） ============ */
+/* 小程序映射：#app → page 根容器 */
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;  /* 优先使用 dvh，小程序需降级为 100vh */
+  overflow: hidden;
+}
+
+/* ============ 4. TopBar 顶部栏（MD3 Top App Bar） ============ */
+/* 小程序映射：自定义导航栏组件 */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-4);
+  padding-top: calc(var(--sp-2) + var(--safe-top));  /* 顶部安全区补偿 */
+  background: var(--md-surface-container);            /* MD3 略 elevated 表面 */
+  border-bottom: 1px solid var(--md-outline-variant); /* MD3 分割线 */
+  box-shadow: var(--md-elevation-1);                  /* MD3 Level 1 阴影 */
+  z-index: 2000;
+  flex-shrink: 0;
+  position: relative;
+}
+/* Logo 主文字 */
+.topbar__logo {
+  font-weight: 700;
+  font-size: var(--fs-lg);
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: -.2px;
+  color: var(--md-on-surface);  /* 主文字色 */
+}
+/* Logo 副标题 */
+.topbar__logo-sub {
+  font-size: var(--fs-xs);
+  color: var(--text-hint);  /* 提示文字色 */
+  font-weight: 400;
+  margin-left: var(--sp-1);
+}
+
+/* ============ 5. SearchWrap 搜索栏（MD3 Search Bar） ============ */
+/* MD3 Search Bar 风格：全圆角、无 border、surface-container-high 背景 */
+.search-wrap {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--md-surface-container-high);  /* MD3 搜索栏背景 */
+  border: 1px solid transparent;                  /* 透明 border 占位，避免 focus 时跳动 */
+  border-radius: var(--md-shape-full);            /* MD3 全圆角 */
+  padding: 0 var(--sp-3);
+  height: 36px;
+  gap: var(--sp-2);
+  transition: background var(--md-dur-short) var(--md-easing-standard),
+              border-color var(--md-dur-short) var(--md-easing-standard);
+}
+/* 注意：:focus-within 在小程序中不支持，需用 JS class toggle 替代
+   小程序迁移方案：input bindfocus 时 addClass('is-focused')，bindblur 时 removeClass */
+.search-wrap:focus-within {
+  background: var(--md-surface-container-highest);  /* MD3 focus 态加深一档 */
+  border-color: var(--md-outline);                   /* MD3 focus 加 1px outline */
+  box-shadow: none;                                  /* 无 box-shadow，用 border 替代 */
+}
+/* 搜索输入框 */
+.search-wrap__input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: var(--fs-base);
+  color: var(--md-on-surface);  /* 主文字色 */
+  height: 100%;
+}
+.search-wrap__input::placeholder { color: var(--text-hint); }  /* 占位符色 */
+
+/* 筛选按钮（MD3 Filter Chip 风格，搜索栏左侧漏斗按钮） */
+.search-wrap__filter {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--md-outline);        /* MD3 Filter Chip 描边 */
+  background: transparent;                      /* MD3 Chip 透明背景 */
+  color: var(--md-on-surface-variant);         /* MD3 辅助文字色 */
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: var(--md-shape-sm);           /* MD3 Chip 圆角 */
+  cursor: pointer;
+  white-space: nowrap;
+  height: 26px;
+  position: relative;          /* state layer 定位基准 */
+  overflow: hidden;            /* state layer 裁剪 */
+  transition: all var(--md-dur-short) var(--md-easing-standard);
+}
+/* MD3 State Layer — ::before 伪元素实现悬停/按压反馈 */
+.search-wrap__filter::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;     /* 使用当前文字色作为 state layer */
+  opacity: 0;                   /* 默认透明 */
+  border-radius: inherit;       /* 继承父元素圆角 */
+  pointer-events: none;         /* 不拦截点击 */
+  transition: opacity var(--md-dur-short) var(--md-easing-standard);
+}
+.search-wrap__filter:hover::before { opacity: var(--md-state-hover); }    /* 悬停 8% */
+.search-wrap__filter:active::before { opacity: var(--md-state-pressed); } /* 按压 12% */
+/* is-active 态：MD3 Filter Chip 选中样式 */
+.search-wrap__filter.is-active {
+  background: var(--md-secondary-container);       /* MD3 选中背景 */
+  border-color: var(--md-secondary);                /* MD3 选中描边 */
+  color: var(--md-on-secondary-container);          /* MD3 选中文字 */
+}
+.search-wrap__filter-label { font-size: var(--fs-sm); }
+
+/* 搜索清除按钮（MD3 Icon Button 风格，输入后显示） */
+.search-wrap__clear {
+  flex-shrink: 0;
+  border: none;
+  background: var(--md-on-surface-variant);  /* MD3 图标按钮背景 */
+  color: #fff;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+  transition: background var(--md-dur-short) var(--md-easing-standard);
+}
+.search-wrap__clear.is-show { display: flex; }
+.search-wrap__clear:hover { background: var(--md-on-surface); }  /* hover 加深一档 */
+
+/* 搜索按钮（MD3 Filled Tonal Button 风格） */
+.search-wrap__btn {
+  flex-shrink: 0;
+  border: none;
+  background: var(--md-primary-container);       /* MD3 Tonal 按钮背景 */
+  color: var(--md-on-primary-container);          /* MD3 Tonal 按钮文字 */
+  border-radius: var(--md-shape-full);
+  padding: 0 14px;
+  height: 28px;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+  transition: background var(--md-dur-short) var(--md-easing-standard);
+}
+/* MD3 State Layer */
+.search-wrap__btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  transition: opacity var(--md-dur-short) var(--md-easing-standard);
+}
+.search-wrap__btn:hover::before { opacity: var(--md-state-hover); }
+.search-wrap__btn:active::before { opacity: var(--md-state-pressed); }
+.search-wrap__btn:hover { background: var(--md-primary-hover); }  /* hover 深一档 */
+.search-wrap__btn:active { transform: translateY(1px); }
+
+/* ============ 6. SearchSuggest 搜索建议（MD3 Menu） ============ */
+/* MD3 Menu 风格：surface-container 背景、elevation-2 阴影、shape-md 圆角 */
+.search-suggest {
+  position: absolute;
+  left: -1px; right: -1px;
+  top: calc(100% + 4px);
+  background: var(--md-surface-container);    /* MD3 Menu 背景 */
+  border: 1px solid var(--md-outline-variant); /* MD3 Menu 描边 */
+  border-radius: var(--md-shape-md);           /* MD3 Menu 圆角 */
+  box-shadow: var(--md-elevation-2);           /* MD3 Level 2 阴影 */
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 2000;
+  display: none;
+}
+.search-suggest.is-show { display: block; }
+
+/* 建议项（MD3 Menu Item） */
+.suggest-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 10px var(--sp-4);
+  cursor: pointer;
+  border-bottom: 1px solid var(--md-outline-variant);  /* MD3 分割线 */
+  transition: background var(--md-dur-short) var(--md-easing-standard);
+  position: relative;
+  overflow: hidden;
+}
+.suggest-item:last-child { border-bottom: none; }
+/* MD3 State Layer */
+.suggest-item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  transition: opacity var(--md-dur-short) var(--md-easing-standard);
+}
+.suggest-item:hover::before { opacity: var(--md-state-hover); }
+.suggest-item.is-active::before { opacity: var(--md-state-pressed); }
+/* hover/active 态：MD3 surface-container-high 背景 */
+.suggest-item:hover, .suggest-item.is-active {
+  background: var(--md-surface-container-high);
+}
+.suggest-item__icon {
+  font-size: var(--fs-md);
+  flex-shrink: 0;
+  line-height: 1;
+  width: 20px;
+  text-align: center;
+}
+.suggest-item__body { flex: 1; min-width: 0; }
+.suggest-item__name {
+  font-size: var(--fs-sm);
+  color: var(--md-on-surface);  /* 主文字色 */
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+}
+.suggest-item__addr {
+  font-size: var(--fs-xs);
+  color: var(--md-on-surface-variant);  /* 辅助文字色 */
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+.suggest-item__dist {
+  font-size: var(--fs-xs);
+  color: var(--md-primary);  /* 主色距离文字 */
+  flex-shrink: 0;
+  font-weight: 500;
+}
+/* 空状态 */
+.suggest-empty {
+  padding: var(--sp-5) var(--sp-4);
+  text-align: center;
+  color: var(--md-on-surface-variant);
+  font-size: var(--fs-sm);
+}
+
+/* ============ 7. FilterDropdown 筛选下拉（MD3 Menu） ============ */
+/* 同搜索建议样式：surface-container 背景、elevation 阴影 */
+.filter-dropdown {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  margin-top: 6px;
+  min-width: 160px;
+  background: var(--md-surface-container);    /* MD3 Menu 背景 */
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-md);           /* MD3 Menu 圆角 */
+  box-shadow: var(--md-elevation-2);           /* MD3 Level 2 阴影 */
+  z-index: 2000;
+  display: none;
+  padding: 6px 0;
+  overflow: hidden;
+}
+.filter-dropdown.is-show { display: block; }
+/* 筛选项（MD3 Menu Item） */
+.filter-dropdown__item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 9px 14px;
+  font-size: var(--fs-sm);
+  font-weight: 400;
+  color: var(--md-on-surface);
+  cursor: pointer;
+  transition: background var(--md-dur-short) var(--md-easing-standard);
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+}
+/* MD3 State Layer */
+.filter-dropdown__item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  transition: opacity var(--md-dur-short) var(--md-easing-standard);
+}
+.filter-dropdown__item:hover::before { opacity: var(--md-state-hover); }
+.filter-dropdown__item:hover { background: var(--md-surface-container-high); }
+/* is-active 项：MD3 选中态（primary-container 8% overlay 效果，用浅色近似） */
+.filter-dropdown__item.is-active {
+  color: var(--md-primary);       /* MD3 主色文字 */
+  font-weight: 500;
+  background: var(--md-primary-container);  /* MD3 主色容器底色（近似 8% overlay） */
+}
+.filter-dropdown__check {
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--md-primary);  /* MD3 主色勾选 */
+  visibility: hidden;
+}
+.filter-dropdown__item.is-active .filter-dropdown__check { visibility: visible; }
+.filter-dropdown__label { flex: 1; }
+/* 筛选色点（HTML 内联 style 引用 --c-accessible/--c-family/--c-water/--c-ok） */
+.filter-dropdown__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ============ 8. Map 容器 ============ */
+/* 小程序映射：map 组件 */
+#map {
+  flex: 1;
+  width: 100%;
+  position: relative;
+}
+
+/* ============ 9. Toilet Marker 厕所标记（3色语义，技评§13.3-13.4） ============ */
+/* 移动端：28px 正圆，3px 白边，无 emoji，户外强光高对比 */
+/* 类名匹配 markerClass() 返回值：green/red/uncertain/gray */
+.toilet-marker {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 6px rgba(60,64,67,.3), 0 1px 2px rgba(60,64,67,.2);
+  transition: transform var(--md-dur-short) var(--md-easing-standard);
+}
+.toilet-marker:hover { transform: scale(1.2); }
+.toilet-marker.green      { background: var(--c-ok); }        /* 能用 */
+.toilet-marker.red        { background: var(--c-fail); }      /* 不能用 */
+.toilet-marker.uncertain  { background: var(--c-uncertain); } /* 不确定 */
+.toilet-marker.gray       { background: var(--c-stale); }     /* 不可靠 */
+
+/* 聚合气泡（MD3 Badge 风格，与 toilet-marker 同色体系） */
+.toilet-cluster-icon { background: transparent !important; border: none !important; }
+.toilet-cluster {
+  border-radius: 50%;
+  border: 3px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+  box-shadow: 0 2px 8px rgba(0,0,0,.25), 0 1px 3px rgba(0,0,0,.15);
+  cursor: pointer;
+  letter-spacing: -.3px;
+  text-align: center;
+  transition: transform var(--md-dur-short) var(--md-easing-standard);
+}
+.toilet-cluster:hover { transform: scale(1.08); }
+.toilet-cluster.green     { background: #1e8e3e; }                                    /* 能用聚合 */
+.toilet-cluster.red       { background: #d93025; }                                    /* 不能用聚合 */
+.toilet-cluster.uncertain { background: linear-gradient(135deg, #d93025 50%, #5f6368 50%); }  /* 不确定聚合 */
+.toilet-cluster.gray      { background: #5f6368; }                                    /* 不可靠聚合 */
+
+/* 用户定位蓝点（MD3 风格保持不变） */
+.user-loc { position: relative; width: 22px; height: 22px; }
+.user-loc__dot {
+  position: absolute; inset: 0; margin: auto;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--md-primary); border: 3px solid #fff;  /* MD3 主色蓝点 */
+  box-shadow: 0 1px 4px rgba(66,133,244,.5); z-index: 2;
+}
+.user-loc__pulse {
+  position: absolute; inset: 0; margin: auto;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: rgba(66,133,244,.3);
+  animation: pulse 2s ease-out infinite; z-index: 1;
+}
+@keyframes pulse {
+  0%   { transform: scale(1);   opacity: .5; }
+  70%  { transform: scale(3.5); opacity: 0;  }
+  100% { transform: scale(3.5); opacity: 0;  }
+}
+
+/* 搜索定位图钉 / 上报拾取图钉（复用）—— 标准水滴形，尖点指向坐标，标签在下方 */
+.search-pin-marker { background: transparent !important; border: none !important; }
+.search-pin { position: relative; width: 80px; pointer-events: none; }
+.search-pin__head {
+  position: relative;
+  width: 28px; height: 36px;
+  margin: 0 auto;
+}
+/* 圆形头部：红色+白边+阴影（::before 已用于图钉形状，不加 state layer） */
+.search-pin__head::before {
+  content: '';
+  position: absolute; left: 0; top: 0;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--md-error);  /* MD3 错误色（红色图钉） */
+  border: 3px solid #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,.3);
+  box-sizing: border-box;
+  z-index: 2;
+}
+/* 尖点：红色小三角，指向坐标（::after 已用于图钉尖点，不加 state layer） */
+.search-pin__head::after {
+  content: '';
+  position: absolute; left: 50%; top: 23px;
+  transform: translateX(-50%);
+  width: 0; height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 11px solid var(--md-error);  /* MD3 错误色 */
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,.25));
+  z-index: 1;
+}
+.search-pin__head .emoji {
+  position: absolute; left: 50%; top: 14px;
+  transform: translate(-50%, -50%);
+  font-size: 13px; line-height: 1;
+  z-index: 3;
+  filter: none;
+}
+.search-pin__label {
+  margin-top: 2px;
+  background: #3c4043; color: #fff;  /* 深色标签底 */
+  font-size: 12px; font-weight: 500;
+  padding: 4px 10px; border-radius: 4px;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0,0,0,.2);
+  text-align: center;
+  display: table;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ============ 10. FAB 按钮组（MD3 FAB / Extended FAB） ============ */
+/* 小程序映射：cover-view 浮动按钮 */
+/* 回到位置按钮（MD3 Small FAB：圆形，仅图标） */
+.fab-reloc {
+  position: absolute; right: var(--sp-4); bottom: 80px; z-index: 999;
+  width: 48px; height: 48px;
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+  border-radius: 50%;
+  border: none; box-shadow: var(--md-elevation-3);
+  cursor: pointer; user-select: none;
+  transition: box-shadow var(--md-dur-short) var(--md-easing-standard);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  padding: 0;
+}
+/* MD3 State Layer */
+.fab-reloc::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  transition: opacity var(--md-dur-short) var(--md-easing-standard);
+}
+.fab-reloc:hover::before { opacity: var(--md-state-hover); }
+.fab-reloc:active::before { opacity: var(--md-state-pressed); }
+.fab-reloc:hover { box-shadow: var(--md-elevation-4); }  /* hover 提升到 Level 4 */
+.fab-reloc:active { transform: translateY(1px); box-shadow: var(--md-elevation-1); }
+/* 定位中状态：旋转图标 + 禁止点击 */
+.fab-reloc.is-locating { pointer-events: none; opacity: 0.7; }
+.fab-reloc.is-locating .reloc-icon {
+  display: inline-block;
+  animation: reloc-spin 1s linear infinite;
+}
+@keyframes reloc-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* 上报 FAB（MD3 FAB：圆形/圆角，primary-container 背景） */
+.fab-add {
+  position: absolute; right: var(--sp-4); bottom: 140px; z-index: 999;
+  width: 48px; height: 48px; border-radius: var(--md-shape-md);  /* MD3 FAB 圆角 */
+  background: var(--md-primary-container);       /* MD3 FAB 背景 */
+  color: var(--md-on-primary-container);          /* MD3 FAB 文字 */
+  font-size: 24px; font-weight: 300;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--md-elevation-3);              /* MD3 Level 3 阴影 */
+  cursor: pointer; user-select: none;
+  transition: box-shadow var(--md-dur-short) var(--md-easing-standard);
+  line-height: 1;
+  overflow: hidden;
+}
+/* MD3 State Layer */
+.fab-add::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  transition: opacity var(--md-dur-short) var(--md-easing-standard);
+}
+.fab-add:hover::before { opacity: var(--md-state-hover); }
+.fab-add:active::before { opacity: var(--md-state-pressed); }
+.fab-add:hover { box-shadow: var(--md-elevation-4); }  /* hover 提升到 Level 4 */
+.fab-add:active { transform: translateY(1px); box-shadow: var(--md-elevation-1); }
+
+/* ============ 11. Legend 图例（MD3 Card） ============ */
+/* MD3 Card 风格：surface-container-low 背景、shape-md 圆角、elevation-1 阴影 */
+.legend {
+  position: absolute; left: var(--sp-4); bottom: var(--sp-4); z-index: 999;
+  background: var(--md-surface-container-low);    /* MD3 Card 背景 */
+  border: 1px solid var(--md-outline-variant);    /* MD3 Card 描边 */
+  border-radius: var(--md-shape-md);              /* MD3 Card 圆角 */
+  padding: var(--sp-3) 14px;
+  box-shadow: var(--md-elevation-1);              /* MD3 Level 1 阴影 */
+  font-size: var(--fs-sm); line-height: 2;
+  display: none;
+}
+.legend__row { display: flex; align-items: center; gap: 8px; color: var(--md-on-surface-variant); }
+.legend__dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+/* ============ 12. NearbyList 周边列表（MD3 Bottom Sheet） ============ */
+/* 小程序映射：scroll-view + list 组件 */
+/* MD3 Bottom Sheet 风格：surface-container-low 背景、shape-xl 圆角（顶部大圆角） */
+.nearby-list {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 999;
+  background: var(--md-surface-container-low);    /* MD3 Bottom Sheet 背景 */
+  border-radius: var(--md-shape-xl) var(--md-shape-xl) 0 0;  /* MD3 顶部大圆角 */
+  box-shadow: var(--shadow-xl);                   /* 向上投影（Bottom Sheet 专用） */
+  max-height: 40vh; overflow-y: auto;
+  transition: max-height var(--md-dur-medium) var(--md-easing-standard);
+  padding-bottom: var(--safe-bottom);
+  overscroll-behavior: contain;                   /* 滚动到边缘不穿透 */
+}
+.nearby-list.is-collapsed { max-height: 48px; overflow: hidden; }
+
+/* 列表头部（sticky，MD3 Bottom Sheet header） */
+.nearby-list__header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: var(--sp-3) var(--sp-4); font-size: var(--fs-sm);
+  color: var(--md-on-surface-variant); position: sticky; top: 0;
+  background: var(--md-surface-container-low);    /* MD3 header 背景（不透明） */
+  border-radius: var(--md-shape-xl) var(--md-shape-xl) 0 0;
+  cursor: pointer; user-select: none;
+  border-bottom: 1px solid var(--md-outline-variant);  /* MD3 分割线 */
+  z-index: 2;                                    /* 确保 header 在列表项之上 */
+  overflow: hidden;
+}
+/* MD3 State Layer */
+.nearby-list__header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  transition: opacity var(--md-dur-short) var(--md-easing-standard);
+}
+.nearby-list__header:active::before { opacity: var(--md-state-pressed); }
+.nearby-list__title { color: var(--md-on-surface); font-size: var(--fs-base); font-weight: 600; }
+.nearby-list__toggle { font-size: var(--fs-sm); color: var(--md-primary); font-weight: 500; }
+.nearby-list.is-collapsed .nearby-list__items { display: none; }
+
+/* 列表项（MD3 List Item） */
+.nearby-item {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4); cursor: pointer;
+  border-bottom: 1px solid var(--md-outline-variant);  /* MD3 分割线 */
+  transition: background var(--md-dur-short) var(--md-easing-standard);
+  min-height: 52px;
+  position: relative;
+  overflow: hidden;
+}
+.nearby-item:last-child { border-bottom: none; }
+/* MD3 State Layer */
+.nearby-item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  transition: opacity var(--md-dur-short) var(--md-easing-standard);
+}
+.nearby-item:hover::before { opacity: var(--md-state-hover); }
+.nearby-item:active::before { opacity: var(--md-state-pressed); }
+/* hover/active 态：MD3 surface-container 逐级加深 */
+.nearby-item:hover { background: var(--md-surface-container); }
+.nearby-item:active { background: var(--md-surface-container-high); }
+/* 序号圆点（保持语义色，匹配 markerClass() 返回值） */
+.nearby-item__num {
+  flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%;
+  background: var(--md-primary); color: #fff;
+  font-size: var(--fs-sm); font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+}
+/* num 语义色匹配 markerClass() 返回值 */
+.nearby-item__num.green      { background: var(--c-ok); }
+.nearby-item__num.red        { background: var(--c-fail); }
+.nearby-item__num.uncertain  { background: #f59e0b; }    /* 待确认：琥珀色（实心，白色背景上可辨） */
+.nearby-item__num.gray       { background: var(--c-stale); }
+.nearby-item__body { flex: 1; min-width: 0; }
+.nearby-item__name {
+  font-size: var(--fs-base); font-weight: 500; color: var(--md-on-surface);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.nearby-item__sub { font-size: var(--fs-sm); color: var(--md-on-surface-variant); margin-top: 2px; }
+.nearby-item__desc {
+  font-size: var(--fs-sm); color: var(--md-on-surface-variant); margin-top: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.nearby-item__dist {
+  flex-shrink: 0; font-size: var(--fs-sm); color: var(--md-primary);
+  font-weight: 600; text-align: right;
+}
+.nearby-item__walk { color: var(--md-on-surface-variant); font-weight: 400; font-size: var(--fs-xs); }
+
+/* 空状态 */
+.nearby-empty {
+  padding: var(--sp-6) var(--sp-4);
+  text-align: center; color: var(--md-on-surface-variant); font-size: var(--fs-sm);
+}
+
+/* ============ 13. Panel 详情面板（MD3 Bottom Sheet） ============ */
+.panel {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 1100;
+  background: var(--md-surface-container-low);
+  border-radius: var(--md-shape-xl) var(--md-shape-xl) 0 0;
+  box-shadow: var(--shadow-xl);
+  max-height: 40vh; display: flex; flex-direction: column;
+  transform: translateY(calc(100% + 20px));
+  transition: transform var(--md-dur-medium) var(--md-easing-emphasized), max-height var(--md-dur-medium) var(--md-easing-emphasized);
+  padding-bottom: var(--safe-bottom);
+  pointer-events: none;
+  overscroll-behavior: contain;
+}
+.panel.is-show {
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.panel.is-half {
+  max-height: 40vh;
+}
+.panel.is-expanded {
+  max-height: 85vh;
+}
+.panel__handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 10px 0 6px;
+  flex-shrink: 0;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.panel__handle::after {
+  content: '';
+  width: 32px;
+  height: 4px;
+  background: var(--md-outline-variant);
+  border-radius: 2px;
+}
+.panel__handle::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--md-dur-short) var(--md-easing-standard);
+}
+.panel__handle:hover::before { opacity: var(--md-state-hover); }
+.panel__handle:active::before { opacity: var(--md-state-pressed); }
+/* 面板内容区（flex:1 可滚动） */
+.panel__body {
+  flex: 1; min-height: 0;
+  overflow-y: auto; padding: 4px var(--sp-5) var(--sp-6);
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+.panel.is-half .panel__body {
+  overflow-y: auto;
+}
+.panel.is-dragging .panel__body {
+  overflow: hidden;
+}
+/* 面板标题行：flex 布局，标题+导航按钮横排 */
+.panel__title-row {
+  display: flex; align-items: flex-start; gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+}
+/* 标题：flex:1 占满宽度，超长省略号截断 */
+.panel__title,
+.panel__body h2 {
+  flex: 1; min-width: 0;
+  font-size: var(--fs-xl); font-weight: 600;
+  margin: 0; padding-right: 0;
+  color: var(--md-on-surface); letter-spacing: -.1px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* 地址行：标题下方灰色小字，显示 address · desc 拼接 */
+.panel__addr {
+  font-size: var(--fs-sm); color: var(--text-sub);
+  margin-bottom: var(--sp-1); line-height: 1.4;
+  word-break: break-word;  /* 超长正常换行，不截断 */
+}
+
+/* ============ 14. Tag 标签（MD3 Chip） ============ */
+/* 类名匹配 statusMeta().cls 和 SOURCE_MAP[].cls */
+/* MD3 Chip 风格：shape-sm 圆角、4px 12px padding */
+.tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 12px; border-radius: var(--md-shape-sm);  /* MD3 Chip 圆角 */
+  font-size: var(--fs-xs); font-weight: 500;
+  white-space: nowrap; letter-spacing: .2px;
+}
+/* 状态标签 — MD3 语义色容器 */
+.tag.status-open    { background: #e6f4ea; color: #137333; }              /* 开放 — 浅绿底深绿字 */
+.tag.status-locked  { background: #fce8e6; color: #c5221f; }              /* 锁门 — 浅红底深红字 */
+.tag.status-repair  { background: #fef7e0; color: #b06000; }              /* 维修 — 浅黄底深黄字 */
+.tag.status-removed { background: var(--md-surface-container); color: var(--md-on-surface-variant); }  /* 不存在 — MD3 中性 */
+.tag.status-unknown { background: var(--md-surface-container); color: var(--md-on-surface-variant); }  /* 未知 — MD3 中性 */
+/* 来源标签 — MD3 容器色 */
+.tag.source-amap    { background: var(--md-primary-container); color: var(--md-on-primary-container); }  /* 高德 — MD3 主色容器 */
+.tag.source-user    { background: #e6f4ea; color: #137333; }              /* 众包 — 浅绿底 */
+.tag.source-live    { background: var(--md-tertiary-container); color: var(--md-on-tertiary-container); }  /* 实时 — MD3 第三色容器 */
+/* 标签 label（设施标签） */
+.tag.label          { background: var(--md-surface-container); color: var(--md-on-surface-variant); }
+/* 旧信息警告 */
+.tag.old-warn       { background: #fef7e0; color: #b06000; }
+/* 状态子标签（更小字号） */
+.tag.status-sub     { background: var(--md-surface-container); color: var(--text-hint); font-size: 10px; font-weight: 400; }
+
+/* 标签容器 */
+.meta { display: flex; flex-wrap: wrap; gap: 6px; margin: var(--sp-2) 0; }
+
+/* ============ 15. InfoRow 信息行（MD3 List Item） ============ */
+/* border-bottom 使用 MD3 outline-variant */
+.info-row {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: var(--sp-3);
+  padding: 10px 0; font-size: var(--fs-base);
+  border-bottom: 1px solid var(--md-outline-variant);
+}
+.info-row:last-child { border-bottom: none; }
+.info-row .k { color: var(--md-on-surface-variant); font-weight: 400; flex-shrink: 0; }
+.info-row .v {
+  font-weight: 500; color: var(--md-on-surface);
+  display: flex; align-items: center; justify-content: flex-end;
+  gap: 4px; flex-wrap: wrap; max-width: 75%; line-height: 1.4;
+}
+.info-row .v > span { min-width: 0; }
+.info-row .v br { width: 100%; height: 0; border: 0; margin: 0; padding: 0; }
+
+/* ============ 15b. Nav Button 导航按钮（MD3 IconButton） ============ */
+/* 36x36px 图标按钮，透明背景，hover/active state layer 反馈 */
+.nav-btn {
+  flex-shrink: 0;
+  width: 36px; height: 36px;
+  padding: 0; border: none;
+  border-radius: var(--md-shape-sm);
+  background: transparent;
+  color: var(--md-on-surface-variant);
+  cursor: pointer; user-select: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  position: relative; overflow: hidden;
+  transition: background var(--md-dur-short) var(--md-easing-standard);
+}
+.nav-btn svg { display: block; }
+/* MD3 State Layer：hover/active 时叠加半透明前景色 */
+.nav-btn::before {
+  content: ''; position: absolute; inset: 0;
+  background: currentColor; opacity: 0;
+  border-radius: inherit; pointer-events: none;
+  transition: opacity var(--md-dur-short) var(--md-easing-standard);
+}
+.nav-btn:hover::before { opacity: var(--md-state-hover); }
+.nav-btn:active::before { opacity: var(--md-state-pressed); }
+
+/* ============ 15c. Nav ActionSheet 导航选择面板（MD3 Bottom Sheet） ============ */
+/* 遮罩：半透明覆盖层 */
+.nav-sheet-overlay {
+  position: fixed; inset: 0; z-index: 2000;
+  background: rgba(0,0,0,0);              /* 透明 → 渐变到半透明 */
+  display: flex; align-items: flex-end; justify-content: center;
+  transition: background var(--md-dur-medium) var(--md-easing-standard);
+}
+.nav-sheet-overlay.is-show { background: rgba(0,0,0,0.45); }
+
+/* 底部 Sheet：MD3 Bottom Sheet 风格，顶部大圆角 */
+.nav-sheet {
+  width: 100%; max-width: 440px;
+  background: var(--md-surface-container-low);
+  border-radius: var(--md-shape-xl) var(--md-shape-xl) 0 0;
+  box-shadow: var(--md-elevation-3);
+  padding: var(--sp-2) var(--sp-4) var(--sp-4);
+  padding-bottom: calc(var(--sp-4) + var(--safe-bottom, 0px));
+  transform: translateY(100%);             /* 初始在屏幕下方 */
+  transition: transform var(--md-dur-medium) var(--md-easing-emphasized);
+}
+.nav-sheet-overlay.is-show .nav-sheet { transform: translateY(0); }
+
+/* 顶部拖拽指示条（MD3 规范） */
+.nav-sheet__handle {
+  width: 32px; height: 4px;
+  background: var(--md-outline-variant);
+  border-radius: 2px;
+  margin: 0 auto var(--sp-2);
+}
+
+/* 标题 */
+.nav-sheet__title {
+  font-size: var(--fs-base); font-weight: 500;
+  color: var(--md-on-surface-variant);
+  text-align: center;
+  padding: var(--sp-1) 0 var(--sp-3);
+}
+
+/* 列表项：48px 高，居中图标+文字 */
+.nav-sheet__item {
+  width: 100%; min-height: 48px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: transparent; border: none;
+  font-size: var(--fs-base); color: var(--md-on-surface);
+  cursor: pointer; user-select: none;
+  border-radius: var(--md-shape-md);
+  transition: background var(--md-dur-short) var(--md-easing-standard);
+}
+.nav-sheet__item:hover { background: var(--md-surface-container-highest); }
+.nav-sheet__item:active { background: var(--md-surface-container-high); }
+.nav-sheet__icon { font-size: 18px; }
+.nav-sheet__label { font-weight: 400; }
+
+/* 取消按钮：单独样式，上方有间距 */
+.nav-sheet__item--cancel {
+  margin-top: var(--sp-2);
+  border-top: 1px solid var(--md-outline-variant);
+  border-radius: 0;
+  color: var(--md-on-surface-variant);
+}
+
+/* ============ 16. Stars 评分 ============ */
+.stars { color: #fbbc05; font-size: var(--fs-base); letter-spacing: 1px; flex-shrink: 0; white-space: nowrap; line-height: 1; }
+.stars .empty { color: var(--md-outline-variant); }
+
+/* ============ 17. ReportSection 上报区 ============ */
+.report-section { margin-top: var(--sp-4); }
+.report-section h3 {
+  font-size: var(--fs-sm); margin-bottom: var(--sp-2);
+  color: var(--md-on-surface-variant); font-weight: 500;
+  text-transform: uppercase; letter-spacing: .5px;
+}
+/* 上报按钮网格（4列） */
+.report-btns { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-2); }
+/* 上报按钮（MD3 Segmented Button 风格） */
+.report-btn {
+  padding: var(--sp-2) var(--sp-1); border-radius: var(--md-shape-sm);  /* MD3 圆角 */
+  border: 1px solid var(--md-outline);            /* MD3 Segmented 描边 */
+  background: transparent;                          /* MD3 透明背景 */
+  font-size: var(--fs-sm); font-weight: 500; cursor: pointer;
+  text-align: center;
+  transition: all var(--md-dur-short) var(--md-easing-standard);
+  min-height: 48px; display: flex; flex-direction: column;
+  justify-content: center; align-items: center; gap: 3px;
+  color: var(--md-on-surface);
+  position: relative;
+  overflow: hidden;
+}
+/* MD3 State Layer */
+.report-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  transition: opacity var(--md-dur-short) var(--md-easing-standard);
+}
+.report-btn:hover::before { opacity: var(--md-state-hover); }
+.report-btn:active::before { opacity: var(--md-state-pressed); }
+/* hover 态：MD3 surface-container 背景 */
+.report-btn:hover { background: var(--md-surface-container); }
+.report-btn:active { transform: scale(.97); }
+.report-btn .emoji { font-size: 18px; }
+/* is-active 态：MD3 Segmented Button 选中（secondary-container） */
+.report-btn.is-active {
+  border-color: var(--md-secondary);                    /* MD3 选中描边 */
+  background: var(--md-secondary-container);            /* MD3 选中背景 */
+  color: var(--md-on-secondary-container);              /* MD3 选中文字 */
+  box-shadow: var(--md-elevation-1);
+}
+
+/* 上报表单输入框（MD3 Outlined Text Field 风格） */
+.report-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--md-shape-sm);           /* MD3 Outlined 圆角 */
+  border: 1px solid var(--md-outline);          /* MD3 Outlined 描边 */
+  font-size: var(--fs-base);
+  margin-top: var(--sp-1);
+  background: var(--md-surface-container-lowest);  /* MD3 输入框背景 */
+  color: var(--md-on-surface);
+  transition: border-color var(--md-dur-short) var(--md-easing-standard),
+              padding var(--md-dur-short) var(--md-easing-standard);
+  box-sizing: border-box;
+}
+/* focus 态：MD3 Outlined focus — border 2px primary，padding 减 1px 补偿避免跳动 */
+.report-input:focus {
+  outline: none;
+  border: 2px solid var(--md-primary);  /* MD3 focus 加粗到 2px */
+  padding: 9px 11px;                     /* 减 1px 补偿 border 增粗 */
+  box-shadow: none;                      /* MD3 Outlined 无 box-shadow */
+}
+
+/* 补充设施按钮（3列网格，与4列状态按钮区分）
+   3态：默认（未标注）/ is-pending（单人补充待复核）/ is-confirmed（已确认） */
+.supplement-btns { grid-template-columns: repeat(3, 1fr); }
+/* 待复核态 — 黄色警告 */
+.supplement-btn.is-pending {
+  border-color: var(--c-warning);
+  background: #fef7e0;
+  color: #b08000;
+}
+/* 已确认态 — 绿色成功 */
+.supplement-btn.is-confirmed {
+  border-color: var(--c-success);
+  background: #e6f4ea;
+  color: var(--c-success);
+}
+/* 已标注状态点击撤销（不是 default，允许点击） */
+.supplement-btn.is-pending:hover,
+.supplement-btn.is-confirmed:hover {
+  border-color: var(--md-error);  /* MD3 错误色 */
+  background: #fce8e6;
+  color: var(--md-error);
+}
+
+/* ============ 17b. DescSupplement 位置描述补充区域（多描述卡片） ============ */
+/* 描述卡片：白底圆角，border + padding */
+.desc-card {
+  margin-top: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--md-surface);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-sm);
+}
+/* 原始描述卡片：浅灰底区分 */
+.desc-card--original {
+  background: var(--md-surface-variant);
+  border-style: dashed;
+}
+/* 卡片头部：文本 + 状态标签横排 */
+.desc-card__header {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-2);
+}
+/* 描述文本：on-surface 色，小字，正常换行 */
+.desc-card__text {
+  flex: 1; min-width: 0;
+  color: var(--md-on-surface);
+  font-size: var(--fs-sm);
+  line-height: 1.4;
+  word-break: break-word;
+}
+/* 状态标签区 */
+.desc-card__status { flex-shrink: 0; }
+.desc-card__hint { margin-top: var(--sp-1); }
+/* 卡片操作按钮行 */
+.desc-card__actions {
+  display: flex; justify-content: flex-end; gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+
+/* pending/confirmed/原始 标签：复用 supplement-btn 的黄/绿配色 */
+.tag.is-pending {
+  display: inline-block;
+  padding: 2px 8px;
+  border: 1px solid var(--c-warning);
+  background: #fef7e0;
+  color: #b08000;
+  border-radius: var(--md-shape-sm);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+}
+.tag.is-confirmed {
+  display: inline-block;
+  padding: 2px 8px;
+  border: 1px solid var(--c-success);
+  background: #e6f4ea;
+  color: var(--c-success);
+  border-radius: var(--md-shape-sm);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+}
+.desc-tag-original {
+  display: inline-block;
+  padding: 2px 8px;
+  border: 1px solid var(--md-outline-variant);
+  background: transparent;
+  color: var(--text-sub);
+  border-radius: var(--md-shape-sm);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+}
+
+/* 操作按钮：MD3 Text Button 风格 */
+.desc-action-btn {
+  padding: 4px 10px;
+  font-size: var(--fs-xs);
+  border: none;
+  background: transparent;
+  border-radius: var(--md-shape-sm);
+  cursor: pointer;
+  transition: background var(--md-dur-short) var(--md-easing-standard);
+}
+/* "👍 描述准确"按钮：primary 色 */
+.desc-confirm-btn { color: var(--md-primary); }
+.desc-confirm-btn:hover { background: var(--md-primary); color: var(--md-on-primary); }
+/* "撤销"按钮：hover 红色背景 */
+.desc-undo-btn { color: var(--text-sub); }
+.desc-undo-btn:hover {
+  background: #fce8e6;
+  color: var(--md-error);
+}
+
+/* "我有补充"按钮：MD3 Tonal Button 风格 */
+.desc-add-toggle-btn {
+  display: block;
+  width: 100%;
+  margin-top: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  font-size: var(--fs-sm);
+  border: 1px dashed var(--md-outline);
+  background: transparent;
+  color: var(--md-primary);
+  border-radius: var(--md-shape-sm);
+  cursor: pointer;
+  transition: all var(--md-dur-short) var(--md-easing-standard);
+}
+.desc-add-toggle-btn:hover {
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+  border-color: var(--md-primary);
+  border-style: solid;
+}
+
+/* 输入框行：横排输入框+补充按钮 */
+.desc-supplement-input-row {
+  display: flex; gap: var(--sp-2); margin-top: var(--sp-2);
+}
+/* 隐藏状态（"我有补充"未展开时） */
+.desc-input-hidden { display: none; }
+/* 输入框：复用 #newDesc 风格，flex:1 占满宽度 */
+.desc-supplement-input-row .desc-input {
+  flex: 1; min-width: 0;
+  padding: var(--sp-2) var(--sp-3);
+  font-size: var(--fs-sm);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-sm);
+  background: var(--md-surface);
+  color: var(--md-on-surface);
+  outline: none;
+  transition: border-color var(--md-dur-short) var(--md-easing-standard);
+}
+.desc-supplement-input-row .desc-input:focus {
+  border-color: var(--md-primary);
+  border-width: 2px;
+  padding: calc(var(--sp-2) - 1px) calc(var(--sp-3) - 1px);
+}
+/* 补充按钮：复用 .report-btn 样式，不挤压 */
+.desc-supplement-input-row .report-btn {
+  flex-shrink: 0;
+}
+
+/* ============ 18. CommentsSection 评论区 ============ */
+.comments-section { margin-top: var(--sp-4); }
+.comments-section h3 {
+  font-size: var(--fs-sm); margin-bottom: var(--sp-2); font-weight: 500;
+  text-transform: uppercase; letter-spacing: .5px; color: var(--md-on-surface-variant);
+}
+/* 评论区输入区 */
+.comment-input { display: flex; gap: var(--sp-2); margin-bottom: var(--sp-3); align-items: center; }
+/* 评分下拉（MD3 Outlined Text Field 风格） */
+.comment-input select {
+  padding: 8px;
+  border-radius: var(--md-shape-sm);           /* MD3 Outlined 圆角 */
+  border: 1px solid var(--md-outline);          /* MD3 Outlined 描边 */
+  font-size: var(--fs-sm); flex-shrink: 0;
+  background: var(--md-surface-container-lowest);
+  color: var(--md-on-surface);
+  transition: border-color var(--md-dur-short) var(--md-easing-standard);
+}
+.comment-input select:focus { border-color: var(--md-primary); outline: none; }
+/* 评论输入框（MD3 Outlined Text Field 风格） */
+.comment-input input {
+  flex: 1; min-width: 0; padding: 8px var(--sp-3);
+  border-radius: var(--md-shape-full);
+  border: 1px solid var(--md-outline);          /* MD3 Outlined 描边 */
+  font-size: var(--fs-sm);
+  background: var(--md-surface-container-lowest);
+  color: var(--md-on-surface);
+  transition: border-color var(--md-dur-short) var(--md-easing-standard);
+}
+.comment-input input:focus { border-color: var(--md-primary); outline: none; }
+/* 发布按钮（MD3 Filled Tonal Button 风格） */
+.comment-input button {
+  padding: 8px 16px;
+  border-radius: var(--md-shape-full);
+  border: none;
+  background: var(--md-secondary-container);    /* MD3 Tonal 背景 */
+  color: var(--md-on-secondary-container);       /* MD3 Tonal 文字 */
+  font-size: var(--fs-sm); font-weight: 500; cursor: pointer;
+  flex-shrink: 0; white-space: nowrap;
+  transition: background var(--md-dur-short) var(--md-easing-standard);
+  position: relative;
+  overflow: hidden;
+}
+/* MD3 State Layer */
+.comment-input button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  transition: opacity var(--md-dur-short) var(--md-easing-standard);
+}
+.comment-input button:hover::before { opacity: var(--md-state-hover); }
+.comment-input button:active::before { opacity: var(--md-state-pressed); }
+.comment-input button:active { transform: translateY(1px); }
+
+/* 评论项 */
+.comment-item { padding: var(--sp-3) 0; border-bottom: 1px solid var(--md-outline-variant); }
+.comment-item:last-child { border-bottom: none; }
+.comment-item .head {
+  display: flex; justify-content: space-between;
+  font-size: var(--fs-sm); color: var(--md-on-surface-variant); margin-bottom: 4px;
+}
+.comment-item .stars { font-size: var(--fs-sm); }
+.comment-item .text { font-size: var(--fs-base); line-height: 1.6; color: var(--md-on-surface); }
+
+/* ============ 19. Toast 提示（MD3 Snackbar） ============ */
+/* 小程序映射：wx.showToast */
+/* MD3 Snackbar 风格：inverse-surface 背景、shape-xs 圆角、elevation-3 阴影 */
+.toast {
+  position: fixed; top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(.9);
+  background: var(--md-inverse-surface);    /* MD3 Snackbar 深色背景 */
+  color: var(--md-inverse-on-surface);       /* MD3 Snackbar 浅色文字 */
+  padding: 12px var(--sp-5);
+  border-radius: var(--md-shape-xs);         /* MD3 Snackbar 圆角 */
+  font-size: var(--fs-base); font-weight: 500; z-index: 2000;
+  opacity: 0; pointer-events: none;
+  transition: all var(--md-dur-medium) var(--md-easing-standard);
+  text-align: center; max-width: 80vw;
+  box-shadow: var(--md-elevation-3);         /* MD3 Level 3 阴影 */
+}
+.toast.is-show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+/* ============ 20. Loading 加载态 ============ */
+/* 保持现有动画不变 */
+.loading-dot {
+  display: inline-block; width: 8px; height: 8px;
+  border-radius: 50%; background: var(--md-primary);  /* MD3 主色 */
+  animation: loadingPulse 1s ease-in-out infinite;
+}
+@keyframes loadingPulse {
+  0%, 100% { opacity: .3; transform: scale(.8); }
+  50%      { opacity: 1;  transform: scale(1.2); }
+}
+
+/* ============ 21. MD3 Button System（MD3 按钮系统） ============ */
+/* 基础按钮类 — 所有 MD3 按钮变体的公共属性 */
+.md3-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 24px; min-height: 40px;
+  border: none; border-radius: var(--md-shape-full);  /* MD3 全圆角 */
+  font-size: var(--md-label-lg-size); font-weight: 500;
+  cursor: pointer; user-select: none;
+  transition: all var(--md-dur-short) var(--md-easing-standard);
+  position: relative;
+  overflow: hidden;
+}
+/* MD3 State Layer — 所有按钮变体共用 */
+.md3-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;     /* 使用当前文字色作为 state layer */
+  opacity: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  transition: opacity var(--md-dur-short) var(--md-easing-standard);
+}
+.md3-btn:hover::before { opacity: var(--md-state-hover); }
+.md3-btn:active::before { opacity: var(--md-state-pressed); }
+.md3-btn:disabled { opacity: 0.38; cursor: not-allowed; }  /* MD3 disabled 38% 透明度 */
+.md3-btn:disabled::before { display: none; }
+
+/* 提交按钮容器（与表单字段保持间距） */
+.md3-submit-wrap { margin-top: var(--sp-5); padding-bottom: var(--sp-2); }
+/* MD3 Filled Button（实心按钮） — 主色背景，min-height 对齐 48px touch target */
+.md3-btn--filled {
+  background: var(--md-primary);
+  color: var(--md-on-primary);
+  min-height: 44px;
+}
+.md3-btn--filled:hover { background: var(--md-primary-hover); }
+.md3-btn--filled:disabled {
+  background: rgba(26,28,30,0.12);
+  color: rgba(26,28,30,0.38);
+}
+/* MD3 按钮内圆形 spinner */
+.md3-btn .spinner {
+  width: 18px; height: 18px;
+  border: 2px solid rgba(255,255,255,.4);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: md3-spin .8s linear infinite;
+  flex-shrink: 0;
+}
+.md3-btn:disabled .spinner {
+  border-top-color: rgba(26,28,30,0.38);
+  border-color: rgba(26,28,30,0.12);
+}
+@keyframes md3-spin { to { transform: rotate(360deg); } }
+
+/* MD3 Filled Tonal Button（色调按钮） — secondary-container 背景 */
+.md3-btn--tonal {
+  background: var(--md-secondary-container);
+  color: var(--md-on-secondary-container);
+}
+
+/* MD3 Outlined Button（描边按钮） — 透明背景 + outline 描边 */
+.md3-btn--outlined {
+  border: 1px solid var(--md-outline);
+  background: transparent;
+  color: var(--md-primary);
+}
+
+/* MD3 Text Button（文字按钮） — 纯透明背景 */
+.md3-btn--text {
+  background: transparent;
+  color: var(--md-primary);
+}
+
+/* ============ 22. 响应式：移动端（<768px） ============ */
+@media (max-width: 767px) {
+  /* TopBar 紧凑布局 */
+  .topbar { gap: var(--sp-2); padding: var(--sp-2) var(--sp-3); padding-top: calc(var(--sp-2) + var(--safe-top)); }
+  .topbar__logo { font-size: var(--fs-md); }
+  .topbar__logo-sub { display: none; }
+  /* 搜索栏紧凑 */
+  .search-wrap { height: 34px; padding: 0 var(--sp-2); }
+  .search-wrap__input { font-size: var(--fs-sm); }
+  .search-wrap__btn { padding: 0 10px; height: 26px; font-size: var(--fs-xs); }
+  /* 搜索建议最大高度 */
+  .search-suggest { max-height: 50vh; }
+  .suggest-item { padding: var(--sp-2) var(--sp-3); min-height: 48px; }
+  /* FAB 紧凑：移到右上角（zoom control 下方），避免叠在 nearby-list 列表项上 */
+  .fab-reloc { bottom: auto; top: 78px; right: var(--sp-3); width: 40px; height: 40px; }
+  .fab-reloc .reloc-icon { width: 20px; height: 20px; }
+  .fab-add  { bottom: auto; top: 126px; right: var(--sp-3); width: 44px; height: 44px; }
+  /* 图例移动端隐藏 */
+  .legend { display: none !important; }
+  /* 面板最大高度 */
+  .panel.is-half { max-height: 40vh; }
+  .panel.is-expanded { max-height: 85vh; }
+  /* 上报按钮最小高度 */
+  .report-btn { min-height: 44px; }
+}
+
+/* ============ 23. 响应式：桌面端（>=768px） ============ */
+@media (min-width: 768px) {
+  /* 搜索栏限宽 */
+  .search-wrap { max-width: 440px; }
+  /* 面板右侧浮出（MD3 Side Sheet 风格） */
+  .panel {
+    left: auto; right: var(--sp-5); bottom: var(--sp-5);
+    width: 420px; max-height: 80vh;
+    border-radius: var(--md-shape-xl);
+    border: 1px solid var(--md-outline-variant);
+    transform: translateX(120%);
+    transition: transform var(--md-dur-medium) var(--md-easing-emphasized);
+  }
+  .panel.is-half,
+  .panel.is-expanded {
+    max-height: 80vh;
+  }
+  .panel.is-show {
+    transform: translateX(0);
+  }
+  /* 图例桌面端显示，左上角 zoom control 下方（避开底部按钮和周边列表） */
+  .legend { display: block; left: var(--sp-5); right: auto; bottom: auto; top: 72px; transform: none; }
+  /* 周边列表左下浮出 */
+  .nearby-list {
+    left: var(--sp-5); right: auto; top: auto; bottom: var(--sp-5);
+    width: 360px; max-height: 50vh;
+    border-radius: var(--md-shape-lg);  /* MD3 桌面端圆角 */
+    border: 1px solid var(--md-outline-variant);
+    box-shadow: var(--md-elevation-2);  /* MD3 Level 2 阴影 */
+    padding-bottom: 0;
+  }
+  .nearby-list__header { border-radius: var(--md-shape-lg) var(--md-shape-lg) 0 0; }
+  /* 桌面端 marker：30px 水滴形 */
+  .toilet-marker {
+    width: 30px; height: 30px;
+    border-radius: 50% 50% 50% 0; transform: rotate(-45deg);
+    border: 2px solid #fff;
+  }
+  .toilet-marker:hover { transform: rotate(-45deg) scale(1.15); }
+  /* FAB 桌面端位置：面板左侧垂直堆叠，避开左下角 nearby-list 和右侧面板 */
+  /* 面板宽 460px，FAB 放在面板左侧（right 偏移 = 面板宽 + 间距） */
+  .fab-reloc { bottom: var(--sp-5); right: calc(460px + var(--sp-4)); }
+  .fab-add  { bottom: calc(var(--sp-5) + 56px); right: calc(460px + var(--sp-4)); }
+}
+
+/* ============ 24. 响应式：大屏（>=1200px） ============ */
+@media (min-width: 1200px) {
+  /* 大屏搜索栏加宽 */
+  .search-wrap { max-width: 520px; }
+  /* 大屏面板加宽 */
+  .panel { width: 460px; }
+  /* 大屏周边列表加宽 */
+  .nearby-list { width: 400px; }
+}
+
+/* ============ 25. 无障碍 & 打印 ============ */
+/* prefers-reduced-motion：减少动画，适配运动敏感用户 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}
+/* 打印样式：隐藏交互组件，仅保留地图 */
+@media print {
+  .topbar, .fab-reloc, .fab-add, .legend,
+  .nearby-list, .panel, .toast { display: none !important; }
+  #map { flex: 1; }
+}
