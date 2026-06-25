@@ -1521,32 +1521,30 @@ html, body {
   .search-suggest { max-height: 50vh; }
   .suggest-item { padding: var(--sp-2) var(--sp-3); min-height: 48px; }
 
-  /* --- FAB：跟随 nearby-list 顶部，列表展开时自动隐藏 ---
-     收起态：FAB 贴在 nearby-list 顶部上方（紧贴卡片顶边）
-     展开态：FAB 淡出隐藏（浏览列表时无需地图操作按钮）
-     z-index 低于 nearby-list(999) 和 panel(1100)，确保被覆盖 */
+  /* --- FAB：跟随 nearby-list 顶部，面板打开时被覆盖 ---
+     收起态(56px header)：FAB 贴在列表顶部上方
+     展开peek态(45vh)：FAB 贴在列表顶部上方，地图区域仍有足够空间
+     详情面板打开时：panel z-index(1100) > FAB z-index(500)，自动被覆盖
+     "高到一定程度不显示"：当前 peek 态仅 45vh，不算高；后续添加 full-expanded(90vh) 态再隐藏 */
   .fab-reloc,
   .fab-add {
     top: auto; right: var(--sp-3);
     width: 44px; height: 44px;
     z-index: 500;
-    opacity: 0;
-    pointer-events: none;
+    opacity: 1;
+    pointer-events: auto;
+    bottom: calc(45vh + var(--sp-2));
     transition: opacity var(--md-dur-medium) var(--md-easing-standard),
                 bottom var(--md-dur-medium) var(--md-easing-standard);
   }
   .fab-reloc .reloc-icon { width: 20px; height: 20px; }
-  .fab-add { font-size: 22px; }
+  .fab-add { font-size: 22px; bottom: calc(45vh + var(--sp-2) + 44px + var(--sp-2)); }
 
-  /* nearby-list 收起态：FAB 显现在列表顶部正上方 */
+  /* nearby-list 收起态：FAB 贴在收起的 header 上方 */
   .nearby-list.is-collapsed ~ .fab-reloc {
-    opacity: 1;
-    pointer-events: auto;
     bottom: calc(56px + var(--safe-bottom) + var(--sp-2));
   }
   .nearby-list.is-collapsed ~ .fab-add {
-    opacity: 1;
-    pointer-events: auto;
     bottom: calc(56px + var(--safe-bottom) + var(--sp-2) + 44px + var(--sp-2));
   }
 
