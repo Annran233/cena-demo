@@ -22,15 +22,21 @@ function getAllToilets() {
     return d <= 3000;
   });
 
-  // 2. 仅从附近用户点位收集 originalId/name（用于去重，避免远距离点位屏蔽附近同名 MOCK/live）
+  // 2. 从附近用户点位和 liveToilets 收集已出现的 id/name（用于去重，避免重复 marker）
   const userOriginalIds = new Set();
   const userNames = new Set();
   for (const ut of visibleUser) {
     if (ut.originalId) userOriginalIds.add(ut.originalId);
     userNames.add(ut.name);
   }
+  const liveIds = new Set();
+  const liveNames = new Set();
+  for (const lt of liveToilets) {
+    liveIds.add(lt.id);
+    liveNames.add(lt.name);
+  }
 
-  // 3. liveToilets：去重 + 3km 安全距离过滤（API 已限 2km，加边界兜底）
+  // 3. liveToilets：去重 + 3km 安全距离过滤（本地筛选已限 3km，加边界兜底）
   const liveWithSupplements = liveToilets
     .filter(t => {
       if (userOriginalIds.has(t.id) || userNames.has(t.name)) return false;
@@ -39,10 +45,12 @@ function getAllToilets() {
     })
     .map(t => { const copy = { ...t }; applySupplementToToilet(copy); applyDescSupplementToToilet(copy); return copy; });
 
-  // 4. MOCK_TOILETS：3km 距离 + 去重，应用补充标签
+  // 4. MOCK_TOILETS：3km 距离 + 去重（排除 userToilets 和 liveToilets 中已有的），应用补充标签
   const nearbyMock = MOCK_TOILETS.filter(t => {
     const d = haversine(searchCenter[0], searchCenter[1], t.lat, t.lng);
-    return d <= 3000 && !userOriginalIds.has(t.id) && !userNames.has(t.name);
+    return d <= 3000
+      && !userOriginalIds.has(t.id) && !userNames.has(t.name)
+      && !liveIds.has(t.id) && !liveNames.has(t.name);
   }).map(t => {
     const copy = { ...t };
     applySupplementToToilet(copy);
