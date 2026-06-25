@@ -725,7 +725,7 @@ html, body {
 .fab-add:hover { box-shadow: var(--md-elevation-4); }  /* hover 提升到 Level 4 */
 .fab-add:active { transform: translateY(1px); box-shadow: var(--md-elevation-1); }
 
-/* ============ 11. Legend 图例（MD3 Card） ============ */
+/* ============ 11. Legend 图例（MD3 Card，移动端可折叠） ============ */
 /* MD3 Card 风格：surface-container-low 背景、shape-md 圆角、elevation-1 阴影 */
 .legend {
   position: absolute; left: var(--sp-4); bottom: var(--sp-4); z-index: 999;
@@ -736,9 +736,20 @@ html, body {
   box-shadow: var(--md-elevation-1);              /* MD3 Level 1 阴影 */
   font-size: var(--fs-sm); line-height: 2;
   display: none;
+  cursor: pointer;
+  transition: padding var(--md-dur-short) var(--md-easing-standard);
 }
 .legend__row { display: flex; align-items: center; gap: 8px; color: var(--md-on-surface-variant); }
 .legend__dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+/* 移动端折叠触发按钮：4色圆点水平排列 */
+.legend__trigger {
+  display: none;                                  /* 桌面端不显示触发按钮 */
+  align-items: center; gap: 3px;
+  padding: 2px;
+}
+.legend__body {
+  display: block;                                 /* 桌面端始终展开 */
+}
 
 /* ============ 12. NearbyList 周边列表（MD3 Bottom Sheet） ============ */
 /* 小程序映射：scroll-view + list 组件 */
@@ -1608,8 +1619,21 @@ html, body {
   }
   .toast.is-show { transform: translateX(-50%) scale(1); }
 
-  /* --- 图例移动端隐藏 --- */
-  .legend { display: none !important; }
+  /* --- 图例：移动端可折叠（默认显示4色触发按钮，点击展开） --- */
+  .legend {
+    display: flex !important;
+    align-items: center;
+    padding: 8px 10px;
+    bottom: calc(140px + var(--safe-bottom));  /* 避开 FAB 和 nearby-list */
+    left: var(--sp-3);
+  }
+  .legend__trigger { display: flex; }              /* 移动端显示触发按钮 */
+  .legend__body { display: none; }                 /* 默认收起 body */
+  .legend.is-expanded {
+    padding: var(--sp-3) 14px;
+  }
+  .legend.is-expanded .legend__trigger { display: none; }
+  .legend.is-expanded .legend__body { display: block; }
 }
 
 /* ============ 23. 响应式：桌面端（>=768px） ============ */

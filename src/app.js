@@ -460,10 +460,21 @@ setTimeout(() => map.invalidateSize(), 200);
 /* 首次访问提示图例含义（localStorage 标记，仅显示一次） */
 setTimeout(() => {
   if (!localStorage.getItem('hasSeenLegend')) {
-    showToast('🟢能用 🔴不能用 ⚫不确定，点击查看详情');
+    showToast('🟢能用 🔴不能用 ⚫不确定，点击左下图例查看详情');
     localStorage.setItem('hasSeenLegend', '1');
   }
 }, 2000);
+
+/* 图例点击展开/收起（移动端可折叠，桌面端常驻无需切换） */
+document.getElementById('legend').addEventListener('click', () => {
+  document.getElementById('legend').classList.toggle('is-expanded');
+});
+document.getElementById('legend').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    document.getElementById('legend').classList.toggle('is-expanded');
+  }
+});
 
 /* 定时检查用户点位降级（30/90 天无确认，pointTier 纯函数基于时间实时计算） */
 setInterval(() => {

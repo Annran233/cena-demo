@@ -98,12 +98,20 @@
     <!-- 上报新厕所 -->
     <div class="fab-add" id="addBtn" title="上报新厕所" role="button" aria-label="上报新厕所">+</div>
 
-    <!-- ======== Legend：图例（3色语义，移动端隐藏，桌面端显示） ======== -->
-    <div class="legend" aria-label="颜色图例">
-      <div class="legend__row"><span class="legend__dot" style="background:var(--c-ok)"></span>能用</div>
-      <div class="legend__row"><span class="legend__dot" style="background:var(--c-fail)"></span>不能用</div>
-      <div class="legend__row"><span class="legend__dot" style="background:var(--c-uncertain)"></span>不确定</div>
-      <div class="legend__row"><span class="legend__dot" style="background:var(--c-stale)"></span>信息待复核</div>
+    <!-- ======== Legend：图例（3色语义，移动端可折叠，桌面端常驻） ======== -->
+    <div class="legend" id="legend" aria-label="颜色图例" role="button" tabindex="0">
+      <div class="legend__trigger" aria-hidden="true">
+        <span class="legend__dot" style="background:var(--c-ok)"></span>
+        <span class="legend__dot" style="background:var(--c-fail)"></span>
+        <span class="legend__dot" style="background:var(--c-uncertain)"></span>
+        <span class="legend__dot" style="background:var(--c-stale)"></span>
+      </div>
+      <div class="legend__body">
+        <div class="legend__row"><span class="legend__dot" style="background:var(--c-ok)"></span>能用</div>
+        <div class="legend__row"><span class="legend__dot" style="background:var(--c-fail)"></span>不能用</div>
+        <div class="legend__row"><span class="legend__dot" style="background:var(--c-uncertain)"></span>不确定</div>
+        <div class="legend__row"><span class="legend__dot" style="background:var(--c-stale)"></span>信息待复核</div>
+      </div>
     </div>
 
     <!-- ======== Panel：详情面板（底部滑出，Google Bottom Sheet 风格） ======== -->
