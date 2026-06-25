@@ -329,6 +329,7 @@ document.getElementById('addBtn').addEventListener('click', openAddToiletPanel);
   let _isDesktop = false;
   let _currentSnap = 'closed';
   let _dragFromHandle = false;
+  let _directionLocked = false;
   const TAP_THRESHOLD = 5;
   const SNAP_THRESHOLD = 100;
   const VELOCITY_THRESHOLD = 0.5;

@@ -66,7 +66,8 @@ function renderNearbyList() {
 function toggleNearbyList() {
   const list = document.getElementById('nearbyList');
   list.classList.toggle('is-collapsed');
-  document.getElementById('nearbyToggle').textContent = list.classList.contains('is-collapsed') ? '展开 ▼' : '收起 ▲';
+  const toggle = document.getElementById('nearbyToggle');
+  toggle.textContent = list.classList.contains('is-collapsed') ? '展开 ▼' : '收起 ▲';
 }
 
 /* 收起周边列表（移动端点击 marker 时调用，列表收到底部不遮挡地图） */
