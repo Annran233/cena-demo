@@ -1620,12 +1620,15 @@ html, body {
   .toast.is-show { transform: translateX(-50%) scale(1); }
 
   /* --- 图例：移动端可折叠（默认显示4色触发按钮，点击展开） --- */
+  /* 放在 topbar 下方左侧，避开 nearby-list（底部）和 FAB（右侧） */
   .legend {
     display: flex !important;
     align-items: center;
-    padding: 8px 10px;
-    bottom: calc(140px + var(--safe-bottom));  /* 避开 FAB 和 nearby-list */
+    padding: 6px 10px;
     left: var(--sp-3);
+    bottom: auto;
+    top: calc(64px + var(--safe-top));  /* topbar 高度约 56px + safe-top + 8px 间距 */
+    z-index: 600;  /* 高于 FAB(500)，低于 nearby-list(999) */
   }
   .legend__trigger { display: flex; }              /* 移动端显示触发按钮 */
   .legend__body { display: none; }                 /* 默认收起 body */
