@@ -152,165 +152,17 @@ map.on('click', (e) => {
 /* 缩放结束时重渲染（切换聚合/直显模式） */
 map.on('zoomend', renderMarkers);
 
-/* ============ 定位逻辑：watchPosition 持续监听 + 保守节流策略 ============ */
-/* 网页端 GPS 固有限制：getCurrentPosition 一次性定位，位置不动不刷新
-   watchPosition 持续监听 + 双重节流（500m/120s）解决：
-   - 高频回调仅更新蓝点视觉跟随（0 API 成本）
-   - 累计移动 >500m 且距上次刷新 >120s 才触发周边搜索（1次 around API）
-   - 页面隐藏暂停 watch（省电），回前台恢复
-   - 初次定位立即触发一次刷新（保留体验）
-   - 手动点定位按钮强制刷新（绕过节流） */
-let _locating = false;
-let _watchId = null;
-let _lastRefreshTime = 0;       // 上次触发周边刷新的时间戳（ms）
-let _lastRefreshCoords = null;  // 上次触发周边刷新的坐标 [lat, lng]（GCJ-02）
-const WATCH_REFRESH_DIST = 500; // 触发刷新的最小移动距离（米）
-const WATCH_REFRESH_INTERVAL = 120 * 1000;  // 触发刷新的最小间隔（ms）
+/* ============ 定位：写死海港公园，不请求 Geolocation ============
+   Demo 范围限定滨海新区海港公园，不弹定位权限请求，定位点固定为海港公园
+   relocBtn 点击直接 flyTo 海港公园 */
 
-function requestLocation(silent) {
-  // 安全上下文检测：非 HTTPS 且非 localhost/127.0.0.1 时 Geolocation API 被浏览器禁用
-  const isSecure = window.isSecureContext
-    || location.hostname === 'localhost'
-    || location.hostname === '127.0.0.1'
-    || location.protocol === 'file:';
-  if (!isSecure) {
-    if (!silent) showToast('当前页面为HTTP连接，浏览器限制定位功能，请使用localhost访问或手动搜索位置');
-    return;
-  }
-  if (!navigator.geolocation) {
-    if (!silent) showToast('你的浏览器不支持定位功能，请手动搜索位置');
-    return;
-  }
-  if (_locating) return; // 防止重复点击
-  _locating = true;
-
-  // 按钮显示定位中状态
-  const btn = document.getElementById('relocBtn');
-  if (btn) btn.classList.add('is-locating');
-
-  // 已有 watch：清除重建（强制刷新场景）
-  if (_watchId !== null) {
-    navigator.geolocation.clearWatch(_watchId);
-    _watchId = null;
-  }
-
-  // 首次用 getCurrentPosition 快速获取一次（保留原有体验）
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      _locating = false;
-      if (btn) btn.classList.remove('is-locating');
-      // 围栏检查：围栏内启动 watch 真实跟随，围栏外强制定位到海港公园
-      const userLat = pos.coords.latitude;
-      const userLng = pos.coords.longitude;
-      if (isInGeofence(userLat, userLng)) {
-        // 围栏内：真实位置 + watchPosition 持续跟随
-        handleLocationUpdate(pos, silent, true);
-        startWatchPosition();
-      } else {
-        // 围栏外：强制定位到海港公园，不启动 watch（用户不动）
-        const [glat, glng] = wgs84ToGcj02(USER_LOC_WGS[1], USER_LOC_WGS[0]);
-        USER_LOC = [glat, glng];
-        window._hasGpsFix = true;
-        userLocMarker.setLatLng([glat, glng]);
-        _lastRefreshTime = Date.now();
-        _lastRefreshCoords = [glat, glng];
-        setSearchCenter(USER_LOC, '我的位置', 15);
-        if (!silent) {
-          showToast('已定位到 Demo 服务区（吉运一道·海港公园）');
-        }
-      }
-    },
-    (err) => {
-      _locating = false;
-      if (btn) btn.classList.remove('is-locating');
-      handleLocationError(err, silent);
-    },
-    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-  );
-}
-
-// 处理定位成功（仅围栏内调用）：更新 USER_LOC + marker，按节流策略决定是否刷新周边
-function handleLocationUpdate(pos, silent, forceRefresh) {
-  const userLat = pos.coords.latitude;
-  const userLng = pos.coords.longitude;
-  const [glat, glng] = wgs84ToGcj02(userLng, userLat);
-  USER_LOC = [glat, glng];
-  window._hasGpsFix = true;
-  userLocMarker.setLatLng([glat, glng]);
-
-  if (forceRefresh) {
-    // 首次定位或手动按钮触发：立即刷新
-    _lastRefreshTime = Date.now();
-    _lastRefreshCoords = [glat, glng];
-    setSearchCenter(USER_LOC, '我的位置', 15);
-    if (!silent) {
-      showToast('已定位到你的位置，周边厕所已更新');
-    }
-    return;
-  }
-
-  // watch 回调：双重节流（距离 >500m 且间隔 >120s）
-  const now = Date.now();
-  if (_lastRefreshCoords) {
-    const dist = haversine(_lastRefreshCoords[0], _lastRefreshCoords[1], glat, glng);
-    const elapsed = now - _lastRefreshTime;
-    if (dist < WATCH_REFRESH_DIST || elapsed < WATCH_REFRESH_INTERVAL) {
-      return; // 节流：仅视觉跟随，不刷新周边
-    }
-  }
-  _lastRefreshTime = now;
-  _lastRefreshCoords = [glat, glng];
-  setSearchCenter(USER_LOC, '我的位置', 15);
-  if (!silent) {
-    showToast('已更新位置，周边厕所已刷新');
-  }
-}
-
-function handleLocationError(err, silent) {
-  console.log('Geolocation 失败：', err.code, err.message);
-  if (silent) return;
-  switch (err.code) {
-    case 1: showToast('定位权限被拒绝，请在浏览器设置中允许位置访问后重试'); break;
-    case 2: showToast('暂时无法获取位置信息，请检查手机定位是否开启'); break;
-    case 3: showToast('定位超时，请检查网络或GPS信号后重试'); break;
-    default: showToast('定位失败，请手动搜索位置');
-  }
-  // 定位失败时回到默认位置（海港公园）
-  setSearchCenter(USER_LOC, '我的位置', 15);
-}
-
-// 启动 watchPosition 持续监听（保守策略：高频视觉跟随，节流刷新周边）
-function startWatchPosition() {
-  if (_watchId !== null) return;
-  _watchId = navigator.geolocation.watchPosition(
-    (pos) => handleLocationUpdate(pos, true, false),
-    (err) => handleLocationError(err, true),
-    { enableHighAccuracy: true, maximumAge: 30000, timeout: 15000 }
-  );
-}
-
-// 页面可见性变化：隐藏暂停 watch（省电），可见恢复
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) {
-    if (_watchId !== null) {
-      navigator.geolocation.clearWatch(_watchId);
-      _watchId = null;
-    }
-  } else if (window._hasGpsFix) {
-    startWatchPosition();
-  }
-});
+let _lastRefreshTime = Date.now();
+let _lastRefreshCoords = USER_LOC;
 
 document.getElementById('relocBtn').addEventListener('click', () => {
-  if (USER_LOC && window._hasGpsFix) {
-    // 已有定位：强制刷新一次（绕过节流）
-    _lastRefreshTime = 0;
-    _lastRefreshCoords = null;
-    setSearchCenter(USER_LOC, '我的位置', 15);
-    showToast('已回到你的位置');
-  } else {
-    requestLocation(false);
-  }
+  map.flyTo(USER_LOC, 15, { duration: 0.5 });
+  setSearchCenter(USER_LOC, '海港公园', 15);
+  showToast('已定位到海港公园');
 });
 
 // 上报新厕所按钮
@@ -599,14 +451,11 @@ loadUserToilets();
 loadTagSupplements();
 // 加载用户补充位置描述
 loadDescSupplements();
-// 启动：以默认位置（吉运一道·海港公园）为中心拉取周边厕所
-setSearchCenter(CENTER, '我的位置', 15);
+// 位置固定为海港公园
+window._hasGpsFix = true;
+// 以海港公园为中心拉取周边厕所
+setSearchCenter(CENTER, '海港公园', 15);
 setTimeout(() => map.invalidateSize(), 200);
-
-/* 静默尝试 Geolocation 定位（桌面浏览器可能允许自动定位）
-   移动端浏览器通常需要用户手势触发才弹权限框，因此这里静默失败，
-   用户点击"我的位置"按钮时会以交互模式重新请求，弹窗请求权限 */
-requestLocation(true);
 
 /* 首次访问提示图例含义（localStorage 标记，仅显示一次） */
 setTimeout(() => {
