@@ -283,29 +283,32 @@ html, body {
 .topbar__add:active { transform: scale(0.95); }
 .topbar__add svg { display: block; }
 
-/* ============ 5. SearchWrap 搜索栏（MD3 Search Bar） ============ */
-/* 纯白胶囊风格：全圆角、无 border、纯白背景 + 微阴影 */
+/* ============ 5. SearchWrap 搜索栏（MD3 Search Bar 标准） ============ */
+/* 纯白胶囊：搜索图标 + 输入框 + 清除 + 搜索按钮，统一 48px 高度 */
 .search-wrap {
   flex: 1;
   min-width: 0;
   position: relative;
   display: flex;
   align-items: center;
-  background: #ffffff;
+  background: var(--md-surface-container-high);  /* MD3 Search Bar 使用 surface-container-high */
   border: none;
   border-radius: var(--md-shape-full);
-  padding: 0 var(--sp-3);
-  height: 40px;
+  padding: 0 var(--sp-2);
+  height: 48px;
   gap: var(--sp-2);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  transition: background var(--md-dur-short) var(--md-easing-standard),
-              box-shadow var(--md-dur-short) var(--md-easing-standard);
+  box-shadow: var(--md-elevation-1);
+  transition: box-shadow var(--md-dur-short) var(--md-easing-standard);
 }
-/* 注意：:focus-within 在小程序中不支持，需用 JS class toggle 替代
-   小程序迁移方案：input bindfocus 时 addClass('is-focused')，bindblur 时 removeClass */
 .search-wrap:focus-within {
+  box-shadow: var(--md-elevation-2);
   background: #ffffff;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+/* 左侧搜索图标 */
+.search-wrap__icon {
+  flex-shrink: 0;
+  color: var(--md-on-surface-variant);
+  pointer-events: none;
 }
 /* 搜索输入框 */
 .search-wrap__input {
@@ -315,94 +318,60 @@ html, body {
   background: transparent;
   outline: none;
   font-size: var(--fs-base);
-  color: var(--md-on-surface);  /* 主文字色 */
+  color: var(--md-on-surface);
   height: 100%;
 }
-.search-wrap__input::placeholder { color: var(--text-hint); }  /* 占位符色 */
-
-/* 筛选按钮（MD3 Filter Chip 风格，搜索栏左侧漏斗按钮） */
-.search-wrap__filter {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  border: 1px solid var(--md-outline);        /* MD3 Filter Chip 描边 */
-  background: transparent;                      /* MD3 Chip 透明背景 */
-  color: var(--md-on-surface-variant);         /* MD3 辅助文字色 */
-  font-size: var(--fs-sm);
-  font-weight: 500;
-  padding: 4px 8px;
-  border-radius: var(--md-shape-sm);           /* MD3 Chip 圆角 */
-  cursor: pointer;
-  white-space: nowrap;
-  height: 26px;
-  position: relative;          /* state layer 定位基准 */
-  overflow: hidden;            /* state layer 裁剪 */
-  transition: all var(--md-dur-short) var(--md-easing-standard);
-}
-/* MD3 State Layer — ::before 伪元素实现悬停/按压反馈 */
-.search-wrap__filter::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: currentColor;     /* 使用当前文字色作为 state layer */
-  opacity: 0;                   /* 默认透明 */
-  border-radius: inherit;       /* 继承父元素圆角 */
-  pointer-events: none;         /* 不拦截点击 */
-  transition: opacity var(--md-dur-short) var(--md-easing-standard);
-}
-.search-wrap__filter:hover::before { opacity: var(--md-state-hover); }    /* 悬停 8% */
-.search-wrap__filter:active::before { opacity: var(--md-state-pressed); } /* 按压 12% */
-/* is-active 态：MD3 Filter Chip 选中样式 */
-.search-wrap__filter.is-active {
-  background: var(--md-secondary-container);       /* MD3 选中背景 */
-  border-color: var(--md-secondary);                /* MD3 选中描边 */
-  color: var(--md-on-secondary-container);          /* MD3 选中文字 */
-}
-.search-wrap__filter-label { font-size: var(--fs-sm); }
+.search-wrap__input::placeholder { color: var(--text-hint); }
 
 /* 搜索清除按钮（MD3 Icon Button 风格，输入后显示） */
 .search-wrap__clear {
   flex-shrink: 0;
   border: none;
-  background: var(--md-on-surface-variant);  /* MD3 图标按钮背景 */
+  background: var(--md-on-surface-variant);
   color: #fff;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1;
   cursor: pointer;
   display: none;
   align-items: center;
   justify-content: center;
   padding: 0;
-  position: relative;
-  overflow: hidden;
   transition: background var(--md-dur-short) var(--md-easing-standard);
 }
 .search-wrap__clear.is-show { display: flex; }
-.search-wrap__clear:hover { background: var(--md-on-surface); }  /* hover 加深一档 */
+.search-wrap__clear:hover { background: var(--md-on-surface); }
 
-/* 搜索按钮（MD3 Filled Tonal Button 风格） */
-.search-wrap__btn {
-  flex-shrink: 0;
+/* ============ 5b. FilterFab 浮动筛选按钮（地图左上角，替代原 Zoom 位置） ============ */
+/* MD3 Extended FAB 风格：白底胶囊，漏斗图标 + 标签 */
+.filter-fab {
+  position: absolute;
+  left: var(--sp-3);
+  top: calc(var(--safe-top) + 120px);  /* topbar 下方 8px 间距 */
+  z-index: 1500;
+}
+.filter-fab__btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   border: none;
-  background: var(--md-primary-container);       /* MD3 Tonal 按钮背景 */
-  color: var(--md-on-primary-container);          /* MD3 Tonal 按钮文字 */
-  border-radius: var(--md-shape-full);
-  padding: 0 14px;
-  height: 28px;
+  background: var(--md-surface-container-low);
+  color: var(--md-on-surface-variant);
   font-size: var(--fs-sm);
   font-weight: 500;
+  padding: 0 14px;
+  height: 40px;
+  border-radius: var(--md-shape-full);
   cursor: pointer;
   white-space: nowrap;
+  box-shadow: var(--md-elevation-1);
   position: relative;
   overflow: hidden;
-  transition: background var(--md-dur-short) var(--md-easing-standard);
+  transition: all var(--md-dur-short) var(--md-easing-standard);
 }
-/* MD3 State Layer */
-.search-wrap__btn::before {
+.filter-fab__btn::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -412,10 +381,15 @@ html, body {
   pointer-events: none;
   transition: opacity var(--md-dur-short) var(--md-easing-standard);
 }
-.search-wrap__btn:hover::before { opacity: var(--md-state-hover); }
-.search-wrap__btn:active::before { opacity: var(--md-state-pressed); }
-.search-wrap__btn:hover { background: var(--md-primary-hover); }  /* hover 深一档 */
-.search-wrap__btn:active { transform: translateY(1px); }
+.filter-fab__btn:hover::before { opacity: var(--md-state-hover); }
+.filter-fab__btn:active::before { opacity: var(--md-state-pressed); }
+.filter-fab__btn:active { transform: scale(0.97); }
+/* is-active 态：选中筛选时高亮 */
+.filter-fab__btn.is-active {
+  background: var(--md-secondary-container);
+  color: var(--md-on-secondary-container);
+}
+.filter-fab__label { font-size: var(--fs-sm); }
 
 /* ============ 6. SearchSuggest 搜索建议（MD3 Menu） ============ */
 /* MD3 Menu 风格：surface-container 背景、elevation-2 阴影、shape-md 圆角 */
@@ -708,11 +682,11 @@ html, body {
 /* 小程序映射：cover-view 浮动胶囊 */
 .nav-bar {
   position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  right: var(--sp-3);       /* 移至右侧定位，不再水平居中 */
   bottom: var(--nav-bar-bottom, calc(56px + var(--safe-bottom) + 8px)); /* JS 联动面板高度时更新此变量 */
   z-index: 2200;            /* 高于 panel.is-expanded(2100)，确保详情面板展开时定位/图例按钮可见 */
   display: flex;
+  flex-direction: column;   /* 按钮竖向排列 */
   align-items: center;
   gap: 0;
   background: #ffffff;
@@ -780,9 +754,9 @@ body.is-dragging-sheet .nav-bar {
 /* ============ 11. LegendPopup 图例弹窗（点击导航条图例按钮弹出） ============ */
 .legend-popup {
   position: absolute;
-  left: calc(50% + 26px);
-  transform: translateX(-50%) translateY(8px);
-  bottom: calc(var(--nav-bar-bottom, calc(56px + var(--safe-bottom) + 8px)) + 52px + 8px); /* 跟随 nav-bar 联动 */
+  right: var(--sp-3);       /* 对齐 nav-bar 右侧 */
+  transform: translateY(8px);
+  bottom: calc(var(--nav-bar-bottom, calc(56px + var(--safe-bottom) + 8px)) + 96px + 8px); /* 跟随 nav-bar 上方：竖向 nav-bar 高度(2按钮≈96px)+8px 间距 */
   z-index: 2201;            /* 高于 nav-bar(2200)，弹窗在按钮上方 */
   background: #ffffff;
   border-radius: var(--md-shape-lg);
@@ -802,7 +776,7 @@ body.is-dragging-sheet .nav-bar {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
-  transform: translateX(-50%) translateY(0);
+  transform: translateY(0);
 }
 .legend-popup__row {
   display: flex;
@@ -819,8 +793,8 @@ body.is-dragging-sheet .nav-bar {
 .legend-popup__arrow {
   position: absolute;
   bottom: -6px;
-  left: 50%;
-  transform: translateX(-50%) rotate(45deg);
+  right: 18px;              /* 箭头移至右侧，对齐 nav-bar */
+  transform: rotate(45deg);
   width: 12px;
   height: 12px;
   background: #ffffff;
@@ -834,7 +808,7 @@ body.is-dragging-sheet .nav-bar {
   background: #ffffff;
   border-radius: var(--md-shape-xl) var(--md-shape-xl) 0 0;
   box-shadow: var(--shadow-xl);
-  max-height: 75vh; overflow-y: auto;
+  max-height: 60vh; overflow-y: auto;  /* 限制列表高度，避免遮挡过多地图 */
   transition: max-height var(--md-dur-medium) var(--md-easing-standard);
   padding-bottom: var(--safe-bottom);
   overscroll-behavior: contain;
@@ -994,7 +968,7 @@ body.is-dragging-sheet .nav-bar {
   max-height: 45vh;
 }
 .panel.is-expanded {
-  max-height: 85vh;
+  max-height: 60vh;         /* 限制展开高度，避免遮挡过多地图 */
   z-index: 2100;            /* 展开态覆盖 topbar，避免搜索框穿模 */
 }
 .panel__handle {
@@ -1641,12 +1615,13 @@ body.is-dragging-sheet .nav-bar {
   .topbar__brand-sub { font-size: var(--fs-xs); }
 
   /* --- 搜索栏移动端 --- */
-  .search-wrap { height: 40px; padding: 0 var(--sp-2); gap: var(--sp-1); }
+  .search-wrap { height: 44px; padding: 0 var(--sp-2); gap: var(--sp-1); }
   .search-wrap__input { font-size: 16px; }  /* 16px 防止 iOS 缩放 */
-  .search-wrap__filter { padding: 4px 6px; height: 28px; }
-  .search-wrap__filter-label { display: none; }
-  .search-wrap__btn { padding: 0 10px; height: 28px; font-size: var(--fs-xs); }
-  .search-wrap__clear { width: 16px; height: 16px; }
+  .search-wrap__clear { width: 18px; height: 18px; }
+  /* Filter FAB 移动端：紧凑图标-only 模式 */
+  .filter-fab { top: calc(var(--safe-top) + 108px); }
+  .filter-fab__btn { padding: 0 12px; height: 40px; }
+  .filter-fab__label { display: none; }  /* 移动端只显示漏斗图标 */
 
   /* 搜索建议：大触摸区 */
   .search-suggest { max-height: 50vh; }
@@ -1654,6 +1629,7 @@ body.is-dragging-sheet .nav-bar {
 
   /* --- NavBar 移动端：更大触摸目标 --- */
   .nav-bar {
+    right: var(--sp-3);     /* 移动端同样保持右侧定位 */
     bottom: var(--nav-bar-bottom, calc(56px + var(--safe-bottom) + 8px)); /* 跟随 Sheet 高度联动，fallback 为默认底部位置 */
   }
   .nav-bar__btn {
@@ -1661,11 +1637,12 @@ body.is-dragging-sheet .nav-bar {
     height: 48px;
   }
   .legend-popup {
-    bottom: calc(56px + var(--safe-bottom) + 8px + 52px + 8px);
+    right: var(--sp-3);     /* 移动端同样对齐 nav-bar 右侧 */
+    bottom: calc(56px + var(--safe-bottom) + 8px + 104px + 8px); /* 移动端竖向 nav-bar 高度(2按钮≈104px)+8px 间距 */
   }
 
   /* --- NearbyList 移动端 --- */
-  .nearby-list { max-height: 75vh; }
+  .nearby-list { max-height: 60vh; }
   .nearby-list.is-collapsed { max-height: calc(56px + var(--safe-bottom)); }
   .nearby-list:not(.is-collapsed) .nearby-list__items {
     padding-bottom: calc(72px + var(--safe-bottom));
@@ -1685,7 +1662,7 @@ body.is-dragging-sheet .nav-bar {
 
   /* --- Panel 移动端 --- */
   .panel.is-half { max-height: 45vh; }
-  .panel.is-expanded { max-height: 90vh; }
+  .panel.is-expanded { max-height: 60vh; }  /* 移动端同样限制高度 */
   .panel__body { padding: var(--sp-1) var(--sp-4) var(--sp-5); }
   .panel__handle { padding: 12px 0 6px; }
   .panel__handle::after { width: 36px; height: 5px; }

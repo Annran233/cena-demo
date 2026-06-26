@@ -44,10 +44,7 @@
         </button>
       </div>
       <div class="search-wrap">
-        <button class="search-wrap__filter" id="filterBtn" title="筛选" aria-label="筛选厕所类型" aria-haspopup="listbox">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-          <span class="search-wrap__filter-label" id="filterLabel">全部</span>
-        </button>
+        <svg class="search-wrap__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input
           id="searchInput"
           class="search-wrap__input"
@@ -57,19 +54,26 @@
           aria-label="搜索地点"
         />
         <button class="search-wrap__clear" id="searchClear" title="清除" aria-label="清除搜索内容">×</button>
-        <button id="searchBtn" class="search-wrap__btn">搜索</button>
         <div class="search-suggest" id="searchSuggest" role="listbox"></div>
-        <div class="filter-dropdown" id="filterDropdown" role="listbox" aria-label="厕所筛选">
-          <div class="filter-dropdown__item is-active" data-filter="all" role="option">
-            <span class="filter-dropdown__check">✓</span><span class="filter-dropdown__label">全部</span>
-          </div>
-          <div class="filter-dropdown__item" data-filter="accessible" role="option"><span class="filter-dropdown__check">✓</span><span class="filter-dropdown__dot" style="background:var(--c-accessible)"></span><span class="filter-dropdown__label">无障碍</span></div>
-          <div class="filter-dropdown__item" data-filter="family" role="option"><span class="filter-dropdown__check">✓</span><span class="filter-dropdown__dot" style="background:var(--c-family)"></span><span class="filter-dropdown__label">第三卫生间</span></div>
-          <div class="filter-dropdown__item" data-filter="water" role="option"><span class="filter-dropdown__check">✓</span><span class="filter-dropdown__dot" style="background:var(--c-water)"></span><span class="filter-dropdown__label">房车水源</span></div>
-          <div class="filter-dropdown__item" data-filter="open" role="option"><span class="filter-dropdown__check">✓</span><span class="filter-dropdown__dot" style="background:var(--c-ok)"></span><span class="filter-dropdown__label">仅看开放</span></div>
-        </div>
       </div>
     </header>
+
+    <!-- ======== Filter 浮动筛选按钮（地图左上角，原 Zoom 位置） ======== -->
+    <div class="filter-fab" id="filterFab">
+      <button class="filter-fab__btn" id="filterBtn" title="筛选" aria-label="筛选厕所类型" aria-haspopup="listbox">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        <span class="filter-fab__label" id="filterLabel">全部</span>
+      </button>
+      <div class="filter-dropdown" id="filterDropdown" role="listbox" aria-label="厕所筛选">
+        <div class="filter-dropdown__item is-active" data-filter="all" role="option">
+          <span class="filter-dropdown__check">✓</span><span class="filter-dropdown__label">全部</span>
+        </div>
+        <div class="filter-dropdown__item" data-filter="accessible" role="option"><span class="filter-dropdown__check">✓</span><span class="filter-dropdown__dot" style="background:var(--c-accessible)"></span><span class="filter-dropdown__label">无障碍</span></div>
+        <div class="filter-dropdown__item" data-filter="family" role="option"><span class="filter-dropdown__check">✓</span><span class="filter-dropdown__dot" style="background:var(--c-family)"></span><span class="filter-dropdown__label">第三卫生间</span></div>
+        <div class="filter-dropdown__item" data-filter="water" role="option"><span class="filter-dropdown__check">✓</span><span class="filter-dropdown__dot" style="background:var(--c-water)"></span><span class="filter-dropdown__label">房车水源</span></div>
+        <div class="filter-dropdown__item" data-filter="open" role="option"><span class="filter-dropdown__check">✓</span><span class="filter-dropdown__dot" style="background:var(--c-ok)"></span><span class="filter-dropdown__label">仅看开放</span></div>
+      </div>
+    </div>
 
     <!-- ======== Map：地图容器 ======== -->
     <main id="map" role="application" aria-label="厕所地图"></main>

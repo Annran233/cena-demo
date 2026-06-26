@@ -860,8 +860,10 @@ window.panelHeightChanged = function() {
 };
 
 /* ============ nav-bar 联动底部 Sheet 高度 ============ */
-/* 面板 / 周边列表 打开或展开时，nav-bar 上浮到 Sheet 顶部上方，避免遮挡内容
+/* nav-bar 现位于右侧竖向排列，水平方向不再与 sheet 冲突；
+   但面板/列表展开较高时仍会纵向遮挡 nav-bar，故需上浮到 sheet 顶部上方。
    实现：通过 CSS 变量 --nav-bar-bottom 统一控制 nav-bar 和 legend-popup 的 bottom
+   （right 定位不影响 bottom 计算，JS 无需关心水平位置）
    覆盖时机：MutationObserver 监听 panel + nearbyList class/style 变化，
             app.js 拖拽 move 中同步调用 */
 function updateNavBarPosition() {

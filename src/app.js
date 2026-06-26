@@ -21,7 +21,7 @@ Object.keys(PRESET_LOCATIONS_RAW).forEach(k => {
 });
 
 /* ============ 地图初始化 ============ */
-map = L.map('map', { zoomControl: true, attributionControl: false }).setView(CENTER, 15);
+map = L.map('map', { zoomControl: false, attributionControl: false }).setView(CENTER, 15);
 L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', {
   maxZoom: 18, subdomains: ['1', '2', '3', '4'],
   errorTileUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
@@ -632,7 +632,7 @@ document.getElementById('searchInput').addEventListener('focus', () => {
   const q = document.getElementById('searchInput').value.trim();
   if (q.length >= 2) onSearchInput();
 });
-document.getElementById('searchBtn').addEventListener('click', doSearch);
+// 搜索通过 Enter 键触发，无需额外按钮
 document.getElementById('searchInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') {
     document.getElementById('searchSuggest').classList.remove('is-show');
