@@ -1650,7 +1650,7 @@ html, body {
 
   /* --- NavBar 移动端：更大触摸目标 --- */
   .nav-bar {
-    bottom: calc(56px + var(--safe-bottom) + 8px);
+    bottom: var(--nav-bar-bottom, calc(56px + var(--safe-bottom) + 8px)); /* 跟随 Sheet 高度联动，fallback 为默认底部位置 */
   }
   .nav-bar__btn {
     width: 52px;
