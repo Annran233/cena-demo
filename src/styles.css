@@ -980,6 +980,7 @@ html, body {
 }
 .panel.is-expanded {
   max-height: 85vh;
+  z-index: 2100;            /* 展开态覆盖 topbar，避免搜索框穿模 */
 }
 .panel__handle {
   display: flex;
