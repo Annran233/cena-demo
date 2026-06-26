@@ -684,7 +684,7 @@ html, body {
   position: absolute;
   right: var(--sp-3);       /* 移至右侧定位，不再水平居中 */
   bottom: var(--nav-bar-bottom, calc(56px + var(--safe-bottom) + 8px)); /* JS 联动面板高度时更新此变量 */
-  z-index: 2200;            /* 高于 panel.is-expanded(2100)，确保详情面板展开时定位/图例按钮可见 */
+  z-index: 900;              /* 低于 nearby-list(999)/panel(1100)，卡片展开时遮住 nav-bar，nav-bar 从后方滑上 */
   display: flex;
   flex-direction: column;   /* 按钮竖向排列 */
   align-items: center;
@@ -757,7 +757,7 @@ body.is-dragging-sheet .nav-bar {
   right: var(--sp-3);       /* 对齐 nav-bar 右侧 */
   transform: translateY(8px);
   bottom: calc(var(--nav-bar-bottom, calc(56px + var(--safe-bottom) + 8px)) + 96px + 8px); /* 跟随 nav-bar 上方：竖向 nav-bar 高度(2按钮≈96px)+8px 间距 */
-  z-index: 2201;            /* 高于 nav-bar(2200)，弹窗在按钮上方 */
+  z-index: 901;            /* 高于 nav-bar(900)，弹窗在按钮上方 */
   background: #ffffff;
   border-radius: var(--md-shape-lg);
   box-shadow: 0 4px 16px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.08);
