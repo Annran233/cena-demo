@@ -82,9 +82,9 @@ map.addLayer(clusterGroup);
     return (isDesktop() ? COLLAPSED_H_DESKTOP : HEADER_H) + getSafeBottom();
   }
   function getExpandedH() {
-    /* snap 后的展开目标高度：移动端 60vh（约 4-5 条卡片，保留 40% 地图可见），
-       桌面端 50vh（侧边浮出列表，高度足够） */
-    const vh = isDesktop() ? 50 : 60;
+    /* snap 后的展开目标高度：移动端 35vh（两条半预览，保留 65% 地图可见），
+       内容超出可在列表内滚动；桌面端 50vh（侧边浮出列表） */
+    const vh = isDesktop() ? 50 : 35;
     return Math.floor(window.innerHeight * vh / 100);
   }
   function getCurrentH() {
@@ -136,8 +136,9 @@ map.addLayer(clusterGroup);
     // 拖拽时不限制上限，允许手指自由拉到任意高度，snap 后再设到目标高度
     const newH = Math.max(minH, startHeight + dy);
     setHeight(newH);
-    // 拖拽过程中同步联动 nav-bar 位置
+    // 拖拽过程中同步联动 nav-bar 位置，并实时平移地图让关注点保持在卡片上方可见区
     if (window.updateNavBarPosition) window.updateNavBarPosition();
+    if (window.panToVisibleArea) window.panToVisibleArea(null, false);
   }
   function onEnd(e) {
     if (!pendingDrag && !isDragging) return;
@@ -525,8 +526,9 @@ document.getElementById('addBtn').addEventListener('click', () => {
       _currentY = offsetY;
       if (dt > 0) _velocity = (point.clientY - _lastY) / dt;
       panel.style.transform = `translateY(${_currentY}px)`;
-      // 拖拽过程中同步联动 nav-bar 位置（MutationObserver 异步，拖拽需同步避免延迟）
+      // 拖拽过程中同步联动 nav-bar 位置，并实时平移地图让 POI 保持在卡片上方可见区
       if (window.updateNavBarPosition) window.updateNavBarPosition();
+      if (window.panToVisibleArea) window.panToVisibleArea(null, false);
     }
 
     _lastX = point.clientX;

@@ -97,10 +97,15 @@ function setSearchCenter(coords, name, zoom, ensureToilet, silent) {
   }
 
   /* silent=true（初始加载/刷新）：不自动展开列表，保持收起状态，用户手动上滑/点击 header 才展开
-     silent=false（用户主动搜索/长按/点击地图）：自动展开列表展示周边结果 */
+     silent=false（用户主动搜索/长按/点击地图）：自动展开列表展示周边结果，展开后平移地图让搜索中心可见 */
   const list = document.getElementById('nearbyList');
   if (!silent) {
     list.classList.remove('is-collapsed');
+    // 列表展开动画过程中持续平移地图，搜索中心（用户定位/长按点）始终在卡片上方可见
+    if (window.panToVisibleArea && window.syncNavBarDuringTransition) {
+      window.panToVisibleArea(coords, false);
+      window.syncNavBarDuringTransition(400);
+    }
   }
 }
 
