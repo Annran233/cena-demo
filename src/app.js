@@ -391,6 +391,8 @@ document.getElementById('addBtn').addEventListener('click', openAddToiletPanel);
       _currentY = offsetY;
       if (dt > 0) _velocity = (point.clientY - _lastY) / dt;
       panel.style.transform = `translateY(${_currentY}px)`;
+      // 拖拽过程中同步联动 nav-bar 位置（MutationObserver 异步，拖拽需同步避免延迟）
+      if (window.updateNavBarPosition) window.updateNavBarPosition();
     }
 
     _lastX = point.clientX;

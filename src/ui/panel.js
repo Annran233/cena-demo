@@ -844,3 +844,40 @@ window.panelHeightChanged = function() {
     if (currentToilet) panToiletToVisibleArea(currentToilet);
   });
 };
+
+/* ============ nav-bar 联动面板高度 ============ */
+/* 面板打开/展开/拖拽时，nav-bar 上浮到面板顶部上方，避免遮挡卡片内容
+   实现：通过 CSS 变量 --nav-bar-bottom 统一控制 nav-bar 和 legend-popup 的 bottom
+   覆盖时机：MutationObserver 监听 panel class/style 变化 + 拖拽 move 中同步调用 */
+function updateNavBarPosition() {
+  // 桌面端 nav-bar 在右下角，不联动
+  if (window.innerWidth >= 768) return;
+  const panel = document.getElementById('panel');
+  if (!panel) return;
+
+  // 面板关闭：清除 inline 变量，回到 CSS 默认值
+  if (!panel.classList.contains('is-show')) {
+    document.documentElement.style.removeProperty('--nav-bar-bottom');
+    return;
+  }
+
+  // 计算面板可见高度（面板顶部到视口底部的距离）
+  // panel 用 transform: translateY 控制显隐，getBoundingClientRect 反映真实可见位置
+  const rect = panel.getBoundingClientRect();
+  const visibleHeight = window.innerHeight - rect.top;
+  // nav-bar 放在面板顶部上方 8px 间距
+  document.documentElement.style.setProperty('--nav-bar-bottom', `${visibleHeight + 8}px`);
+}
+
+// 监听 panel class/style 变化（覆盖 setSnap、openPanel、closePanel 等所有状态切换）
+const _panelObserver = new MutationObserver(() => updateNavBarPosition());
+_panelObserver.observe(document.getElementById('panel'), {
+  attributes: true,
+  attributeFilter: ['class', 'style']
+});
+
+// 窗口尺寸变化时重算（如旋转屏幕）
+window.addEventListener('resize', updateNavBarPosition);
+
+// 暴露给 app.js 拖拽过程中同步调用（MutationObserver 是异步微任务，拖拽时需同步更新避免延迟）
+window.updateNavBarPosition = updateNavBarPosition;
