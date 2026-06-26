@@ -73,8 +73,7 @@ function renderNearbyList() {
       if (t) {
         map.setView([t.lat, t.lng], 17);
         openPanel(t);
-        const list = document.getElementById('nearbyList');
-        list.classList.add('is-collapsed');
+        collapseNearbyList();
       }
     });
   });
