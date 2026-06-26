@@ -87,6 +87,7 @@ map.addLayer(clusterGroup);
     startHeight = getCurrentH();
     list.classList.add('is-dragging');
     list.classList.remove('is-collapsed');
+    document.body.classList.add('is-dragging-sheet'); // 禁用 nav-bar bottom 过渡，确保跟手
     setHeight(startHeight);
   }
   function onMove(y) {
@@ -103,6 +104,7 @@ map.addLayer(clusterGroup);
     if (!isDragging) return;
     isDragging = false;
     list.classList.remove('is-dragging');
+    document.body.classList.remove('is-dragging-sheet'); // 恢复 nav-bar bottom 过渡
     list.style.maxHeight = '';
     const h = getCurrentH();
     const expandedH = getExpandedH();
@@ -342,6 +344,7 @@ document.getElementById('addBtn').addEventListener('click', openAddToiletPanel);
 
     panel.style.transition = 'none';
     panel.classList.add('is-dragging');
+    document.body.classList.add('is-dragging-sheet'); // 禁用 nav-bar bottom 过渡，确保跟手
     document.body.style.userSelect = 'none';
   }
 
@@ -407,6 +410,7 @@ document.getElementById('addBtn').addEventListener('click', openAddToiletPanel);
     if (!_dragging) return;
     _dragging = false;
     panel.classList.remove('is-dragging');
+    document.body.classList.remove('is-dragging-sheet'); // 恢复 nav-bar bottom 过渡
     document.body.style.userSelect = '';
 
     const totalDist = _isDesktop ? _currentX : _currentY;

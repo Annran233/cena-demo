@@ -721,6 +721,10 @@ html, body {
   padding: 4px;
   transition: bottom var(--md-dur-medium) var(--md-easing-emphasized); /* 联动面板时平滑过渡 */
 }
+/* 拖拽 sheet 时禁用 nav-bar 的 bottom 过渡，确保跟手 */
+body.is-dragging-sheet .nav-bar {
+  transition: none;
+}
 .nav-bar__btn {
   width: 48px;
   height: 44px;
