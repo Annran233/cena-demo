@@ -69,6 +69,10 @@ map.addLayer(clusterGroup);
   const FLING_VELOCITY = 0.7;
   // move 采样有效性窗口（ms）：超过该时长认为速度已过期（事件丢失时避免用陈旧速度误判 snap）
   const VELOCITY_FRESH_MS = 100;
+  // 顶部安全间距：列表顶部与搜索栏底部之间的最小间距（px），防止穿模
+  const TOP_GAP = 8;
+  // 当前 snap 状态：'collapsed' | 'half' | 'expanded'
+  let _snapState = 'collapsed';
 
   function isDesktop() {
     return window.innerWidth >= 768;
@@ -78,20 +82,54 @@ map.addLayer(clusterGroup);
     const val = getComputedStyle(document.documentElement).getPropertyValue('--safe-bottom').trim();
     return parseFloat(val) || 0;
   }
+  function getSafeTop() {
+    if (isDesktop()) return 0;
+    const val = getComputedStyle(document.documentElement).getPropertyValue('--safe-top').trim();
+    return parseFloat(val) || 0;
+  }
+  /* 收起高度：只显示 header（56px + safe-bottom） */
   function getCollapsedH() {
     return (isDesktop() ? COLLAPSED_H_DESKTOP : HEADER_H) + getSafeBottom();
   }
-  function getExpandedH() {
-    /* snap 后的展开目标高度：移动端 35vh（两条半预览，保留 65% 地图可见），
-       内容超出可在列表内滚动；桌面端 50vh（侧边浮出列表） */
-    const vh = isDesktop() ? 50 : 35;
-    return Math.floor(window.innerHeight * vh / 100);
+  /* 预览高度：35vh（两条半卡片预览，保留 65% 地图可见） */
+  function getHalfH() {
+    if (isDesktop()) return Math.floor(window.innerHeight * 0.5);
+    return Math.floor(window.innerHeight * 0.35);
+  }
+  /* 全展开高度：到搜索栏底部下方 TOP_GAP 处，不穿模盖住 topbar */
+  function getFullH() {
+    if (isDesktop()) return Math.floor(window.innerHeight * 0.5);
+    // 动态计算 topbar 底部 Y 坐标：标题行 + 搜索栏 + padding
+    const topbar = document.querySelector('.topbar');
+    if (topbar) {
+      const topbarBottom = topbar.getBoundingClientRect().bottom;
+      const maxH = window.innerHeight - topbarBottom - TOP_GAP;
+      return Math.max(getHalfH() + 40, Math.floor(maxH));
+    }
+    // 兜底：safe-top + 标题行(~50px) + 搜索栏(44px) + padding(~12px) + TOP_GAP
+    const fallback = getSafeTop() + 50 + 44 + 12 + TOP_GAP;
+    return window.innerHeight - fallback;
   }
   function getCurrentH() {
     return list.getBoundingClientRect().height;
   }
   function setHeight(px) {
     list.style.maxHeight = px + 'px';
+  }
+  /* 根据当前高度判断所处的 snap 状态 */
+  function getSnapFromHeight(h) {
+    const ch = getCollapsedH();
+    const hh = getHalfH();
+    const fh = getFullH();
+    if (h <= (ch + hh) / 2) return 'collapsed';
+    if (h <= (hh + fh) / 2) return 'half';
+    return 'expanded';
+  }
+  function applySnapClass(snap) {
+    list.classList.remove('is-collapsed');
+    if (snap === 'collapsed') {
+      list.classList.add('is-collapsed');
+    }
   }
   function onStart(y) {
     // 只记录起点状态，不立即进入拖拽模式；等位移超阈值才激活（避免干扰点击）
@@ -100,6 +138,8 @@ map.addLayer(clusterGroup);
     moved = false;
     startY = y;
     startHeight = getCurrentH();
+    // 记录起始 snap 状态
+    _snapState = getSnapFromHeight(startHeight);
     const now = performance.now();
     startTime = now;
     // 重置速度采样
@@ -133,8 +173,9 @@ map.addLayer(clusterGroup);
       activateDrag();
     }
     const minH = getCollapsedH();
-    // 拖拽时不限制上限，允许手指自由拉到任意高度，snap 后再设到目标高度
-    const newH = Math.max(minH, startHeight + dy);
+    const maxH = getFullH();  // 拖拽上限：不超过 topbar 底部，防止穿模
+    // 拖拽高度限制在 [minH, maxH] 之间，手指可以自由拉到任意合法高度
+    const newH = Math.min(maxH, Math.max(minH, startHeight + dy));
     setHeight(newH);
     // 拖拽过程中只同步 nav-bar 位置（CSS 变量，轻量），不平移地图避免干扰 touch 事件
     if (window.updateNavBarPosition) window.updateNavBarPosition();
@@ -159,50 +200,54 @@ map.addLayer(clusterGroup);
       }
     }
 
-    const expandedH = getExpandedH();
-    const collapsedH = getCollapsedH();
+    const ch = getCollapsedH();
+    const hh = getHalfH();
+    const fh = getFullH();
 
-    // snap 判定：快速 fling 优先按方向，慢速拖拽按位置
     const flingFresh = (performance.now() - lastTime) < VELOCITY_FRESH_MS || wasPending;
-    let shouldExpand;
+    let targetSnap;
+
     if (flingFresh && endVelocity > FLING_VELOCITY) {
-      shouldExpand = true;
+      // 快速上滑：升一档（collapsed→half→expanded）
+      targetSnap = _snapState === 'collapsed' ? 'half' : 'expanded';
     } else if (flingFresh && endVelocity < -FLING_VELOCITY) {
-      shouldExpand = false;
+      // 快速下滑：降一档（expanded→half→collapsed）
+      targetSnap = _snapState === 'expanded' ? 'half' : 'collapsed';
     } else if (wasDragging) {
+      // 慢速拖拽：按最终位置判定 snap
       const h = getCurrentH();
-      shouldExpand = h >= (collapsedH + expandedH) / 2;
+      targetSnap = getSnapFromHeight(h);
     } else {
-      // 普通点击（非快速 flick 且非拖拽）：直接返回，不改变任何状态，由 click 事件处理 toggle
+      // 普通点击（非快速 flick 且非拖拽）：直接返回，由 click 事件处理 toggle
       moved = false;
       return;
     }
 
-    // 快速 flick / 拖拽结束：执行过渡动画
+    // 执行过渡动画到目标 snap 高度
     list.classList.remove('is-dragging');
-    // 注意：不在这里移除 is-dragging-sheet，由 syncNavBarDuringTransition 统一管理
-
     if (wasPending) {
       moved = true; // 快速 flick 抑制后续合成 click 事件
     }
 
-    // 用内联样式锁定当前高度作为 transition 起点，然后切换类名、设置目标高度触发过渡
+    const targetH = targetSnap === 'collapsed' ? ch : targetSnap === 'half' ? hh : fh;
+    _snapState = targetSnap;
+
+    // 用内联样式锁定当前高度作为 transition 起点，然后设目标高度触发过渡
     const startH = getCurrentH();
-    const targetH = shouldExpand ? expandedH : collapsedH;
-    list.style.overflow = 'hidden'; // 过渡期间隐藏滚动条避免闪烁
+    list.style.overflow = 'hidden';
     list.style.maxHeight = startH + 'px';
     void list.offsetHeight; // 强制 reflow 确保浏览器记录起始高度
-    if (shouldExpand) {
-      list.classList.remove('is-collapsed');
-    } else {
-      list.classList.add('is-collapsed');
-    }
+    applySnapClass(targetSnap);
     list.style.maxHeight = targetH + 'px';
 
-    // 过渡结束后清理内联样式
+    // 过渡结束后清理内联样式（overflow 恢复，但 maxHeight 保留给非collapsed状态防止CSS截断）
     const cleanupAndSync = () => {
-      list.style.maxHeight = '';
       list.style.overflow = '';
+      if (targetSnap === 'collapsed') {
+        list.style.maxHeight = '';
+      }
+      // half/expanded 保留内联 maxHeight，因为 CSS 默认 max-height 是 90vh 兜底，
+      // 而 getFullH() 是动态计算的（基于 topbar 位置），需要内联精确控制
     };
     const onTransEnd = (ev) => {
       if (ev.target === list && ev.propertyName === 'max-height') {
@@ -213,14 +258,41 @@ map.addLayer(clusterGroup);
     list.addEventListener('transitionend', onTransEnd);
     setTimeout(cleanupAndSync, 380);
 
-    // snap 过渡期间用 rAF 循环同步 nav-bar 位置，禁用 nav-bar 自身 bottom transition 避免慢半拍
+    // snap 过渡期间用 rAF 循环同步 nav-bar 位置，结束后平移地图
     if (window.syncNavBarDuringTransition) {
       window.syncNavBarDuringTransition(400);
     }
   }
 
+  /* 点击 header 时的 toggle 行为：
+     collapsed → half（预览两条半）；half/expanded → collapsed */
+  window._toggleNearbySheet = function() {
+    if (_snapState === 'collapsed') {
+      _snapState = 'half';
+      const hh = getHalfH();
+      list.style.overflow = 'hidden';
+      list.style.maxHeight = getCollapsedH() + 'px';
+      void list.offsetHeight;
+      list.classList.remove('is-collapsed');
+      list.style.maxHeight = hh + 'px';
+      setTimeout(() => { list.style.overflow = ''; }, 380);
+      if (window.syncNavBarDuringTransition) window.syncNavBarDuringTransition(400);
+    } else {
+      _snapState = 'collapsed';
+      const ch = getCollapsedH();
+      const startH = getCurrentH();
+      list.style.overflow = 'hidden';
+      list.style.maxHeight = startH + 'px';
+      void list.offsetHeight;
+      list.classList.add('is-collapsed');
+      list.style.maxHeight = ch + 'px';
+      setTimeout(() => { list.style.maxHeight = ''; list.style.overflow = ''; }, 380);
+      if (window.syncNavBarDuringTransition) window.syncNavBarDuringTransition(400);
+    }
+  };
+
   /* 触摸事件：touchstart 在 header/list 上触发（支持从内容区开始拖拽），
-     touchmove/touchend 绑定到 document 确保手指滑出区域后事件不丢失（与 mouse 事件逻辑一致） */
+     touchmove/touchend 绑定到 document 确保手指滑出区域后事件不丢失 */
   const dragTargets = [header, list];
   dragTargets.forEach(target => {
     target.addEventListener('touchstart', (e) => {
@@ -248,7 +320,11 @@ map.addLayer(clusterGroup);
 
   header.addEventListener('click', (e) => {
     if (moved) { e.preventDefault(); e.stopPropagation(); moved = false; return; }
-    toggleNearbyList();
+    if (window._toggleNearbySheet) {
+      window._toggleNearbySheet();
+    } else {
+      toggleNearbyList();
+    }
   });
 })();
 

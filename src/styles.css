@@ -808,7 +808,7 @@ body.is-dragging-sheet .nav-bar {
   background: #ffffff;
   border-radius: var(--md-shape-xl) var(--md-shape-xl) 0 0;
   box-shadow: var(--shadow-xl);
-  max-height: 35vh; overflow-y: auto;  /* 两条半预览高度，与 JS getExpandedH() 35vh 一致 */
+  max-height: 90vh; overflow-y: auto;  /* 默认兜底高度，实际高度由JS内联maxHeight精确控制（三档snap） */
   transition: max-height var(--md-dur-medium) var(--md-easing-standard);
   padding-bottom: var(--safe-bottom);
   overscroll-behavior: contain;
@@ -1646,7 +1646,7 @@ body.is-dragging-sheet .nav-bar {
   }
 
   /* --- NearbyList 移动端 --- */
-  .nearby-list { max-height: 35vh; }  /* 与 JS getExpandedH() 35vh 一致，两条半预览 */
+  .nearby-list { max-height: 90vh; }  /* 兜底，实际高度由JS三档snap控制 */
   .nearby-list.is-collapsed { max-height: calc(56px + var(--safe-bottom)); }
   .nearby-list:not(.is-collapsed) .nearby-list__items {
     padding-bottom: calc(72px + var(--safe-bottom));

@@ -81,15 +81,31 @@ function renderNearbyList() {
 }
 
 function toggleNearbyList() {
-  const list = document.getElementById('nearbyList');
-  list.classList.toggle('is-collapsed');
+  // 优先走三档 snap 的 toggle 逻辑（collapsed↔half）
+  if (window._toggleNearbySheet) {
+    window._toggleNearbySheet();
+  } else {
+    const list = document.getElementById('nearbyList');
+    list.classList.toggle('is-collapsed');
+  }
 }
 
+/* 展开周边列表到预览档（half）：用户主动操作（搜索/长按/点击）时调用 */
 function expandNearbyList() {
-  document.getElementById('nearbyList').classList.remove('is-collapsed');
+  if (window._toggleNearbySheet) {
+    // 如果当前是 collapsed，toggle 到 half；如果已是 half/expanded 则不变
+    const list = document.getElementById('nearbyList');
+    if (list.classList.contains('is-collapsed')) {
+      window._toggleNearbySheet();
+    }
+  } else {
+    document.getElementById('nearbyList').classList.remove('is-collapsed');
+  }
 }
 
-/* 收起周边列表（移动端点击 marker 时调用，列表收到底部不遮挡地图） */
+/* 收起周边列表：点击marker/打开面板/点击空白时调用 */
 function collapseNearbyList() {
   document.getElementById('nearbyList').classList.add('is-collapsed');
+  // 重置内联 maxHeight 让 CSS is-collapsed 生效
+  document.getElementById('nearbyList').style.maxHeight = '';
 }
