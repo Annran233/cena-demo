@@ -919,6 +919,29 @@ document.getElementById('nearbyList').addEventListener('transitionend', (e) => {
 // 窗口尺寸变化时重算（如旋转屏幕）
 window.addEventListener('resize', updateNavBarPosition);
 
+/* ============ snap 过渡期间持续同步 nav-bar 位置 ============ */
+/* 列表/面板 snap 动画期间，用 rAF 循环每帧更新 CSS 变量，
+   同时禁用 nav-bar 自身的 bottom transition，避免 nav-bar 慢半拍。
+   duration 后自动停止循环并恢复 transition。 */
+let _navSyncRafId = null;
+window.syncNavBarDuringTransition = function(duration) {
+  if (window.innerWidth >= 768) return; // 桌面端不联动
+  document.body.classList.add('is-dragging-sheet'); // 禁用 nav-bar bottom transition
+  if (_navSyncRafId) cancelAnimationFrame(_navSyncRafId);
+  const start = performance.now();
+  function tick() {
+    updateNavBarPosition();
+    if (performance.now() - start < duration) {
+      _navSyncRafId = requestAnimationFrame(tick);
+    } else {
+      _navSyncRafId = null;
+      document.body.classList.remove('is-dragging-sheet');
+      updateNavBarPosition();
+    }
+  }
+  _navSyncRafId = requestAnimationFrame(tick);
+};
+
 // 暴露给 app.js 拖拽过程中同步调用（MutationObserver 是异步微任务，拖拽时需同步更新避免延迟）
 window.updateNavBarPosition = updateNavBarPosition;
 

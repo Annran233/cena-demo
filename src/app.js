@@ -177,7 +177,7 @@ map.addLayer(clusterGroup);
 
     // 快速 flick / 拖拽结束：执行过渡动画
     list.classList.remove('is-dragging');
-    document.body.classList.remove('is-dragging-sheet');
+    // 注意：不在这里移除 is-dragging-sheet，由 syncNavBarDuringTransition 统一管理
 
     if (wasPending) {
       moved = true; // 快速 flick 抑制后续合成 click 事件
@@ -196,11 +196,10 @@ map.addLayer(clusterGroup);
     }
     list.style.maxHeight = targetH + 'px';
 
-    // 过渡结束后清理内联样式、同步 nav-bar
+    // 过渡结束后清理内联样式
     const cleanupAndSync = () => {
       list.style.maxHeight = '';
       list.style.overflow = '';
-      if (window.updateNavBarPosition) window.updateNavBarPosition();
     };
     const onTransEnd = (ev) => {
       if (ev.target === list && ev.propertyName === 'max-height') {
@@ -211,7 +210,10 @@ map.addLayer(clusterGroup);
     list.addEventListener('transitionend', onTransEnd);
     setTimeout(cleanupAndSync, 380);
 
-    if (window.updateNavBarPosition) window.updateNavBarPosition();
+    // snap 过渡期间用 rAF 循环同步 nav-bar 位置，禁用 nav-bar 自身 bottom transition 避免慢半拍
+    if (window.syncNavBarDuringTransition) {
+      window.syncNavBarDuringTransition(400);
+    }
   }
 
   /* 触摸事件：touchstart 在 header/list 上触发（支持从内容区开始拖拽），
@@ -413,8 +415,15 @@ document.getElementById('addBtn').addEventListener('click', openAddToiletPanel);
       }
     }
 
-    if (snap !== 'closed' && prevSnap !== snap && typeof window.panelHeightChanged === 'function') {
-      setTimeout(() => window.panelHeightChanged(), 280);
+    if (snap !== 'closed' && prevSnap !== snap) {
+      // nav-bar 位置同步：用 rAF 循环在过渡期间持续更新，避免慢半拍
+      if (animate && window.syncNavBarDuringTransition) {
+        window.syncNavBarDuringTransition(400);
+      }
+      // 面板高度变化后平移 POI 到可见区域（panelHeightChanged 内部也会调 updateNavBarPosition，作为最终兜底）
+      if (typeof window.panelHeightChanged === 'function') {
+        setTimeout(() => window.panelHeightChanged(), 280);
+      }
     }
   }
 
