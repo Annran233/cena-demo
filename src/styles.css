@@ -967,6 +967,10 @@ body.is-dragging-sheet .nav-bar {
 .panel.is-half {
   max-height: 45vh;
 }
+/* 紧凑态：坐标拾取/上报面板初始高度，约一条半高 */
+.panel.is-compact {
+  max-height: 180px;
+}
 .panel.is-expanded {
   max-height: 60vh;         /* 限制展开高度，避免遮挡过多地图 */
   z-index: 2100;            /* 展开态覆盖 topbar，避免搜索框穿模 */

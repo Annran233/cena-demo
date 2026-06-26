@@ -839,12 +839,11 @@ async function openAddToiletPanel() {
     setTimeout(() => openPanel(newToilet), 300);
   });
 
-  // 初始以 half 态弹出（移动端 45vh 限制初始高度，避免占满屏幕；上滑可展开至 expanded）
-  // 与 openPanel 详情面板弹出方式保持一致；桌面端 Side Sheet 下 is-half/is-expanded 视觉一致
-  document.getElementById('panel').classList.add('is-show', 'is-half');
-  document.getElementById('panel').classList.remove('is-expanded');
+  // 初始以 compact 态弹出（约一条半高），上滑可展开至 expanded
+  document.getElementById('panel').classList.add('is-show', 'is-compact');
+  document.getElementById('panel').classList.remove('is-expanded', 'is-half');
   if (window.innerWidth < 768 && window._setPanelSnap) {
-    window._setPanelSnap('half', false);
+    window._setPanelSnap('compact', false);
   }
 }
 

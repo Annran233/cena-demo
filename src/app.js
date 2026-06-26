@@ -400,7 +400,7 @@ document.getElementById('addBtn').addEventListener('click', () => {
     const prevSnap = _currentSnap;
     _currentSnap = snap;
 
-    panel.classList.remove('is-half', 'is-expanded');
+    panel.classList.remove('is-half', 'is-expanded', 'is-compact');
 
     if (snap === 'closed') {
       panel.classList.remove('is-show');
@@ -411,7 +411,9 @@ document.getElementById('addBtn').addEventListener('click', () => {
       document.getElementById('nearbyList').style.display = '';
     } else {
       panel.classList.add('is-show');
-      if (snap === 'half') {
+      if (snap === 'compact') {
+        panel.classList.add('is-compact');
+      } else if (snap === 'half') {
         panel.classList.add('is-half');
       } else if (snap === 'expanded') {
         panel.classList.add('is-expanded');
@@ -503,7 +505,11 @@ document.getElementById('addBtn').addEventListener('click', () => {
       }
 
       let offsetY = dy;
-      if (_currentSnap === 'half') {
+      if (_currentSnap === 'compact') {
+        if (dy < 0) {
+          offsetY = dy * 0.5;  /* compact→half 上滑阻尼 */
+        }
+      } else if (_currentSnap === 'half') {
         if (dy < 0) {
           offsetY = dy * 0.5;
         }
@@ -564,7 +570,9 @@ document.getElementById('addBtn').addEventListener('click', () => {
 
     if (!moved) {
       if (_dragFromHandle) {
-        if (_currentSnap === 'half') {
+        if (_currentSnap === 'compact') {
+          setSnap('half');
+        } else if (_currentSnap === 'half') {
           setSnap('expanded');
         } else if (_currentSnap === 'expanded') {
           setSnap('half');
@@ -577,7 +585,13 @@ document.getElementById('addBtn').addEventListener('click', () => {
     const fastUp = _velocity < -VELOCITY_THRESHOLD;
     const fastDown = _velocity > VELOCITY_THRESHOLD;
 
-    if (_currentSnap === 'half') {
+    if (_currentSnap === 'compact') {
+      if (totalDist < -SNAP_THRESHOLD || fastUp) {
+        targetSnap = 'half';
+      } else if (totalDist > SNAP_THRESHOLD || fastDown) {
+        targetSnap = 'closed';
+      }
+    } else if (_currentSnap === 'half') {
       if (totalDist < -SNAP_THRESHOLD || fastUp) {
         targetSnap = 'expanded';
       } else if (totalDist > SNAP_THRESHOLD || fastDown) {
