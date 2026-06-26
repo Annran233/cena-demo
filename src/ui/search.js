@@ -58,7 +58,7 @@ function selectSuggest(item) {
   showToast('已定位到：' + item.name + '，周边厕所已更新');
 }
 
-function setSearchCenter(coords, name, zoom, ensureToilet) {
+function setSearchCenter(coords, name, zoom, ensureToilet, silent) {
   searchCenter = coords;
   searchCenterName = name;
   if (searchPinMarker) map.removeLayer(searchPinMarker);
@@ -96,8 +96,12 @@ function setSearchCenter(coords, name, zoom, ensureToilet) {
     showToast(`已加载${name}周边${nearby.length}个厕所`);
   }
 
+  /* silent=true（初始加载/刷新）：不自动展开列表，保持收起状态，用户手动上滑/点击 header 才展开
+     silent=false（用户主动搜索/长按/点击地图）：自动展开列表展示周边结果 */
   const list = document.getElementById('nearbyList');
-  list.classList.remove('is-collapsed');
+  if (!silent) {
+    list.classList.remove('is-collapsed');
+  }
 }
 
 const onSearchInput = debounce(() => {

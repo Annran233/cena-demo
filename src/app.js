@@ -82,9 +82,9 @@ map.addLayer(clusterGroup);
     return (isDesktop() ? COLLAPSED_H_DESKTOP : HEADER_H) + getSafeBottom();
   }
   function getExpandedH() {
-    /* snap 后的展开目标高度：移动端 70vh（约 5-6 条卡片，保留 30% 地图可见），
+    /* snap 后的展开目标高度：移动端 60vh（约 4-5 条卡片，保留 40% 地图可见），
        桌面端 50vh（侧边浮出列表，高度足够） */
-    const vh = isDesktop() ? 50 : 70;
+    const vh = isDesktop() ? 50 : 60;
     return Math.floor(window.innerHeight * vh / 100);
   }
   function getCurrentH() {
@@ -687,8 +687,8 @@ loadTagSupplements();
 loadDescSupplements();
 // 位置固定为海港公园
 window._hasGpsFix = true;
-// 以海港公园为中心拉取周边厕所
-setSearchCenter(CENTER, '海港公园', 15);
+// 以海港公园为中心拉取周边厕所（silent=true：初始加载不自动展开列表）
+setSearchCenter(CENTER, '海港公园', 15, null, true);
 setTimeout(() => map.invalidateSize(), 200);
 
 /* 首次访问提示图例含义（localStorage 标记，仅显示一次） */

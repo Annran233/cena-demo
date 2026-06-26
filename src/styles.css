@@ -808,7 +808,7 @@ body.is-dragging-sheet .nav-bar {
   background: #ffffff;
   border-radius: var(--md-shape-xl) var(--md-shape-xl) 0 0;
   box-shadow: var(--shadow-xl);
-  max-height: 70vh; overflow-y: auto;  /* 限制列表高度，避免遮挡过多地图（与 JS snap 70vh 一致，避免 cleanup 跳跃） */
+  max-height: 60vh; overflow-y: auto;  /* 限制列表高度，避免遮挡过多地图（与 JS getExpandedH() 60vh 一致） */
   transition: max-height var(--md-dur-medium) var(--md-easing-standard);
   padding-bottom: var(--safe-bottom);
   overscroll-behavior: contain;
@@ -1646,7 +1646,7 @@ body.is-dragging-sheet .nav-bar {
   }
 
   /* --- NearbyList 移动端 --- */
-  .nearby-list { max-height: 70vh; }  /* 与 JS getExpandedH() 70vh 一致 */
+  .nearby-list { max-height: 60vh; }  /* 与 JS getExpandedH() 60vh 一致 */
   .nearby-list.is-collapsed { max-height: calc(56px + var(--safe-bottom)); }
   .nearby-list:not(.is-collapsed) .nearby-list__items {
     padding-bottom: calc(72px + var(--safe-bottom));
