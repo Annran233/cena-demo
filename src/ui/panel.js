@@ -505,7 +505,7 @@ function panToiletToVisibleArea(t) {
   const dy = targetY - currentPoint.y;
   if (isNaN(dx) || isNaN(dy)) return;
   if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
-    map.panBy(dx, dy, { animate: true, duration: 0.3 });
+    map.panBy([dx, dy], { animate: true, duration: 0.3 });
   }
 }
 
@@ -894,3 +894,6 @@ window.addEventListener('resize', updateNavBarPosition);
 
 // 暴露给 app.js 拖拽过程中同步调用（MutationObserver 是异步微任务，拖拽时需同步更新避免延迟）
 window.updateNavBarPosition = updateNavBarPosition;
+
+// 初始调用：页面加载时 nearby-list 默认展开，MutationObserver 不会触发初始状态
+updateNavBarPosition();
