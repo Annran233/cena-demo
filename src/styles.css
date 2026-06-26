@@ -711,7 +711,7 @@ html, body {
   left: 50%;
   transform: translateX(-50%);
   bottom: calc(56px + var(--safe-bottom) + 8px);
-  z-index: 1000;
+  z-index: 2200;            /* 高于 panel.is-expanded(2100)，确保详情面板展开时定位/图例按钮可见 */
   display: flex;
   align-items: center;
   gap: 0;
@@ -778,7 +778,7 @@ html, body {
   left: calc(50% + 26px);
   transform: translateX(-50%) translateY(8px);
   bottom: calc(56px + var(--safe-bottom) + 8px + 52px + 8px);
-  z-index: 1001;
+  z-index: 2201;            /* 高于 nav-bar(2200)，弹窗在按钮上方 */
   background: #ffffff;
   border-radius: var(--md-shape-lg);
   box-shadow: 0 4px 16px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.08);
