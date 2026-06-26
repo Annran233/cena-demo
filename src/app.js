@@ -136,9 +136,8 @@ map.addLayer(clusterGroup);
     // 拖拽时不限制上限，允许手指自由拉到任意高度，snap 后再设到目标高度
     const newH = Math.max(minH, startHeight + dy);
     setHeight(newH);
-    // 拖拽过程中同步联动 nav-bar 位置，并实时平移地图让关注点保持在卡片上方可见区
+    // 拖拽过程中只同步 nav-bar 位置（CSS 变量，轻量），不平移地图避免干扰 touch 事件
     if (window.updateNavBarPosition) window.updateNavBarPosition();
-    if (window.panToVisibleArea) window.panToVisibleArea(null, false);
   }
   function onEnd(e) {
     if (!pendingDrag && !isDragging) return;
@@ -526,9 +525,8 @@ document.getElementById('addBtn').addEventListener('click', () => {
       _currentY = offsetY;
       if (dt > 0) _velocity = (point.clientY - _lastY) / dt;
       panel.style.transform = `translateY(${_currentY}px)`;
-      // 拖拽过程中同步联动 nav-bar 位置，并实时平移地图让 POI 保持在卡片上方可见区
+      // 拖拽过程中只同步 nav-bar 位置，不平移地图避免干扰 touch 事件
       if (window.updateNavBarPosition) window.updateNavBarPosition();
-      if (window.panToVisibleArea) window.panToVisibleArea(null, false);
     }
 
     _lastX = point.clientX;

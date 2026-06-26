@@ -957,27 +957,25 @@ document.getElementById('nearbyList').addEventListener('transitionend', (e) => {
 // 窗口尺寸变化时重算（如旋转屏幕）
 window.addEventListener('resize', updateNavBarPosition);
 
-/* ============ snap 过渡期间持续同步 nav-bar 位置 + 地图平移 ============ */
-/* 列表/面板 snap 动画期间，用 rAF 循环每帧更新 CSS 变量和地图位置，
+/* ============ snap 过渡期间持续同步 nav-bar 位置 ============ */
+/* 列表/面板 snap 动画期间，用 rAF 循环每帧更新 CSS 变量，
    同时禁用 nav-bar 自身的 bottom transition，避免 nav-bar 慢半拍。
-   duration 后自动停止循环并恢复 transition。 */
+   地图平移在过渡结束后做一次带动画的 pan，不在每帧调用避免干扰。 */
 let _navSyncRafId = null;
 window.syncNavBarDuringTransition = function(duration) {
-  if (window.innerWidth >= 768) return; // 桌面端不联动
+  if (window.innerWidth >= 768) return;
   document.body.classList.add('is-dragging-sheet');
   if (_navSyncRafId) cancelAnimationFrame(_navSyncRafId);
   const start = performance.now();
   function tick() {
     updateNavBarPosition();
-    // snap 过渡期间持续平移地图，让关注点跟随卡片高度变化保持可见（跟手无动画）
-    if (window.panToVisibleArea) panToVisibleArea(null, false);
     if (performance.now() - start < duration) {
       _navSyncRafId = requestAnimationFrame(tick);
     } else {
       _navSyncRafId = null;
       document.body.classList.remove('is-dragging-sheet');
       updateNavBarPosition();
-      // 过渡结束后做一次带动画的 pan，确保最终位置准确
+      // 过渡结束后做一次带动画的地图平移，让关注点移到卡片上方可见区
       if (window.panToVisibleArea) panToVisibleArea(null, true);
     }
   }
