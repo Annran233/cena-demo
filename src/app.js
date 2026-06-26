@@ -364,8 +364,15 @@ document.getElementById('relocBtn').addEventListener('click', () => {
   showToast('已定位到海港公园');
 });
 
-// 上报新厕所按钮
-document.getElementById('addBtn').addEventListener('click', openAddToiletPanel);
+// 上报新厕所按钮：toggle 行为——首次点击打开上报面板，再次点击（上报面板已打开）收起面板
+// 判断依据：pickPinMarker 存在说明处于上报拾取模式（面板关闭时 clearPickMode 会清空它）
+document.getElementById('addBtn').addEventListener('click', () => {
+  if (pickPinMarker) {
+    closePanel();
+  } else {
+    openAddToiletPanel();
+  }
+});
 
 /* ============ Panel Drag Handle（MD3 Bottom Sheet / Side Sheet 拖拽） ============ */
 (function initPanelDrag() {
