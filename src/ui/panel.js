@@ -933,7 +933,20 @@ function updateNavBarPosition() {
 
   // nav-bar 放在 Sheet 顶部上方 8px 间距
   const visibleHeight = window.innerHeight - top;
-  document.documentElement.style.setProperty('--nav-bar-bottom', `${visibleHeight + 8}px`);
+  const desiredBottom = visibleHeight + 8;
+  // 防穿模：nav-bar 顶部不能超过 topbar 底部，否则会盖住搜索栏
+  const navBarEl = document.querySelector('.nav-bar');
+  const navBarH = navBarEl ? navBarEl.getBoundingClientRect().height : 0;
+  const topbarEl = document.querySelector('.topbar');
+  const topbarBottom = topbarEl ? topbarEl.getBoundingClientRect().bottom : 0;
+  const maxBottom = window.innerHeight - topbarBottom - navBarH - 8;
+  if (maxBottom > 0) {
+    // 有空间：clamp 到不超过 topbar 底部
+    document.documentElement.style.setProperty('--nav-bar-bottom', `${Math.min(desiredBottom, maxBottom)}px`);
+  } else {
+    // 空间不足（列表全展开）：nav-bar 放到屏幕底部，被列表遮住（z-index 900 < 999）
+    document.documentElement.style.setProperty('--nav-bar-bottom', `0px`);
+  }
 }
 
 // 监听 panel 和 nearbyList 的 class/style 变化（覆盖 setSnap、openPanel、closePanel、列表展开/收起等）
