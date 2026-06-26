@@ -52,12 +52,20 @@ map.addLayer(clusterGroup);
 (function initSheetDrag() {
   const list = document.getElementById('nearbyList');
   const header = document.getElementById('nearbyHeader');
-  let startY = 0;
-  let startHeight = 0;
-  let isDragging = false;
-  let moved = false;
+  let startY = 0;             // 拖拽起点 Y 坐标
+  let startHeight = 0;        // 拖拽起点时列表高度
+  let isDragging = false;     // 是否处于拖拽中
+  let moved = false;          // 是否发生过有效移动（用于抑制拖拽后合成的 click 误触）
+  // 速度采样：用于快速 fling 时的 snap 判定，避免仅按位置 snap 导致快速滑动收不拢/展不开
+  let lastY = 0;              // 上一次 move 采样的 Y 坐标
+  let lastTime = 0;           // 上一次 move 采样的时间戳（ms）
+  let velocity = 0;           // 最近一次 move 的瞬时速度（px/ms，正值=手指上移=展开方向）
   const HEADER_H = 56;
   const COLLAPSED_H_DESKTOP = 48;
+  // 速度阈值（px/ms）：超过该值视为快速 fling，按方向 snap 而非按位置 snap
+  const FLING_VELOCITY = 0.7;
+  // move 采样有效性窗口（ms）：超过该时长认为速度已过期（事件丢失时避免用陈旧速度误判 snap）
+  const VELOCITY_FRESH_MS = 100;
 
   function isDesktop() {
     return window.innerWidth >= 768;
@@ -85,6 +93,10 @@ map.addLayer(clusterGroup);
     moved = false;
     startY = y;
     startHeight = getCurrentH();
+    // 重置速度采样，避免上一次拖拽残留速度影响本次 fling 判定
+    lastY = y;
+    lastTime = performance.now();
+    velocity = 0;
     list.classList.add('is-dragging');
     list.classList.remove('is-collapsed');
     document.body.classList.add('is-dragging-sheet'); // 禁用 nav-bar bottom 过渡，确保跟手
@@ -95,7 +107,14 @@ map.addLayer(clusterGroup);
     const dy = startY - y;
     const minH = getCollapsedH();
     const newH = Math.max(minH, Math.min(getExpandedH(), startHeight + dy));
-    if (Math.abs(dy) > 4) moved = true;
+    // 计算瞬时速度：上一次采样到本次采样之间的位移/时间，正值表示手指上移（展开方向）
+    const now = performance.now();
+    const dt = now - lastTime;
+    if (dt > 0) velocity = (lastY - y) / dt;
+    lastY = y;
+    lastTime = now;
+    // 有效移动判定：位移超阈值，或速度已达 fling 量级（快速短距滑动也视为拖拽，抑制 click 误触）
+    if (Math.abs(dy) > 4 || Math.abs(velocity) > FLING_VELOCITY) moved = true;
     setHeight(newH);
     // 拖拽过程中同步联动 nav-bar 位置
     if (window.updateNavBarPosition) window.updateNavBarPosition();
@@ -103,17 +122,28 @@ map.addLayer(clusterGroup);
   function onEnd() {
     if (!isDragging) return;
     isDragging = false;
-    list.classList.remove('is-dragging');
-    document.body.classList.remove('is-dragging-sheet'); // 恢复 nav-bar bottom 过渡
-    list.style.maxHeight = '';
+    // 关键：先读取拖拽终止时的实际高度用于 snap 判定，此时 inline maxHeight 仍为拖拽值，
+    // 避免先清空 maxHeight 导致高度回到 CSS 默认值（75vh）而误判 snap 方向
     const h = getCurrentH();
     const expandedH = getExpandedH();
     const collapsedH = getCollapsedH();
-    if (h < (collapsedH + expandedH) / 2) {
-      list.classList.add('is-collapsed');
+    // 清理拖拽状态：先移除 is-dragging（恢复 transition），再清空 inline maxHeight 触发平滑过渡
+    list.classList.remove('is-dragging');
+    document.body.classList.remove('is-dragging-sheet'); // 恢复 nav-bar bottom 过渡
+    list.style.maxHeight = '';
+    // snap 判定：快速 fling 优先按方向收起/展开，慢速拖拽按位置阈值 snap
+    const flingFresh = (performance.now() - lastTime) < VELOCITY_FRESH_MS; // 速度采样是否仍在有效窗口内
+    if (flingFresh && velocity > FLING_VELOCITY) {
+      list.classList.remove('is-collapsed'); // 快速向上滑 → 展开
+    } else if (flingFresh && velocity < -FLING_VELOCITY) {
+      list.classList.add('is-collapsed');    // 快速向下滑 → 收起
+    } else if (h < (collapsedH + expandedH) / 2) {
+      list.classList.add('is-collapsed');    // 位置低于中点 → 收起
     } else {
-      list.classList.remove('is-collapsed');
+      list.classList.remove('is-collapsed'); // 位置高于中点 → 展开
     }
+    // snap 结束后同步联动一次 nav-bar，确保位置与最终状态一致（MutationObserver 是异步微任务，快速滑动时补一次同步）
+    if (window.updateNavBarPosition) window.updateNavBarPosition();
   }
 
   header.addEventListener('touchstart', (e) => {
