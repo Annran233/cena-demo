@@ -82,7 +82,7 @@ map.addLayer(clusterGroup);
     return (isDesktop() ? COLLAPSED_H_DESKTOP : HEADER_H) + getSafeBottom();
   }
   function getExpandedH() {
-    const vh = isDesktop() ? 40 : 40;  /* 展开40vh，约半屏不到，保留地图可见区域 */
+    const vh = isDesktop() ? 50 : 50;  /* 展开50vh=半屏，snap 后的目标高度 */
     return Math.floor(window.innerHeight * vh / 100);
   }
   function getCurrentH() {
@@ -131,7 +131,8 @@ map.addLayer(clusterGroup);
       activateDrag();
     }
     const minH = getCollapsedH();
-    const newH = Math.max(minH, Math.min(getExpandedH(), startHeight + dy));
+    // 拖拽时不限制上限，允许手指自由拉到任意高度，snap 后再设到目标高度
+    const newH = Math.max(minH, startHeight + dy);
     setHeight(newH);
     // 拖拽过程中同步联动 nav-bar 位置
     if (window.updateNavBarPosition) window.updateNavBarPosition();
