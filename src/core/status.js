@@ -6,6 +6,7 @@
 const STATUS_MAP = {
   open:    { label: '开放中', cls: 'status-open',    emoji: '🟢' },
   locked:  { label: '已锁门', cls: 'status-locked',  emoji: '🔴' },
+  closed:  { label: '暂停营业', cls: 'status-locked', emoji: '🔴' },
   repair:  { label: '维修中', cls: 'status-repair',  emoji: '🟠' },
   removed: { label: '已拆除', cls: 'status-removed', emoji: '⚫' },
   unknown: { label: '未知',   cls: 'status-unknown', emoji: '⚪' }
@@ -71,8 +72,8 @@ function markerClass(t) {
     if (tier === 'suspected') return 'uncertain';  // 单人疑似 → 半透明红
     return 'gray';                                  // 超期待复核 → 灰
   }
-  // 锁门/维修 → 红（优先判断，不被 pointTier 覆盖）
-  if (t.status === 'locked' || t.status === 'repair') return 'red';
+  // 锁门/暂停营业/维修 → 红（优先判断，不被 pointTier 覆盖）
+  if (t.status === 'locked' || t.status === 'closed' || t.status === 'repair') return 'red';
   // 开放中：用户众包相关点位（user / amap+user）按真伪分层映射颜色
   // 纯地图来源（amap / amap-live）且无用户确认记录的默认绿色
   if (t.source === 'user' || t.source === 'amap+user') {
@@ -122,5 +123,5 @@ function statusMeta(t) {
     const days = daysSince(t.last_recovery_report_time);
     return { label: '开放待复核', cls: 'status-unknown', emoji: '⚪', sub: '仅' + rc + '人复核·' + days + '天前·已降级' };
   }
-  return STATUS_MAP[t.status];
+  return STATUS_MAP[t.status] || STATUS_MAP.unknown;
 }

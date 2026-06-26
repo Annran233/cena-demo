@@ -25,7 +25,7 @@ function renderNearbyList() {
     const t = item.t;
     const d = formatDist(item.dist);
     const cls = markerClass(t);
-    const numCls = cls; // 直接使用语义类名（green/red/uncertain/gray）
+    const numCls = cls;
     const subParts = [];
     if (t.source === 'amap-live') {
       subParts.push('🟣 实时');
@@ -36,6 +36,7 @@ function renderNearbyList() {
     if (t.accessible) subParts.push('♿');
     if (t.family) subParts.push('👨‍👩‍👧');
     if (t.water) subParts.push('🚐');
+    const distText = d.text.replace(/([0-9.]+)(.*)/, '<span class="dist-num">$1</span>$2');
     return `
       <div class="nearby-item" data-id="${t.id}">
         <div class="nearby-item__num ${numCls}">${idx + 1}</div>
@@ -44,7 +45,7 @@ function renderNearbyList() {
           ${t.desc ? `<div class="nearby-item__desc">${t.desc}</div>` : ''}
           <div class="nearby-item__sub">${subParts.join(' · ')}</div>
         </div>
-        <div class="nearby-item__dist">${d.text}<br><span class="nearby-item__walk">${d.walk}</span></div>
+        <div class="nearby-item__dist">${distText}<span class="nearby-item__walk">${d.walk}</span></div>
       </div>
     `;
   }).join('');
@@ -57,7 +58,6 @@ function renderNearbyList() {
         openPanel(t);
         const list = document.getElementById('nearbyList');
         list.classList.add('is-collapsed');
-        document.getElementById('nearbyToggle').textContent = '展开 ▼';
       }
     });
   });
@@ -66,13 +66,13 @@ function renderNearbyList() {
 function toggleNearbyList() {
   const list = document.getElementById('nearbyList');
   list.classList.toggle('is-collapsed');
-  const toggle = document.getElementById('nearbyToggle');
-  toggle.textContent = list.classList.contains('is-collapsed') ? '展开 ▼' : '收起 ▲';
+}
+
+function expandNearbyList() {
+  document.getElementById('nearbyList').classList.remove('is-collapsed');
 }
 
 /* 收起周边列表（移动端点击 marker 时调用，列表收到底部不遮挡地图） */
 function collapseNearbyList() {
-  const list = document.getElementById('nearbyList');
-  list.classList.add('is-collapsed');
-  document.getElementById('nearbyToggle').textContent = '展开 ▼';
+  document.getElementById('nearbyList').classList.add('is-collapsed');
 }

@@ -48,7 +48,96 @@ clusterGroup = L.markerClusterGroup({
 map.addLayer(clusterGroup);
 
 /* ============ 事件绑定 ============ */
-document.querySelector('.nearby-list .nearby-list__header').addEventListener('click', toggleNearbyList);
+/* Bottom Sheet 拖拽交互：支持上拉展开、下拉收起，替换展开/收起按钮 */
+(function initSheetDrag() {
+  const list = document.getElementById('nearbyList');
+  const header = document.getElementById('nearbyHeader');
+  let startY = 0;
+  let startHeight = 0;
+  let isDragging = false;
+  let moved = false;
+  const HEADER_H = 56;
+  const COLLAPSED_H_DESKTOP = 48;
+
+  function isDesktop() {
+    return window.innerWidth >= 768;
+  }
+  function getSafeBottom() {
+    if (isDesktop()) return 0;
+    const val = getComputedStyle(document.documentElement).getPropertyValue('--safe-bottom').trim();
+    return parseFloat(val) || 0;
+  }
+  function getCollapsedH() {
+    return (isDesktop() ? COLLAPSED_H_DESKTOP : HEADER_H) + getSafeBottom();
+  }
+  function getExpandedH() {
+    const vh = isDesktop() ? 50 : 75;
+    return Math.floor(window.innerHeight * vh / 100);
+  }
+  function getCurrentH() {
+    return list.getBoundingClientRect().height;
+  }
+  function setHeight(px) {
+    list.style.maxHeight = px + 'px';
+  }
+  function onStart(y) {
+    isDragging = true;
+    moved = false;
+    startY = y;
+    startHeight = getCurrentH();
+    list.classList.add('is-dragging');
+    list.classList.remove('is-collapsed');
+    setHeight(startHeight);
+  }
+  function onMove(y) {
+    if (!isDragging) return;
+    const dy = startY - y;
+    const minH = getCollapsedH();
+    const newH = Math.max(minH, Math.min(getExpandedH(), startHeight + dy));
+    if (Math.abs(dy) > 4) moved = true;
+    setHeight(newH);
+  }
+  function onEnd() {
+    if (!isDragging) return;
+    isDragging = false;
+    list.classList.remove('is-dragging');
+    list.style.maxHeight = '';
+    const h = getCurrentH();
+    const expandedH = getExpandedH();
+    const collapsedH = getCollapsedH();
+    if (h < (collapsedH + expandedH) / 2) {
+      list.classList.add('is-collapsed');
+    } else {
+      list.classList.remove('is-collapsed');
+    }
+  }
+
+  header.addEventListener('touchstart', (e) => {
+    onStart(e.touches[0].clientY);
+  }, { passive: true });
+  header.addEventListener('touchmove', (e) => {
+    onMove(e.touches[0].clientY);
+    if (isDragging) e.preventDefault();
+  }, { passive: false });
+  header.addEventListener('touchend', onEnd);
+  header.addEventListener('touchcancel', onEnd);
+
+  header.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    onStart(e.clientY);
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    onMove(e.clientY);
+  });
+  document.addEventListener('mouseup', onEnd);
+
+  header.addEventListener('click', (e) => {
+    if (moved) { e.preventDefault(); e.stopPropagation(); moved = false; return; }
+    toggleNearbyList();
+  });
+})();
 
 /* 防拖动误触：Leaflet 在拖动地图后有时仍会触发 click，用 dragstart/dragend 标记 */
 let _mapDragged = false;
@@ -460,19 +549,21 @@ setTimeout(() => map.invalidateSize(), 200);
 /* 首次访问提示图例含义（localStorage 标记，仅显示一次） */
 setTimeout(() => {
   if (!localStorage.getItem('hasSeenLegend')) {
-    showToast('🟢能用 🔴不能用 ⚫不确定，点击左下图例查看详情');
+    showToast('🟢能用 🔴不能用 ⚪不确定，点击底部图例按钮查看');
     localStorage.setItem('hasSeenLegend', '1');
   }
 }, 2000);
 
-/* 图例点击展开/收起（移动端可折叠，桌面端常驻无需切换） */
-document.getElementById('legend').addEventListener('click', () => {
-  document.getElementById('legend').classList.toggle('is-expanded');
+/* 底部胶囊条：图例按钮点击弹出/关闭图例浮层 */
+const legendPopup = document.getElementById('legendPopup');
+document.getElementById('navLegendBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  legendPopup.classList.toggle('is-show');
 });
-document.getElementById('legend').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' || e.key === ' ') {
-    e.preventDefault();
-    document.getElementById('legend').classList.toggle('is-expanded');
+/* 点击外部关闭图例浮层 */
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.legend-popup') && !e.target.closest('#navLegendBtn')) {
+    legendPopup.classList.remove('is-show');
   }
 });
 

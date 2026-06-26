@@ -98,7 +98,6 @@ function setSearchCenter(coords, name, zoom, ensureToilet) {
 
   const list = document.getElementById('nearbyList');
   list.classList.remove('is-collapsed');
-  document.getElementById('nearbyToggle').textContent = '收起 ▲';
 }
 
 const onSearchInput = debounce(() => {

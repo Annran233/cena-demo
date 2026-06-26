@@ -209,6 +209,7 @@ html, body {
   height: 100vh;
   height: 100dvh;  /* 优先使用 dvh，小程序需降级为 100vh */
   overflow: hidden;
+  position: relative;
 }
 
 /* ============ 4. TopBar 顶部栏（两行结构：标题行 + 搜索行） ============ */
@@ -700,7 +701,7 @@ html, body {
   left: 50%;
   transform: translateX(-50%);
   bottom: calc(56px + var(--safe-bottom) + 8px);
-  z-index: 500;
+  z-index: 1000;
   display: flex;
   align-items: center;
   gap: 0;
@@ -708,8 +709,6 @@ html, body {
   border-radius: var(--md-shape-full);
   box-shadow: 0 4px 16px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.08);
   padding: 4px;
-  transition: bottom var(--md-dur-medium) var(--md-easing-standard),
-              transform var(--md-dur-medium) var(--md-easing-standard);
 }
 .nav-bar__btn {
   width: 48px;
@@ -752,10 +751,6 @@ html, body {
   border-radius: 50%;
   flex-shrink: 0;
 }
-/* nearby-list 展开时，nav-bar 移到列表顶部上方 */
-.nearby-list:not(.is-collapsed) ~ .nav-bar {
-  bottom: calc(45vh + 8px);
-}
 /* 定位中状态：旋转图标 + 禁止点击 */
 .nav-bar__btn.is-locating { pointer-events: none; opacity: 0.7; }
 .nav-bar__btn.is-locating .reloc-icon {
@@ -772,8 +767,8 @@ html, body {
   position: absolute;
   left: calc(50% + 26px);
   transform: translateX(-50%) translateY(8px);
-  bottom: calc(56px + var(--safe-bottom) + 8px + 52px + 4px);
-  z-index: 501;
+  bottom: calc(56px + var(--safe-bottom) + 8px + 52px + 8px);
+  z-index: 1001;
   background: #ffffff;
   border-radius: var(--md-shape-lg);
   box-shadow: 0 4px 16px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.08);
@@ -781,12 +776,16 @@ html, body {
   font-size: var(--fs-sm);
   line-height: 2;
   opacity: 0;
+  visibility: hidden;
   pointer-events: none;
-  transition: all var(--md-dur-short) var(--md-easing-standard);
+  transition: opacity var(--md-dur-short) var(--md-easing-standard),
+              transform var(--md-dur-short) var(--md-easing-standard),
+              visibility var(--md-dur-short);
   white-space: nowrap;
 }
 .legend-popup.is-show {
   opacity: 1;
+  visibility: visible;
   pointer-events: auto;
   transform: translateX(-50%) translateY(0);
 }
@@ -812,10 +811,6 @@ html, body {
   background: #ffffff;
   box-shadow: 2px 2px 4px rgba(0,0,0,0.06);
 }
-/* nearby-list 展开时，legend-popup 跟着上移 */
-.nearby-list:not(.is-collapsed) ~ .legend-popup {
-  bottom: calc(45vh + 8px + 52px + 4px);
-}
 
 /* ============ 12. NearbyList 周边列表（纯白 Bottom Sheet，浅灰胶囊列表项） ============ */
 /* 小程序映射：scroll-view + list 组件 */
@@ -824,35 +819,53 @@ html, body {
   background: #ffffff;
   border-radius: var(--md-shape-xl) var(--md-shape-xl) 0 0;
   box-shadow: var(--shadow-xl);
-  max-height: 45vh; overflow-y: auto;
+  max-height: 75vh; overflow-y: auto;
   transition: max-height var(--md-dur-medium) var(--md-easing-standard);
   padding-bottom: var(--safe-bottom);
   overscroll-behavior: contain;
 }
 .nearby-list.is-collapsed { max-height: calc(56px + var(--safe-bottom)); overflow: hidden; }
+.nearby-list.is-dragging { transition: none !important; overflow-y: hidden; }
 
 /* 列表头部（sticky，纯白背景） */
 .nearby-list__header {
   display: flex; align-items: center; justify-content: space-between;
   padding: var(--sp-3) var(--sp-4);
+  padding-top: calc(var(--sp-2) + 12px);
   background: #ffffff;
   border-radius: var(--md-shape-xl) var(--md-shape-xl) 0 0;
-  cursor: pointer; user-select: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
   z-index: 2;
   position: sticky; top: 0;
+  touch-action: none;
 }
-/* 拖拽指示条（移动端显示，桌面端在媒体查询中处理） */
-.nearby-list__header::after {
-  content: '';
+.nearby-list__header:active { cursor: grabbing; }
+
+/* 拖拽指示条 */
+.nearby-list__drag-handle {
   position: absolute;
-  top: 6px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 32px;
+  top: 0; left: 0; right: 0;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+}
+.nearby-list__drag-handle::after {
+  content: '';
+  width: 36px;
   height: 4px;
   background: var(--md-outline-variant);
   border-radius: 2px;
-  pointer-events: none;
+  opacity: 0.6;
+  transition: opacity var(--md-dur-short) var(--md-easing-standard);
+}
+.nearby-list__header:hover .nearby-list__drag-handle::after,
+.nearby-list.is-dragging .nearby-list__drag-handle::after {
+  opacity: 1;
+  background: var(--md-outline);
 }
 /* 标签容器：标题 + 副标题 */
 .nearby-list__label {
@@ -870,7 +883,6 @@ html, body {
   color: var(--text-hint);
   font-weight: 400;
 }
-.nearby-list__toggle { font-size: var(--fs-sm); color: var(--md-primary); font-weight: 500; }
 .nearby-list.is-collapsed .nearby-list__items { display: none; }
 
 /* 列表项容器：浅灰背景衬托白色胶囊条目 */
@@ -1632,21 +1644,16 @@ html, body {
     width: 52px;
     height: 48px;
   }
-  /* nearby-list 展开时，nav-bar 跟随列表顶部 */
-  .nearby-list:not(.is-collapsed) ~ .nav-bar {
-    bottom: calc(45vh + 8px);
-  }
-  /* nearby-list 展开时，legend-popup 跟随上移 */
-  .nearby-list:not(.is-collapsed) ~ .legend-popup {
-    bottom: calc(45vh + 8px + 52px + 4px + 4px);
-  }
   .legend-popup {
-    bottom: calc(56px + var(--safe-bottom) + 8px + 52px + 4px + 4px);
+    bottom: calc(56px + var(--safe-bottom) + 8px + 52px + 8px);
   }
 
   /* --- NearbyList 移动端 --- */
-  .nearby-list { max-height: 45vh; }
+  .nearby-list { max-height: 75vh; }
   .nearby-list.is-collapsed { max-height: calc(56px + var(--safe-bottom)); }
+  .nearby-list:not(.is-collapsed) .nearby-list__items {
+    padding-bottom: calc(72px + var(--safe-bottom));
+  }
   .nearby-list__header {
     padding-top: var(--sp-4);
   }
@@ -1730,8 +1737,14 @@ html, body {
   .nearby-list__header {
     border-radius: var(--md-shape-xl) var(--md-shape-xl) 0 0;
     padding-top: var(--sp-3);
+    cursor: pointer;
   }
   .nearby-list__header::after { display: none; }
+  .nearby-list__drag-handle { display: none; }
+  .nearby-list.is-collapsed {
+    max-height: 48px;
+    overflow: hidden;
+  }
   /* 桌面端 marker：30px 水滴形 */
   .toilet-marker {
     width: 30px; height: 30px;
@@ -1760,9 +1773,6 @@ html, body {
     border-radius: 50%;
   }
   /* 桌面端不需要兄弟选择器控制 nav-bar 位置 */
-  .nearby-list:not(.is-collapsed) ~ .nav-bar {
-    bottom: var(--sp-5);
-  }
   /* LegendPopup 桌面端：默认隐藏，点击按钮才弹出，定位在图例按钮上方 */
   .legend-popup {
     left: auto;
@@ -1771,10 +1781,12 @@ html, body {
     top: auto;
     transform: translateY(8px);
     opacity: 0;
+    visibility: hidden;
     pointer-events: none;
   }
   .legend-popup.is-show {
     opacity: 1;
+    visibility: visible;
     pointer-events: auto;
     transform: translateY(0);
   }
@@ -1784,9 +1796,6 @@ html, body {
     right: 18px;
     bottom: -6px;
     transform: rotate(45deg);
-  }
-  .nearby-list:not(.is-collapsed) ~ .legend-popup {
-    bottom: var(--sp-5);
   }
 }
 

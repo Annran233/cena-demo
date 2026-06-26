@@ -489,15 +489,20 @@ function openPanel(t) {
 
 function panToiletToVisibleArea(t) {
   if (!t || !t.lat || !t.lng) return;
+  if (isNaN(t.lat) || isNaN(t.lng)) return;
   const panelEl = document.getElementById('panel');
   const mapSize = map.getSize();
+  if (!mapSize || !mapSize.x || !mapSize.y) return;
   const panelHeight = panelEl.offsetHeight || Math.round(mapSize.y * 0.4);
   const visibleHeight = mapSize.y - panelHeight;
+  if (visibleHeight <= 0) return;
   const targetY = Math.round(visibleHeight * 0.4);
   const targetX = Math.round(mapSize.x / 2);
   const currentPoint = map.latLngToContainerPoint([t.lat, t.lng]);
+  if (!currentPoint || isNaN(currentPoint.x) || isNaN(currentPoint.y)) return;
   const dx = targetX - currentPoint.x;
   const dy = targetY - currentPoint.y;
+  if (isNaN(dx) || isNaN(dy)) return;
   if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
     map.panBy(dx, dy, { animate: true, duration: 0.3 });
   }
