@@ -96,6 +96,8 @@ map.addLayer(clusterGroup);
     const newH = Math.max(minH, Math.min(getExpandedH(), startHeight + dy));
     if (Math.abs(dy) > 4) moved = true;
     setHeight(newH);
+    // 拖拽过程中同步联动 nav-bar 位置
+    if (window.updateNavBarPosition) window.updateNavBarPosition();
   }
   function onEnd() {
     if (!isDragging) return;

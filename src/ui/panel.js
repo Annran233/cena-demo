@@ -845,36 +845,49 @@ window.panelHeightChanged = function() {
   });
 };
 
-/* ============ nav-bar 联动面板高度 ============ */
-/* 面板打开/展开/拖拽时，nav-bar 上浮到面板顶部上方，避免遮挡卡片内容
+/* ============ nav-bar 联动底部 Sheet 高度 ============ */
+/* 面板 / 周边列表 打开或展开时，nav-bar 上浮到 Sheet 顶部上方，避免遮挡内容
    实现：通过 CSS 变量 --nav-bar-bottom 统一控制 nav-bar 和 legend-popup 的 bottom
-   覆盖时机：MutationObserver 监听 panel class/style 变化 + 拖拽 move 中同步调用 */
+   覆盖时机：MutationObserver 监听 panel + nearbyList class/style 变化，
+            app.js 拖拽 move 中同步调用 */
 function updateNavBarPosition() {
   // 桌面端 nav-bar 在右下角，不联动
   if (window.innerWidth >= 768) return;
   const panel = document.getElementById('panel');
-  if (!panel) return;
+  const list = document.getElementById('nearbyList');
+  if (!panel || !list) return;
 
-  // 面板关闭：清除 inline 变量，回到 CSS 默认值
-  if (!panel.classList.contains('is-show')) {
+  // panel 显示且不被 list 完全覆盖时参与计算
+  // nearby-list 折叠时 is-collapsed，其高度约为 header + safe-bottom，仍可能占用底部空间
+  const panelVisible = panel.classList.contains('is-show');
+  const listCollapsed = list.classList.contains('is-collapsed');
+
+  // 关闭所有 Sheet：回到默认底部位置
+  if (!panelVisible && listCollapsed) {
     document.documentElement.style.removeProperty('--nav-bar-bottom');
     return;
   }
 
-  // 计算面板可见高度（面板顶部到视口底部的距离）
-  // panel 用 transform: translateY 控制显隐，getBoundingClientRect 反映真实可见位置
-  const rect = panel.getBoundingClientRect();
-  const visibleHeight = window.innerHeight - rect.top;
-  // nav-bar 放在面板顶部上方 8px 间距
+  // 取两个 Sheet 中更靠近视口顶部（top 更小）的那个作为 nav-bar 上浮基准
+  let top = window.innerHeight;
+  if (panelVisible) {
+    const pr = panel.getBoundingClientRect();
+    if (pr.top < top) top = pr.top;
+  }
+  if (!listCollapsed) {
+    const lr = list.getBoundingClientRect();
+    if (lr.top < top) top = lr.top;
+  }
+
+  // nav-bar 放在 Sheet 顶部上方 8px 间距
+  const visibleHeight = window.innerHeight - top;
   document.documentElement.style.setProperty('--nav-bar-bottom', `${visibleHeight + 8}px`);
 }
 
-// 监听 panel class/style 变化（覆盖 setSnap、openPanel、closePanel 等所有状态切换）
-const _panelObserver = new MutationObserver(() => updateNavBarPosition());
-_panelObserver.observe(document.getElementById('panel'), {
-  attributes: true,
-  attributeFilter: ['class', 'style']
-});
+// 监听 panel 和 nearbyList 的 class/style 变化（覆盖 setSnap、openPanel、closePanel、列表展开/收起等）
+const _sheetObserver = new MutationObserver(() => updateNavBarPosition());
+_sheetObserver.observe(document.getElementById('panel'), { attributes: true, attributeFilter: ['class', 'style'] });
+_sheetObserver.observe(document.getElementById('nearbyList'), { attributes: true, attributeFilter: ['class', 'style'] });
 
 // 窗口尺寸变化时重算（如旋转屏幕）
 window.addEventListener('resize', updateNavBarPosition);
