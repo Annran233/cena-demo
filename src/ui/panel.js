@@ -29,6 +29,7 @@ function renderSupplementBtn(t, tag, emoji, label) {
 
 function openPanel(t) {
   currentToilet = t;
+  highlightMarker(t.id); // 高亮选中态 marker
   const body = document.getElementById('panelBody');
   // 面板打开时隐藏周边列表（避免两个 Bottom Sheet 重叠）
   collapseNearbyList();
@@ -511,6 +512,7 @@ function panToiletToVisibleArea(t) {
 function closePanel() {
   // 移动端关闭面板时同步清理导航 ActionSheet，避免残留
   closeNavActionSheet();
+  clearMarkerHighlight(); // 清除选中高亮
   const panel = document.getElementById('panel');
   if (window.innerWidth < 768 && window._closePanelMobile) {
     window._closePanelMobile();

@@ -7,6 +7,7 @@ let map, markers = [], currentFilter = 'all', liveToilets = [], liveToiletIdCoun
 let clusterGroup = null; // 聚合图层（低缩放级别时使用）
 let pickPinMarker = null; // 上报拾取图钉（可拖动）
 let pickMapClickHandler = null; // 拾取模式下地图点击 handler
+let selectedToiletId = null; // 当前选中厕所 ID（renderMarkers 后自动恢复高亮）
 
 function getAllToilets() {
   // 合并顺序：userToilets（持久化，最高优先级）→ liveToilets（实时搜索）→ MOCK_TOILETS
@@ -66,6 +67,39 @@ function clearMarkers() {
   markers.forEach(m => map.removeLayer(m));
   markers = [];
   if (clusterGroup) clusterGroup.clearLayers();
+}
+
+/* 高亮选中厕所的 marker：放大 + 白色脉冲光环，在密集 POI 中一眼可辨 */
+function highlightMarker(toiletId) {
+  selectedToiletId = toiletId;
+  applyHighlight();
+}
+
+/* 内部：将 is-selected class 应用到对应 marker DOM */
+function applyHighlight() {
+  // 先清除旧高亮
+  document.querySelectorAll('.toilet-marker.is-selected').forEach(el => {
+    el.classList.remove('is-selected');
+    const parent = el.closest('.leaflet-marker-icon');
+    if (parent) parent.style.zIndex = '';
+  });
+  if (!selectedToiletId) return;
+  // 遍历直显 marker（聚合态下 marker DOM 不存在，高亮无意义）
+  const target = markers.find(m => m._toiletId === selectedToiletId);
+  if (!target) return;
+  const el = target.getElement();
+  if (!el) return;
+  const dot = el.querySelector('.toilet-marker');
+  if (!dot) return;
+  dot.classList.add('is-selected');
+  // 提升 marker 层级，确保光环不被相邻 marker 遮挡
+  el.style.zIndex = 1000;
+}
+
+/* 清除选中高亮 */
+function clearMarkerHighlight() {
+  selectedToiletId = null;
+  applyHighlight();
 }
 
 /* 聚合图标：MD3 Badge 风格，根据聚合内点位主状态决定颜色，数量级决定尺寸 */
@@ -133,6 +167,7 @@ function renderMarkers() {
       popupAnchor: [0, -iconAnchor[1]]
     });
     const m = L.marker([t.lat, t.lng], { icon });
+    m._toiletId = t.id;  // 保存 toiletId 用于选中高亮查找
     m.on('click', () => {
       openPanel(t);
       collapseNearbyList(); // 移动端：点击 marker 收起列表，不遮挡地图
@@ -144,6 +179,8 @@ function renderMarkers() {
       markers.push(m);
     }
   });
+  // marker 重建后恢复选中态（setView/zoomend 触发的重渲染不丢失高亮）
+  applyHighlight();
 }
 
 /* ============ 上报拾取模式 ============ */
