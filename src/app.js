@@ -82,7 +82,9 @@ map.addLayer(clusterGroup);
     return (isDesktop() ? COLLAPSED_H_DESKTOP : HEADER_H) + getSafeBottom();
   }
   function getExpandedH() {
-    const vh = isDesktop() ? 50 : 50;  /* 展开50vh=半屏，snap 后的目标高度 */
+    /* snap 后的展开目标高度：移动端 70vh（约 5-6 条卡片，保留 30% 地图可见），
+       桌面端 50vh（侧边浮出列表，高度足够） */
+    const vh = isDesktop() ? 50 : 70;
     return Math.floor(window.innerHeight * vh / 100);
   }
   function getCurrentH() {
