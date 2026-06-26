@@ -2,15 +2,12 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <!-- viewport: 移动端适配 + 安全区域覆盖（刘海屏/底部安全区） -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <!-- PWA 基础 meta（复赛可扩展为完整 manifest） -->
-  <meta name="theme-color" content="#ffffff" />
+  <meta name="theme-color" content="#f3f4f6" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <title>厕哪 — 找公厕的说是</title>
 
-  <!-- Leaflet 地图库（初赛 Web，复赛换小程序原生 map 组件） -->
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -22,7 +19,6 @@
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
     crossorigin=""
   ></script>
-  <!-- 聚合插件：低缩放级别时 marker 聚合成数字气泡（技评§13.5） -->
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.css"
@@ -34,22 +30,20 @@
   </style>
 </head>
 <body>
-  <!--
-    App Shell 结构（小程序移植映射）：
-    #app          → 页面根容器（小程序 page）
-    .topbar       → 自定义导航栏（小程序 navigation-bar 组件）
-    #map          → 地图组件（小程序 map 组件）
-    .nearby-list  → 列表组件（小程序 scroll-view + list）
-    .panel        → 弹出面板（小程序 half-popup 组件）
-    .fab-*        → 浮动按钮（小程序 cover-view 按钮）
-  -->
   <div id="app">
 
-    <!-- ======== TopBar：搜索 + 筛选（内嵌） ======== -->
+    <!-- ======== TopBar：标题行 + 搜索行 ======== -->
     <header class="topbar" role="banner">
-      <div class="topbar__logo">厕哪<span class="topbar__logo-sub">找公厕的说是</span></div>
+      <div class="topbar__title-row">
+        <div class="topbar__brand">
+          <span class="topbar__brand-sub">找公厕</span>
+          <h1 class="topbar__brand-title">厕哪</h1>
+        </div>
+        <button class="topbar__add" id="addBtn" aria-label="上报新厕所">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
       <div class="search-wrap">
-        <!-- 筛选按钮（漏斗 icon，点击展开筛选下拉） -->
         <button class="search-wrap__filter" id="filterBtn" title="筛选" aria-label="筛选厕所类型" aria-haspopup="listbox">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
           <span class="search-wrap__filter-label" id="filterLabel">全部</span>
@@ -62,12 +56,9 @@
           autocomplete="off"
           aria-label="搜索地点"
         />
-        <!-- 搜索清除按钮（输入后显示） -->
         <button class="search-wrap__clear" id="searchClear" title="清除" aria-label="清除搜索内容">×</button>
         <button id="searchBtn" class="search-wrap__btn">搜索</button>
-        <!-- 搜索建议下拉 -->
         <div class="search-suggest" id="searchSuggest" role="listbox"></div>
-        <!-- 筛选下拉（从漏斗按钮向下弹出） -->
         <div class="filter-dropdown" id="filterDropdown" role="listbox" aria-label="厕所筛选">
           <div class="filter-dropdown__item is-active" data-filter="all" role="option">
             <span class="filter-dropdown__check">✓</span><span class="filter-dropdown__label">全部</span>
@@ -83,38 +74,41 @@
     <!-- ======== Map：地图容器 ======== -->
     <main id="map" role="application" aria-label="厕所地图"></main>
 
-    <!-- ======== NearbyList：周边推荐列表（移动端底部，拇指可达） ======== -->
+    <!-- ======== NearbyList：周边推荐列表 ======== -->
     <aside class="nearby-list is-collapsed" id="nearbyList" aria-label="周边厕所列表">
       <div class="nearby-list__header">
-        <span><b class="nearby-list__title" id="nearbyTitle">周边厕所</b> · 按距离推荐</span>
+        <span class="nearby-list__label"><b id="nearbyTitle">周边厕所</b><span class="nearby-list__sub"> · 按距离推荐</span></span>
         <span class="nearby-list__toggle" id="nearbyToggle">展开 ▼</span>
       </div>
       <div class="nearby-list__items" id="nearbyItems"></div>
     </aside>
 
-    <!-- ======== FAB：浮动操作按钮（移动端右下角拇指可达） ======== -->
-    <!-- 回到我的位置 -->
-    <button class="fab-reloc" id="relocBtn" title="定位到我的位置" aria-label="定位到我的位置"><svg class="reloc-icon" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg></button>
-    <!-- 上报新厕所 -->
-    <div class="fab-add" id="addBtn" title="上报新厕所" role="button" aria-label="上报新厕所">+</div>
+    <!-- ======== 底部悬浮胶囊操作条（定位 + 图例） ======== -->
+    <div class="nav-bar" id="navBar">
+      <button class="nav-bar__btn" id="relocBtn" aria-label="定位到海港公园">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3m10-10h-3M5 12H2"/></svg>
+      </button>
+      <button class="nav-bar__btn nav-bar__btn--legend" id="navLegendBtn" aria-label="颜色图例">
+        <span class="legend-dots">
+          <span class="legend-dots__dot" style="background:var(--c-ok)"></span>
+          <span class="legend-dots__dot" style="background:var(--c-fail)"></span>
+          <span class="legend-dots__dot" style="background:var(--c-stale)"></span>
+        </span>
+      </button>
+    </div>
 
-    <!-- ======== Legend：图例（3色语义，移动端可折叠，桌面端常驻） ======== -->
-    <div class="legend" id="legend" aria-label="颜色图例" role="button" tabindex="0">
-      <div class="legend__trigger" aria-hidden="true">
-        <span class="legend__dot" style="background:var(--c-ok)"></span>
-        <span class="legend__dot" style="background:var(--c-fail)"></span>
-        <span class="legend__dot" style="background:var(--c-uncertain)"></span>
-        <span class="legend__dot" style="background:var(--c-stale)"></span>
-      </div>
-      <div class="legend__body">
-        <div class="legend__row"><span class="legend__dot" style="background:var(--c-ok)"></span>能用</div>
-        <div class="legend__row"><span class="legend__dot" style="background:var(--c-fail)"></span>不能用</div>
-        <div class="legend__row"><span class="legend__dot" style="background:var(--c-uncertain)"></span>不确定</div>
-        <div class="legend__row"><span class="legend__dot" style="background:var(--c-stale)"></span>信息待复核</div>
+    <!-- ======== Legend 弹出（点击图例按钮展开） ======== -->
+    <div class="legend-popup" id="legendPopup" aria-label="颜色图例">
+      <div class="legend-popup__arrow"></div>
+      <div class="legend-popup__body">
+        <div class="legend-popup__row"><span class="legend-popup__dot" style="background:var(--c-ok)"></span>能用</div>
+        <div class="legend-popup__row"><span class="legend-popup__dot" style="background:var(--c-fail)"></span>不能用</div>
+        <div class="legend-popup__row"><span class="legend-popup__dot" style="background:var(--c-uncertain)"></span>不确定</div>
+        <div class="legend-popup__row"><span class="legend-popup__dot" style="background:var(--c-stale)"></span>信息待复核</div>
       </div>
     </div>
 
-    <!-- ======== Panel：详情面板（底部滑出，Google Bottom Sheet 风格） ======== -->
+    <!-- ======== Panel：详情面板 ======== -->
     <section class="panel" id="panel" aria-label="厕所详情">
       <div class="panel__handle"></div>
       <div class="panel__body" id="panelBody"></div>
@@ -122,7 +116,6 @@
 
   </div>
 
-  <!-- Toast 提示 -->
   <div class="toast" id="toast" role="alert" aria-live="polite"></div>
 
   <script>

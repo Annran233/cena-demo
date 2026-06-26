@@ -47,14 +47,14 @@
   --md-on-error-container: #410e0b;  /* 错误色容器上的文字 */
 
   /* --- MD3 Surface（表面色阶，从浅到深 5 级） --- */
-  --md-surface:                    #fdfcff;  /* 基础表面（页面背景） */
+  --md-surface:                    #f3f4f6;  /* 基础表面（页面背景，浅灰） */
   --md-on-surface:                 #1a1c1e;  /* 表面上的主文字 */
   --md-on-surface-variant:         #42474e;  /* 表面上的辅助文字 */
-  --md-surface-container-lowest:   #ffffff;  /* 最低层容器（纯白） */
-  --md-surface-container-low:      #f7f9fc;  /* 低层容器 */
-  --md-surface-container:          #f1f3f8;  /* 中层容器 */
-  --md-surface-container-high:     #ebeef3;  /* 高层容器 */
-  --md-surface-container-highest:  #e6e9ee;  /* 最高层容器 */
+  --md-surface-container-lowest:   #ffffff;  /* 最低层容器（纯白卡片） */
+  --md-surface-container-low:      #ffffff;  /* 低层容器（Bottom Sheet 纯白） */
+  --md-surface-container:          #f3f4f6;  /* 中层容器（搜索栏等浅灰） */
+  --md-surface-container-high:     #eeeeee;  /* 高层容器（搜索栏 focus 态） */
+  --md-surface-container-highest:  #e8eaed;  /* 最高层容器 */
 
   /* --- MD3 Outline（描边色） --- */
   --md-outline:         #73777f;  /* 标准描边 */
@@ -123,12 +123,13 @@
   --fs-lg:   17px;                      /* 17px — MD3 无精确对应，保持原值 */
   --fs-xl:   18px;                      /* 18px — MD3 无精确对应，保持原值 */
   --fs-2xl:  20px;                      /* 20px — MD3 无精确对应，保持原值 */
+  --fs-3xl:  32px;                      /* 32px — 大距离数字 */
 
   /* --- MD3 Shape（圆角体系） --- */
   --md-shape-xs:   4px;    /* 小组件圆角（Chip 等） */
-  --md-shape-sm:   8px;    /* 小卡片圆角 */
-  --md-shape-md:   12px;   /* 中卡片/FAB 圆角 */
-  --md-shape-lg:   16px;   /* 大卡片圆角 */
+  --md-shape-sm:   10px;   /* 小卡片圆角 */
+  --md-shape-md:   14px;   /* 中卡片/FAB 圆角 */
+  --md-shape-lg:   20px;   /* 大卡片圆角 */
   --md-shape-xl:   28px;   /* Bottom Sheet 圆角 */
   --md-shape-full: 999px;  /* 全圆角（按钮/搜索栏） */
 
@@ -192,7 +193,7 @@
 html, body {
   height: 100%;
   overflow: hidden;                     /* 防止页面整体滚动 */
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: "HarmonyOS Sans SC", "Source Han Sans SC", "PingFang SC", -apple-system, BlinkMacSystemFont, sans-serif;
   color: var(--md-on-surface);           /* 主文字色 */
   background: var(--md-surface);          /* 页面背景 */
   -webkit-tap-highlight-color: transparent;  /* 移除移动端点击高亮 */
@@ -210,61 +211,100 @@ html, body {
   overflow: hidden;
 }
 
-/* ============ 4. TopBar 顶部栏（MD3 Top App Bar） ============ */
+/* ============ 4. TopBar 顶部栏（两行结构：标题行 + 搜索行） ============ */
 /* 小程序映射：自定义导航栏组件 */
 .topbar {
   display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  padding: var(--sp-2) var(--sp-4);
-  padding-top: calc(var(--sp-2) + var(--safe-top));  /* 顶部安全区补偿 */
-  background: var(--md-surface-container);            /* MD3 略 elevated 表面 */
-  border-bottom: 1px solid var(--md-outline-variant); /* MD3 分割线 */
-  box-shadow: var(--md-elevation-1);                  /* MD3 Level 1 阴影 */
+  flex-direction: column;
+  padding: calc(var(--sp-2) + var(--safe-top)) var(--sp-4) var(--sp-2);
+  background: transparent;
   z-index: 2000;
   flex-shrink: 0;
   position: relative;
 }
-/* Logo 主文字 */
-.topbar__logo {
-  font-weight: 700;
-  font-size: var(--fs-lg);
-  white-space: nowrap;
-  flex-shrink: 0;
-  letter-spacing: -.2px;
-  color: var(--md-on-surface);  /* 主文字色 */
+/* 标题行：品牌 + 添加按钮 */
+.topbar__title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 0 var(--sp-1) var(--sp-2);
 }
-/* Logo 副标题 */
-.topbar__logo-sub {
-  font-size: var(--fs-xs);
-  color: var(--text-hint);  /* 提示文字色 */
+/* 品牌区域：小字 + 大字 */
+.topbar__brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+/* 品牌副标题："找公厕"小字 */
+.topbar__brand-sub {
+  font-size: var(--fs-sm);
+  color: var(--text-hint);
   font-weight: 400;
-  margin-left: var(--sp-1);
 }
+/* 品牌主标题："厕哪"粗黑大字 */
+.topbar__brand-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--md-on-surface);
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+}
+/* 右上角+按钮：纯白圆形 */
+.topbar__add {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: var(--md-surface-container-low);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-on-surface);
+  box-shadow: var(--md-elevation-1);
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  transition: all var(--md-dur-short) var(--md-easing-standard);
+}
+.topbar__add::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  transition: opacity var(--md-dur-short) var(--md-easing-standard);
+}
+.topbar__add:hover::before { opacity: var(--md-state-hover); }
+.topbar__add:active::before { opacity: var(--md-state-pressed); }
+.topbar__add:active { transform: scale(0.95); }
+.topbar__add svg { display: block; }
 
 /* ============ 5. SearchWrap 搜索栏（MD3 Search Bar） ============ */
-/* MD3 Search Bar 风格：全圆角、无 border、surface-container-high 背景 */
+/* 纯白胶囊风格：全圆角、无 border、纯白背景 + 微阴影 */
 .search-wrap {
   flex: 1;
   min-width: 0;
   position: relative;
   display: flex;
   align-items: center;
-  background: var(--md-surface-container-high);  /* MD3 搜索栏背景 */
-  border: 1px solid transparent;                  /* 透明 border 占位，避免 focus 时跳动 */
-  border-radius: var(--md-shape-full);            /* MD3 全圆角 */
+  background: #ffffff;
+  border: none;
+  border-radius: var(--md-shape-full);
   padding: 0 var(--sp-3);
-  height: 36px;
+  height: 40px;
   gap: var(--sp-2);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
   transition: background var(--md-dur-short) var(--md-easing-standard),
-              border-color var(--md-dur-short) var(--md-easing-standard);
+              box-shadow var(--md-dur-short) var(--md-easing-standard);
 }
 /* 注意：:focus-within 在小程序中不支持，需用 JS class toggle 替代
    小程序迁移方案：input bindfocus 时 addClass('is-focused')，bindblur 时 removeClass */
 .search-wrap:focus-within {
-  background: var(--md-surface-container-highest);  /* MD3 focus 态加深一档 */
-  border-color: var(--md-outline);                   /* MD3 focus 加 1px outline */
-  box-shadow: none;                                  /* 无 box-shadow，用 border 替代 */
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
 }
 /* 搜索输入框 */
 .search-wrap__input {
@@ -569,7 +609,7 @@ html, body {
   justify-content: center;
   color: #fff;
   font-weight: 700;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: "HarmonyOS Sans SC", "Source Han Sans SC", "PingFang SC", -apple-system, BlinkMacSystemFont, sans-serif;
   box-shadow: 0 2px 8px rgba(0,0,0,.25), 0 1px 3px rgba(0,0,0,.15);
   cursor: pointer;
   letter-spacing: -.3px;
@@ -653,24 +693,41 @@ html, body {
   margin-right: auto;
 }
 
-/* ============ 10. FAB 按钮组（MD3 FAB / Extended FAB） ============ */
-/* 小程序映射：cover-view 浮动按钮 */
-/* 回到位置按钮（MD3 Regular FAB：圆角矩形，仅图标） */
-.fab-reloc {
-  position: absolute; right: var(--sp-4); bottom: 80px; z-index: 999;
-  width: 48px; height: 48px;
-  background: var(--md-primary-container);
-  color: var(--md-on-primary-container);
-  border-radius: var(--md-shape-lg);  /* 16px 圆角矩形 */
-  border: none; box-shadow: var(--md-elevation-3);
-  cursor: pointer; user-select: none;
-  transition: box-shadow var(--md-dur-short) var(--md-easing-standard);
-  display: flex; align-items: center; justify-content: center;
-  overflow: hidden;
-  padding: 0;
+/* ============ 10. NavBar 底部悬浮胶囊导航条 ============ */
+/* 小程序映射：cover-view 浮动胶囊 */
+.nav-bar {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(56px + var(--safe-bottom) + 8px);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: #ffffff;
+  border-radius: var(--md-shape-full);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.08);
+  padding: 4px;
+  transition: bottom var(--md-dur-medium) var(--md-easing-standard),
+              transform var(--md-dur-medium) var(--md-easing-standard);
 }
-/* MD3 State Layer */
-.fab-reloc::before {
+.nav-bar__btn {
+  width: 48px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  color: var(--md-on-surface-variant);
+  border-radius: var(--md-shape-full);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all var(--md-dur-short) var(--md-easing-standard);
+  position: relative;
+  overflow: hidden;
+}
+.nav-bar__btn::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -680,13 +737,28 @@ html, body {
   pointer-events: none;
   transition: opacity var(--md-dur-short) var(--md-easing-standard);
 }
-.fab-reloc:hover::before { opacity: var(--md-state-hover); }
-.fab-reloc:active::before { opacity: var(--md-state-pressed); }
-.fab-reloc:hover { box-shadow: var(--md-elevation-4); }  /* hover 提升到 Level 4 */
-.fab-reloc:active { transform: translateY(1px); box-shadow: var(--md-elevation-1); }
+.nav-bar__btn:hover::before { opacity: 0.08; }
+.nav-bar__btn:active::before { opacity: 0.12; }
+.nav-bar__btn:active { transform: scale(0.95); }
+.nav-bar__btn svg { display: block; }
+.legend-dots {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.legend-dots__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+/* nearby-list 展开时，nav-bar 移到列表顶部上方 */
+.nearby-list:not(.is-collapsed) ~ .nav-bar {
+  bottom: calc(45vh + 8px);
+}
 /* 定位中状态：旋转图标 + 禁止点击 */
-.fab-reloc.is-locating { pointer-events: none; opacity: 0.7; }
-.fab-reloc.is-locating .reloc-icon {
+.nav-bar__btn.is-locating { pointer-events: none; opacity: 0.7; }
+.nav-bar__btn.is-locating .reloc-icon {
   display: inline-block;
   animation: reloc-spin 1s linear infinite;
 }
@@ -695,170 +767,189 @@ html, body {
   to { transform: rotate(360deg); }
 }
 
-/* 上报 FAB（MD3 Regular FAB：圆角矩形，primary-container 背景） */
-.fab-add {
-  position: absolute; right: var(--sp-4); bottom: 140px; z-index: 999;
-  width: 48px; height: 48px; border-radius: var(--md-shape-lg);  /* 16px 圆角矩形，与 fab-reloc 统一 */
-  background: var(--md-primary-container);       /* MD3 FAB 背景 */
-  color: var(--md-on-primary-container);          /* MD3 FAB 文字 */
-  font-size: 24px; font-weight: 300;
-  display: flex; align-items: center; justify-content: center;
-  box-shadow: var(--md-elevation-3);              /* MD3 Level 3 阴影 */
-  cursor: pointer; user-select: none;
-  transition: box-shadow var(--md-dur-short) var(--md-easing-standard);
-  line-height: 1;
-  overflow: hidden;
-}
-/* MD3 State Layer */
-.fab-add::before {
-  content: '';
+/* ============ 11. LegendPopup 图例弹窗（点击导航条图例按钮弹出） ============ */
+.legend-popup {
   position: absolute;
-  inset: 0;
-  background: currentColor;
+  left: calc(50% + 26px);
+  transform: translateX(-50%) translateY(8px);
+  bottom: calc(56px + var(--safe-bottom) + 8px + 52px + 4px);
+  z-index: 501;
+  background: #ffffff;
+  border-radius: var(--md-shape-lg);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.08);
+  padding: var(--sp-3) var(--sp-4);
+  font-size: var(--fs-sm);
+  line-height: 2;
   opacity: 0;
-  border-radius: inherit;
   pointer-events: none;
-  transition: opacity var(--md-dur-short) var(--md-easing-standard);
+  transition: all var(--md-dur-short) var(--md-easing-standard);
+  white-space: nowrap;
 }
-.fab-add:hover::before { opacity: var(--md-state-hover); }
-.fab-add:active::before { opacity: var(--md-state-pressed); }
-.fab-add:hover { box-shadow: var(--md-elevation-4); }  /* hover 提升到 Level 4 */
-.fab-add:active { transform: translateY(1px); box-shadow: var(--md-elevation-1); }
+.legend-popup.is-show {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+.legend-popup__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--md-on-surface-variant);
+}
+.legend-popup__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.legend-popup__arrow {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 12px;
+  height: 12px;
+  background: #ffffff;
+  box-shadow: 2px 2px 4px rgba(0,0,0,0.06);
+}
+/* nearby-list 展开时，legend-popup 跟着上移 */
+.nearby-list:not(.is-collapsed) ~ .legend-popup {
+  bottom: calc(45vh + 8px + 52px + 4px);
+}
 
-/* ============ 11. Legend 图例（MD3 Card，移动端可折叠） ============ */
-/* MD3 Card 风格：surface-container-low 背景、shape-md 圆角、elevation-1 阴影 */
-.legend {
-  position: absolute; left: var(--sp-4); bottom: var(--sp-4); z-index: 999;
-  background: var(--md-surface-container-low);    /* MD3 Card 背景 */
-  border: 1px solid var(--md-outline-variant);    /* MD3 Card 描边 */
-  border-radius: var(--md-shape-md);              /* MD3 Card 圆角 */
-  padding: var(--sp-3) 14px;
-  box-shadow: var(--md-elevation-1);              /* MD3 Level 1 阴影 */
-  font-size: var(--fs-sm); line-height: 2;
-  display: none;
-  cursor: pointer;
-  transition: padding var(--md-dur-short) var(--md-easing-standard);
-}
-.legend__row { display: flex; align-items: center; gap: 8px; color: var(--md-on-surface-variant); }
-.legend__dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-/* 移动端折叠触发按钮：4色圆点水平排列 */
-.legend__trigger {
-  display: none;                                  /* 桌面端不显示触发按钮 */
-  align-items: center; gap: 3px;
-  padding: 2px;
-}
-.legend__body {
-  display: block;                                 /* 桌面端始终展开 */
-}
-
-/* ============ 12. NearbyList 周边列表（MD3 Bottom Sheet） ============ */
+/* ============ 12. NearbyList 周边列表（纯白 Bottom Sheet，浅灰胶囊列表项） ============ */
 /* 小程序映射：scroll-view + list 组件 */
-/* MD3 Bottom Sheet 风格：surface-container-low 背景、shape-xl 圆角（顶部大圆角） */
 .nearby-list {
   position: absolute; left: 0; right: 0; bottom: 0; z-index: 999;
-  background: var(--md-surface-container-low);    /* MD3 Bottom Sheet 背景 */
-  border-radius: var(--md-shape-xl) var(--md-shape-xl) 0 0;  /* MD3 顶部大圆角 */
-  box-shadow: var(--shadow-xl);                   /* 向上投影（Bottom Sheet 专用） */
-  max-height: 40vh; overflow-y: auto;
+  background: #ffffff;
+  border-radius: var(--md-shape-xl) var(--md-shape-xl) 0 0;
+  box-shadow: var(--shadow-xl);
+  max-height: 45vh; overflow-y: auto;
   transition: max-height var(--md-dur-medium) var(--md-easing-standard);
   padding-bottom: var(--safe-bottom);
-  overscroll-behavior: contain;                   /* 滚动到边缘不穿透 */
+  overscroll-behavior: contain;
 }
-.nearby-list.is-collapsed { max-height: 48px; overflow: hidden; }
+.nearby-list.is-collapsed { max-height: calc(56px + var(--safe-bottom)); overflow: hidden; }
 
-/* 列表头部（sticky，MD3 Bottom Sheet header） */
+/* 列表头部（sticky，纯白背景） */
 .nearby-list__header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: var(--sp-3) var(--sp-4); font-size: var(--fs-sm);
-  color: var(--md-on-surface-variant); position: sticky; top: 0;
-  background: var(--md-surface-container-low);    /* MD3 header 背景（不透明） */
+  padding: var(--sp-3) var(--sp-4);
+  background: #ffffff;
   border-radius: var(--md-shape-xl) var(--md-shape-xl) 0 0;
   cursor: pointer; user-select: none;
-  border-bottom: 1px solid var(--md-outline-variant);  /* MD3 分割线 */
-  z-index: 2;                                    /* 确保 header 在列表项之上 */
-  overflow: hidden;
+  z-index: 2;
+  position: sticky; top: 0;
 }
-/* MD3 State Layer */
-.nearby-list__header::before {
+/* 拖拽指示条（移动端显示，桌面端在媒体查询中处理） */
+.nearby-list__header::after {
   content: '';
   position: absolute;
-  inset: 0;
-  background: currentColor;
-  opacity: 0;
-  border-radius: inherit;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 4px;
+  background: var(--md-outline-variant);
+  border-radius: 2px;
   pointer-events: none;
-  transition: opacity var(--md-dur-short) var(--md-easing-standard);
 }
-.nearby-list__header:active::before { opacity: var(--md-state-pressed); }
-.nearby-list__title { color: var(--md-on-surface); font-size: var(--fs-base); font-weight: 600; }
+/* 标签容器：标题 + 副标题 */
+.nearby-list__label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.nearby-list__label b {
+  font-size: var(--fs-base);
+  font-weight: 700;
+  color: var(--md-on-surface);
+}
+.nearby-list__sub {
+  font-size: var(--fs-sm);
+  color: var(--text-hint);
+  font-weight: 400;
+}
 .nearby-list__toggle { font-size: var(--fs-sm); color: var(--md-primary); font-weight: 500; }
 .nearby-list.is-collapsed .nearby-list__items { display: none; }
 
-/* 列表项（MD3 List Item） */
+/* 列表项容器：浅灰背景衬托白色胶囊条目 */
+.nearby-list__items {
+  padding: var(--sp-2) var(--sp-3) var(--sp-3);
+  background: var(--md-surface);
+}
+
+/* 列表项：纯白胶囊卡片样式（TimeTrace风格：浅灰背景上的白色胶囊） */
 .nearby-item {
   display: flex; align-items: center; gap: var(--sp-3);
-  padding: var(--sp-3) var(--sp-4); cursor: pointer;
-  border-bottom: 1px solid var(--md-outline-variant);  /* MD3 分割线 */
-  transition: background var(--md-dur-short) var(--md-easing-standard);
-  min-height: 52px;
+  padding: var(--sp-3) var(--sp-4);
+  margin-bottom: var(--sp-2);
+  background: #ffffff;
+  border-radius: var(--md-shape-lg);
+  border: none;
+  min-height: 56px;
+  transition: all var(--md-dur-short) var(--md-easing-standard);
+  cursor: pointer;
   position: relative;
   overflow: hidden;
 }
-.nearby-item:last-child { border-bottom: none; }
-/* MD3 State Layer */
-.nearby-item::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: currentColor;
-  opacity: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  transition: opacity var(--md-dur-short) var(--md-easing-standard);
-}
-.nearby-item:hover::before { opacity: var(--md-state-hover); }
-.nearby-item:active::before { opacity: var(--md-state-pressed); }
-/* hover/active 态：MD3 surface-container 逐级加深 */
-.nearby-item:hover { background: var(--md-surface-container); }
-.nearby-item:active { background: var(--md-surface-container-high); }
-/* 序号圆点（保持语义色，匹配 markerClass() 返回值） */
+.nearby-item:last-child { margin-bottom: 0; }
+.nearby-item:active { transform: scale(0.98); background: var(--md-surface-container-high); }
+
+/* 序号圆点（更大更醒目，保持语义色） */
 .nearby-item__num {
-  flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%;
+  flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
   background: var(--md-primary); color: #fff;
-  font-size: var(--fs-sm); font-weight: 600;
+  font-size: var(--fs-sm); font-weight: 700;
   display: flex; align-items: center; justify-content: center;
 }
 /* num 语义色匹配 markerClass() 返回值 */
 .nearby-item__num.green      { background: var(--c-ok); }
 .nearby-item__num.red        { background: var(--c-fail); }
-.nearby-item__num.uncertain  { background: #f59e0b; }    /* 待确认：琥珀色（实心，白色背景上可辨） */
+.nearby-item__num.uncertain  { background: #f59e0b; }
 .nearby-item__num.gray       { background: var(--c-stale); }
 .nearby-item__body { flex: 1; min-width: 0; }
 .nearby-item__name {
-  font-size: var(--fs-base); font-weight: 500; color: var(--md-on-surface);
+  font-size: var(--fs-base); font-weight: 600; color: var(--md-on-surface);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.nearby-item__sub { font-size: var(--fs-sm); color: var(--md-on-surface-variant); margin-top: 2px; }
+.nearby-item__sub { font-size: var(--fs-xs); color: var(--text-hint); margin-top: 2px; }
 .nearby-item__desc {
-  font-size: var(--fs-sm); color: var(--md-on-surface-variant); margin-top: 2px;
+  font-size: var(--fs-xs); color: var(--md-on-surface-variant); margin-top: 2px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+/* 距离：超大粗体数字 */
 .nearby-item__dist {
-  flex-shrink: 0; font-size: var(--fs-sm); color: var(--md-primary);
-  font-weight: 600; text-align: right;
+  flex-shrink: 0;
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
 }
-.nearby-item__walk { color: var(--md-on-surface-variant); font-weight: 400; font-size: var(--fs-xs); }
+.nearby-item__dist .dist-num {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--md-on-surface);
+  line-height: 1;
+  letter-spacing: -0.5px;
+}
+.nearby-item__walk {
+  font-size: var(--fs-xs);
+  color: var(--text-hint);
+  font-weight: 400;
+  margin-top: 2px;
+}
 
 /* 空状态 */
 .nearby-empty {
   padding: var(--sp-6) var(--sp-4);
-  text-align: center; color: var(--md-on-surface-variant); font-size: var(--fs-sm);
+  text-align: center; color: var(--text-hint); font-size: var(--fs-sm);
 }
 
-/* ============ 13. Panel 详情面板（MD3 Bottom Sheet） ============ */
+/* ============ 13. Panel 详情面板（纯白 MD3 Bottom Sheet） ============ */
 .panel {
   position: absolute; left: 0; right: 0; bottom: 0; z-index: 1100;
-  background: var(--md-surface-container-low);
+  background: #ffffff;
   border-radius: var(--md-shape-xl) var(--md-shape-xl) 0 0;
   box-shadow: var(--shadow-xl);
   max-height: 40vh; display: flex; flex-direction: column;
@@ -873,7 +964,7 @@ html, body {
   pointer-events: auto;
 }
 .panel.is-half {
-  max-height: 40vh;
+  max-height: 45vh;
 }
 .panel.is-expanded {
   max-height: 85vh;
@@ -910,7 +1001,7 @@ html, body {
 /* 面板内容区（flex:1 可滚动） */
 .panel__body {
   flex: 1; min-height: 0;
-  overflow-y: auto; padding: 4px var(--sp-5) var(--sp-6);
+  overflow-y: auto; padding: var(--sp-4) var(--sp-5) var(--sp-6);
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
 }
@@ -929,7 +1020,7 @@ html, body {
 .panel__title,
 .panel__body h2 {
   flex: 1; min-width: 0;
-  font-size: var(--fs-xl); font-weight: 600;
+  font-size: var(--fs-xl); font-weight: 700;
   margin: 0; padding-right: 0;
   color: var(--md-on-surface); letter-spacing: -.1px;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -943,10 +1034,10 @@ html, body {
 
 /* ============ 14. Tag 标签（MD3 Chip） ============ */
 /* 类名匹配 statusMeta().cls 和 SOURCE_MAP[].cls */
-/* MD3 Chip 风格：shape-sm 圆角、4px 12px padding */
+/* MD3 Chip 风格：shape-sm 圆角、5px 12px padding */
 .tag {
   display: inline-flex; align-items: center; gap: 4px;
-  padding: 4px 12px; border-radius: var(--md-shape-sm);  /* MD3 Chip 圆角 */
+  padding: 5px 12px; border-radius: var(--md-shape-sm);
   font-size: var(--fs-xs); font-weight: 500;
   white-space: nowrap; letter-spacing: .2px;
 }
@@ -968,7 +1059,7 @@ html, body {
 .tag.status-sub     { background: var(--md-surface-container); color: var(--text-hint); font-size: 10px; font-weight: 400; }
 
 /* 标签容器 */
-.meta { display: flex; flex-wrap: wrap; gap: 6px; margin: var(--sp-2) 0; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px; margin: var(--sp-2) 0; }
 
 /* ============ 15. InfoRow 信息行（MD3 List Item） ============ */
 /* border-bottom 使用 MD3 outline-variant */
@@ -1509,22 +1600,23 @@ html, body {
   color: var(--md-primary);
 }
 
-/* ============ 22. 响应式：移动端（<768px） — 移动端优先精细化 ============ */
+/* ============ 22. 响应式：移动端（<768px） ============ */
 @media (max-width: 767px) {
-  /* --- TopBar：搜索优先，logo 缩小 --- */
+  /* --- TopBar 移动端 --- */
   .topbar {
-    gap: var(--sp-1);
-    padding: var(--sp-1) var(--sp-3);
-    padding-top: calc(var(--sp-1) + var(--safe-top));
+    padding: var(--sp-1) var(--sp-3) 0;
   }
-  .topbar__logo { font-size: var(--fs-base); letter-spacing: -.3px; }
-  .topbar__logo-sub { display: none; }
+  .topbar__title-row {
+    padding: calc(var(--safe-top) + var(--sp-1)) var(--sp-1) var(--sp-2);
+  }
+  .topbar__brand-title { font-size: 26px; }
+  .topbar__brand-sub { font-size: var(--fs-xs); }
 
-  /* --- 搜索栏：紧凑 + filter 图标化 --- */
-  .search-wrap { height: 36px; padding: 0 var(--sp-2); gap: var(--sp-1); }
-  .search-wrap__input { font-size: var(--fs-sm); }
+  /* --- 搜索栏移动端 --- */
+  .search-wrap { height: 40px; padding: 0 var(--sp-2); gap: var(--sp-1); }
+  .search-wrap__input { font-size: 16px; }  /* 16px 防止 iOS 缩放 */
   .search-wrap__filter { padding: 4px 6px; height: 28px; }
-  .search-wrap__filter-label { display: none; }  /* 移动端仅显示漏斗图标 */
+  .search-wrap__filter-label { display: none; }
   .search-wrap__btn { padding: 0 10px; height: 28px; font-size: var(--fs-xs); }
   .search-wrap__clear { width: 16px; height: 16px; }
 
@@ -1532,73 +1624,58 @@ html, body {
   .search-suggest { max-height: 50vh; }
   .suggest-item { padding: var(--sp-2) var(--sp-3); min-height: 48px; }
 
-  /* --- FAB：跟随 nearby-list 顶部，面板打开时被覆盖 ---
-     收起态(56px header)：FAB 贴在列表顶部上方
-     展开peek态(45vh)：FAB 贴在列表顶部上方，地图区域仍有足够空间
-     详情面板打开时：panel z-index(1100) > FAB z-index(500)，自动被覆盖
-     "高到一定程度不显示"：当前 peek 态仅 45vh，不算高；后续添加 full-expanded(90vh) 态再隐藏 */
-  .fab-reloc,
-  .fab-add {
-    top: auto; right: var(--sp-3);
-    width: 44px; height: 44px;
-    z-index: 500;
-    opacity: 1;
-    pointer-events: auto;
-    bottom: calc(45vh + var(--sp-2));
-    transition: opacity var(--md-dur-medium) var(--md-easing-standard),
-                bottom var(--md-dur-medium) var(--md-easing-standard);
+  /* --- NavBar 移动端：更大触摸目标 --- */
+  .nav-bar {
+    bottom: calc(56px + var(--safe-bottom) + 8px);
   }
-  .fab-reloc .reloc-icon { width: 20px; height: 20px; }
-  .fab-add { font-size: 22px; bottom: calc(45vh + var(--sp-2) + 44px + var(--sp-2)); }
-
-  /* nearby-list 收起态：FAB 贴在收起的 header 上方 */
-  .nearby-list.is-collapsed ~ .fab-reloc {
-    bottom: calc(56px + var(--safe-bottom) + var(--sp-2));
+  .nav-bar__btn {
+    width: 52px;
+    height: 48px;
   }
-  .nearby-list.is-collapsed ~ .fab-add {
-    bottom: calc(56px + var(--safe-bottom) + var(--sp-2) + 44px + var(--sp-2));
+  /* nearby-list 展开时，nav-bar 跟随列表顶部 */
+  .nearby-list:not(.is-collapsed) ~ .nav-bar {
+    bottom: calc(45vh + 8px);
+  }
+  /* nearby-list 展开时，legend-popup 跟随上移 */
+  .nearby-list:not(.is-collapsed) ~ .legend-popup {
+    bottom: calc(45vh + 8px + 52px + 4px + 4px);
+  }
+  .legend-popup {
+    bottom: calc(56px + var(--safe-bottom) + 8px + 52px + 4px + 4px);
   }
 
-  /* --- NearbyList：拖拽指示条 + 优化收起态 --- */
+  /* --- NearbyList 移动端 --- */
   .nearby-list { max-height: 45vh; }
   .nearby-list.is-collapsed { max-height: calc(56px + var(--safe-bottom)); }
-  /* 移动端拖拽指示条（桌面端不需要） */
   .nearby-list__header {
-    padding-top: var(--sp-4);  /* 顶部留白给指示条 */
+    padding-top: var(--sp-4);
   }
-  .nearby-list__header::after {
-    content: '';
-    position: absolute;
-    top: 6px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 32px;
-    height: 4px;
-    background: var(--md-outline-variant);
-    border-radius: 2px;
-    pointer-events: none;
+  .nearby-item {
+    padding: var(--sp-3) var(--sp-3);
+    min-height: 52px;
   }
-  .nearby-list__title { font-size: var(--fs-sm); }
+  .nearby-item__num {
+    width: 26px;
+    height: 26px;
+  }
+  .nearby-item__dist .dist-num { font-size: 20px; }
 
-  /* --- Panel：优化 snap 高度 + 内容间距 --- */
+  /* --- Panel 移动端 --- */
   .panel.is-half { max-height: 45vh; }
   .panel.is-expanded { max-height: 90vh; }
   .panel__body { padding: var(--sp-1) var(--sp-4) var(--sp-5); }
-  /* handle 更易触摸 */
   .panel__handle { padding: 12px 0 6px; }
   .panel__handle::after { width: 36px; height: 5px; }
-  /* 标题行：导航按钮确保 44px 触摸目标 */
   .nav-btn { width: 40px; height: 40px; }
   .panel__title { font-size: var(--fs-lg); }
 
-  /* --- 上报按钮：确保不溢出 --- */
+  /* --- 上报按钮 --- */
   .report-btn { min-height: 44px; font-size: var(--fs-xs); padding: var(--sp-2) 2px; }
   .report-btn .emoji { font-size: 16px; }
   .supplement-btns { gap: 6px; }
   .supplement-btn { font-size: var(--fs-xs); padding: var(--sp-2) 2px; }
 
-  /* --- 评论输入：移动端堆叠布局 ---
-     input 占满第一行，select + button 共享第二行 */
+  /* --- 评论输入移动端 --- */
   .comment-input { flex-wrap: wrap; }
   .comment-input input {
     flex: 1 1 100%;
@@ -1608,35 +1685,16 @@ html, body {
   .comment-input select { order: 2; }
   .comment-input button { order: 3; flex: 1; }
 
-  /* --- Toast：底部 Snackbar 风格（MD3 规范，避开 FAB 区域） --- */
+  /* --- Toast 移动端：底部，避开 nav-bar --- */
   .toast {
     top: auto;
-    bottom: calc(140px + var(--safe-bottom));
+    bottom: calc(120px + var(--safe-bottom));
     left: 50%;
     transform: translateX(-50%) scale(.9);
     max-width: 92vw;
     width: auto;
   }
   .toast.is-show { transform: translateX(-50%) scale(1); }
-
-  /* --- 图例：移动端可折叠（默认显示4色触发按钮，点击展开） --- */
-  /* 放在 topbar 下方左侧，避开 nearby-list（底部）和 FAB（右侧） */
-  .legend {
-    display: flex !important;
-    align-items: center;
-    padding: 6px 10px;
-    left: var(--sp-3);
-    bottom: auto;
-    top: calc(64px + var(--safe-top));  /* topbar 高度约 56px + safe-top + 8px 间距 */
-    z-index: 600;  /* 高于 FAB(500)，低于 nearby-list(999) */
-  }
-  .legend__trigger { display: flex; }              /* 移动端显示触发按钮 */
-  .legend__body { display: none; }                 /* 默认收起 body */
-  .legend.is-expanded {
-    padding: var(--sp-3) 14px;
-  }
-  .legend.is-expanded .legend__trigger { display: none; }
-  .legend.is-expanded .legend__body { display: block; }
 }
 
 /* ============ 23. 响应式：桌面端（>=768px） ============ */
@@ -1659,18 +1717,21 @@ html, body {
   .panel.is-show {
     transform: translateX(0);
   }
-  /* 图例桌面端显示，左上角 zoom control 下方（避开底部按钮和周边列表） */
-  .legend { display: block; left: var(--sp-5); right: auto; bottom: auto; top: 72px; transform: none; }
   /* 周边列表左下浮出 */
   .nearby-list {
     left: var(--sp-5); right: auto; top: auto; bottom: var(--sp-5);
     width: 360px; max-height: 50vh;
-    border-radius: var(--md-shape-lg);  /* MD3 桌面端圆角 */
+    border-radius: var(--md-shape-xl);
     border: 1px solid var(--md-outline-variant);
-    box-shadow: var(--md-elevation-2);  /* MD3 Level 2 阴影 */
+    background: #ffffff;
+    box-shadow: var(--md-elevation-2);
     padding-bottom: 0;
   }
-  .nearby-list__header { border-radius: var(--md-shape-lg) var(--md-shape-lg) 0 0; }
+  .nearby-list__header {
+    border-radius: var(--md-shape-xl) var(--md-shape-xl) 0 0;
+    padding-top: var(--sp-3);
+  }
+  .nearby-list__header::after { display: none; }
   /* 桌面端 marker：30px 水滴形 */
   .toilet-marker {
     width: 30px; height: 30px;
@@ -1678,10 +1739,55 @@ html, body {
     border: 2px solid #fff;
   }
   .toilet-marker:hover { transform: rotate(-45deg) scale(1.15); }
-  /* FAB 桌面端位置：面板左侧垂直堆叠，避开左下角 nearby-list 和右侧面板 */
-  /* 面板宽 460px，FAB 放在面板左侧（right 偏移 = 面板宽 + 间距） */
-  .fab-reloc { bottom: var(--sp-5); right: calc(460px + var(--sp-4)); }
-  .fab-add  { bottom: calc(var(--sp-5) + 56px); right: calc(460px + var(--sp-4)); }
+  /* NavBar 桌面端：右下角垂直排列，独立圆形FAB按钮 */
+  .nav-bar {
+    left: auto;
+    right: var(--sp-5);
+    bottom: var(--sp-5);
+    transform: none;
+    flex-direction: column;
+    padding: 0;
+    gap: var(--sp-2);
+    background: transparent;
+    box-shadow: none;
+    border-radius: 0;
+  }
+  .nav-bar__btn {
+    width: 48px;
+    height: 48px;
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.08);
+    border-radius: 50%;
+  }
+  /* 桌面端不需要兄弟选择器控制 nav-bar 位置 */
+  .nearby-list:not(.is-collapsed) ~ .nav-bar {
+    bottom: var(--sp-5);
+  }
+  /* LegendPopup 桌面端：默认隐藏，点击按钮才弹出，定位在图例按钮上方 */
+  .legend-popup {
+    left: auto;
+    right: calc(var(--sp-5) + 56px);
+    bottom: var(--sp-5);
+    top: auto;
+    transform: translateY(8px);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .legend-popup.is-show {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+  .legend-popup__arrow {
+    display: block;
+    left: auto;
+    right: 18px;
+    bottom: -6px;
+    transform: rotate(45deg);
+  }
+  .nearby-list:not(.is-collapsed) ~ .legend-popup {
+    bottom: var(--sp-5);
+  }
 }
 
 /* ============ 24. 响应式：大屏（>=1200px） ============ */
@@ -1704,7 +1810,7 @@ html, body {
 }
 /* 打印样式：隐藏交互组件，仅保留地图 */
 @media print {
-  .topbar, .fab-reloc, .fab-add, .legend,
+  .topbar, .nav-bar, .legend-popup, .topbar__add,
   .nearby-list, .panel, .toast { display: none !important; }
   #map { flex: 1; }
 }
