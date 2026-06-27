@@ -268,8 +268,7 @@ function renderMetroLayer() {
         opacity: 0.9
       });
       circle.on('click', () => {
-        const statusLabel = s.type === 'inside' ? '✅ 站内' : s.type === 'outside' ? '🟡 站外' : '❌ 无厕所';
-        showToast(line.name + ' · ' + s.name + ' | ' + statusLabel + ' | ' + s.detail, 3000);
+        openMetroPanel(s, line);
       });
       circle.addTo(metroLayerGroup);
     });
@@ -283,6 +282,53 @@ function clearMetroLayer() {
   if (metroLayerGroup) {
     map.removeLayer(metroLayerGroup);
     metroLayerGroup = null;
+  }
+}
+
+/* 打开地铁站点详情面板（轻量，复用现有 panel DOM） */
+function openMetroPanel(station, line) {
+  // 先清理现有面板状态
+  closePanel();
+  clearMarkerHighlight();
+  document.getElementById('nearbyList').style.display = 'none';
+
+  const panel = document.getElementById('panel');
+  const body = document.getElementById('panelBody');
+
+  const statusColor = METRO_COLORS[station.type] || '#999';
+  const statusLabel = station.type === 'inside' ? '站内有厕所' : station.type === 'outside' ? '车站外厕所' : '无厕所';
+  const statusEmoji = station.type === 'inside' ? '🟢' : station.type === 'outside' ? '🟡' : '🔴';
+
+  body.innerHTML = `
+    <div class="panel__header">
+      <div class="panel__title">${station.name}</div>
+      <div class="panel__subtitle">${line.name} · ${station.type === 'none' ? '暂不具备设置条件' : '环评标配厕所'}</div>
+    </div>
+    <div class="metro-panel__status" style="display:flex;align-items:center;gap:8px;padding:12px 0;">
+      <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${statusColor};border:2px solid #fff;box-shadow:0 0 0 1px var(--md-outline-variant);flex-shrink:0;"></span>
+      <span style="font-size:15px;font-weight:500;">${statusEmoji} ${statusLabel}</span>
+    </div>
+    <div class="metro-panel__detail" style="padding:10px 14px;background:var(--md-surface-container-low);border-radius:12px;font-size:13px;line-height:1.6;color:var(--md-on-surface-variant);">
+      ${station.detail}
+    </div>
+    <div class="metro-panel__line-info" style="margin-top:12px;display:flex;align-items:center;gap:6px;font-size:13px;color:var(--md-on-surface-variant);">
+      <span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${line.color};flex-shrink:0;"></span>
+      <span>${line.name} · 共${line.stations.length}站</span>
+    </div>
+    <div class="panel__divider"></div>
+    <div class="panel__hint" style="font-size:12px;color:var(--text-hint);text-align:center;padding:8px 0;">
+      ${station.type === 'none' ? '💡 21站中仅小东庄、胡家园无厕所，其余19站均有' : '💡 数据来源：天津轨道交通运营集团 & Z4线环评文件'}
+    </div>
+  `;
+
+  // 显示面板：移动端用 half snap，桌面端直接显示
+  if (window.innerWidth < 768) {
+    panel.classList.add('is-show', 'is-half');
+    panel.style.transform = '';
+    if (window._setPanelSnap) window._setPanelSnap('half', false);
+  } else {
+    panel.classList.add('is-show', 'is-half');
+    panel.style.transform = '';
   }
 }
 
