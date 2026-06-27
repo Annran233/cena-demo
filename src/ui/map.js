@@ -231,6 +231,40 @@ function getPickCoords() {
 /* ============ 轨道交通图层 ============ */
 let metroLayerGroup = null; // 图层组：线路 polyline（底）+ 站点圆点（顶）
 
+/* Chaikin 角切割平滑算法：对折线做 N 次迭代，每次将每个角替换为两个1/4切点，产生平滑曲线
+   闭合曲线设 closed=true；地铁线开放，closed=false */
+function chaikinSmooth(points, iterations) {
+  if (!points || points.length < 3) return points.slice();
+  let result = points.slice();
+  for (let i = 0; i < iterations; i++) {
+    const next = [];
+    next.push(result[0]);
+    for (let j = 0; j < result.length - 1; j++) {
+      const p0 = result[j];
+      const p1 = result[j + 1];
+      next.push([0.75 * p0[0] + 0.25 * p1[0], 0.75 * p0[1] + 0.25 * p1[1]]);
+      next.push([0.25 * p0[0] + 0.75 * p1[0], 0.25 * p0[1] + 0.75 * p1[1]]);
+    }
+    next.push(result[result.length - 1]);
+    result = next;
+  }
+  return result;
+}
+
+/* 构建线路路径点数组：stations坐标 + 插入 path 控制点（after:idx 表示插入到第idx个站之后） */
+function buildLinePath(line) {
+  const stationPts = line.stations.map(s => [s.lat, s.lng]);
+  if (!line.path || !line.path.length) return stationPts;
+  /* 按 after 倒序插入，避免 idx 偏移问题 */
+  const inserts = [...line.path].sort((a, b) => b.after - a.after);
+  let result = stationPts.slice();
+  inserts.forEach(seg => {
+    const insertAt = seg.after + 1;
+    result.splice(insertAt, 0, ...seg.points);
+  });
+  return result;
+}
+
 /* 渲染轨道交通图层（线路 polyline + 站点圆点，polyline 不拦截交互） */
 function renderMetroLayer() {
   if (metroLayerGroup) map.removeLayer(metroLayerGroup);
@@ -238,13 +272,15 @@ function renderMetroLayer() {
 
   Object.keys(METRO_LINES).forEach(lineKey => {
     const line = METRO_LINES[lineKey];
-    const latlngs = line.stations.map(s => [s.lat, s.lng]);
+    /* 构建含控制点的原始路径，再用 Chaikin 平滑2次得到曲线 */
+    const rawPath = buildLinePath(line);
+    const smoothPath = chaikinSmooth(rawPath, 3);
     // 绘制线路 polyline：interactive:false 不拦截点击，不影响地图拖拽和站点点击
-    if (latlngs.length >= 2) {
-      L.polyline(latlngs, {
+    if (smoothPath.length >= 2) {
+      L.polyline(smoothPath, {
         color: line.color,
-        weight: 4,
-        opacity: 0.75,
+        weight: 5,
+        opacity: 0.82,
         lineCap: 'round',
         lineJoin: 'round',
         interactive: false
