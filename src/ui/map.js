@@ -231,37 +231,41 @@ function getPickCoords() {
 /* ============ 轨道交通图层 ============ */
 let metroLayerGroup = null; // 图层组：线路 polyline（底）+ 站点圆点（顶）
 
-/* Chaikin 角切割平滑算法：对折线做 N 次迭代，每次将每个角替换为两个1/4切点，产生平滑曲线
-   闭合曲线设 closed=true；地铁线开放，closed=false */
-function chaikinSmooth(points, iterations) {
-  if (!points || points.length < 3) return points.slice();
-  let result = points.slice();
-  for (let i = 0; i < iterations; i++) {
-    const next = [];
-    next.push(result[0]);
-    for (let j = 0; j < result.length - 1; j++) {
-      const p0 = result[j];
-      const p1 = result[j + 1];
-      next.push([0.75 * p0[0] + 0.25 * p1[0], 0.75 * p0[1] + 0.25 * p1[1]]);
-      next.push([0.25 * p0[0] + 0.75 * p1[0], 0.25 * p0[1] + 0.75 * p1[1]]);
+/* Cardinal/Catmull-Rom 样条插值：三次Hermite曲线，严格经过所有控制点
+   - points: [[lat,lng], ...]  必须经过的锚点（站点坐标）
+   - tension: 0=标准Catmull-Rom（最自然），越大越紧绷，1退化为折线
+   - segments: 每段之间细分数（值越大越平滑，20段足够肉眼光滑）
+   端点处理：首尾切线用相邻段方向延伸（phantom point），保证首末锚点也在曲线上 */
+function cardinalSpline(points, tension, segments) {
+  if (!points || points.length < 2) return points ? points.slice() : [];
+  if (points.length === 2) return points.slice();
+  const t = tension == null ? 0 : tension;
+  const n = points.length;
+  const result = [];
+  /* 每三个相邻点（含phantom端点）算一段贝塞尔 */
+  for (let i = 0; i < n - 1; i++) {
+    const p0 = points[i === 0 ? i : i - 1];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[i + 2 < n ? i + 2 : i + 1];
+    /* 起点p1只在第一段加入（避免重复） */
+    if (i === 0) result.push([p1[0], p1[1]]);
+    /* 在p1→p2之间均匀采样segments段 */
+    for (let s = 1; s <= segments; s++) {
+      const tt = s / segments;
+      const tt2 = tt * tt;
+      const tt3 = tt2 * tt;
+      /* Cardinal 基函数矩阵（tension参数化） */
+      const s0 = -t * tt3 + 2 * t * tt2 - t * tt;
+      const s1 = (2 - t) * tt3 + (t - 3) * tt2 + 1;
+      const s2 = (t - 2) * tt3 + (3 - 2 * t) * tt2 + t * tt;
+      const s3 = t * tt3 - t * tt2;
+      result.push([
+        s0 * p0[0] + s1 * p1[0] + s2 * p2[0] + s3 * p3[0],
+        s0 * p0[1] + s1 * p1[1] + s2 * p2[1] + s3 * p3[1]
+      ]);
     }
-    next.push(result[result.length - 1]);
-    result = next;
   }
-  return result;
-}
-
-/* 构建线路路径点数组：stations坐标 + 插入 path 控制点（after:idx 表示插入到第idx个站之后） */
-function buildLinePath(line) {
-  const stationPts = line.stations.map(s => [s.lat, s.lng]);
-  if (!line.path || !line.path.length) return stationPts;
-  /* 按 after 倒序插入，避免 idx 偏移问题 */
-  const inserts = [...line.path].sort((a, b) => b.after - a.after);
-  let result = stationPts.slice();
-  inserts.forEach(seg => {
-    const insertAt = seg.after + 1;
-    result.splice(insertAt, 0, ...seg.points);
-  });
   return result;
 }
 
@@ -272,21 +276,22 @@ function renderMetroLayer() {
 
   Object.keys(METRO_LINES).forEach(lineKey => {
     const line = METRO_LINES[lineKey];
-    /* 构建含控制点的原始路径，再用 Chaikin 平滑2次得到曲线 */
-    const rawPath = buildLinePath(line);
-    const smoothPath = chaikinSmooth(rawPath, 3);
+    /* 站点锚点：必须严格经过 */
+    const anchors = line.stations.map(s => [s.lat, s.lng]);
+    /* Cardinal样条平滑：tension=0.3（微紧，偏离小），每段20细分 */
+    const smoothPath = cardinalSpline(anchors, 0.3, 20);
     // 绘制线路 polyline：interactive:false 不拦截点击，不影响地图拖拽和站点点击
     if (smoothPath.length >= 2) {
       L.polyline(smoothPath, {
         color: line.color,
         weight: 5,
-        opacity: 0.82,
+        opacity: 0.85,
         lineCap: 'round',
         lineJoin: 'round',
         interactive: false
       }).addTo(metroLayerGroup);
     }
-    // 站点圆点在 polyline 上方绘制（zIndexOffset 高于 polyline）
+    // 站点圆点在 polyline 上方绘制（zIndexOffset 高于 polyline，直接覆盖在线上）
     line.stations.forEach(s => {
       const color = METRO_COLORS[s.type] || '#999';
       const circle = L.circleMarker([s.lat, s.lng], {
