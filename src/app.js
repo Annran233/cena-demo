@@ -765,6 +765,20 @@ window._hasGpsFix = true;
 setSearchCenter(CENTER, '海港公园', 15, null, true);
 setTimeout(() => map.invalidateSize(), 200);
 
+/* 默认开启轨道交通图层（在地图初始化完成后安全调用） */
+setTimeout(() => {
+  try {
+    if (typeof renderMetroLayer === 'function' && map) {
+      renderMetroLayer();
+      _metroLayerActive = true;
+      const metroBtn = document.getElementById('navMetroBtn');
+      if (metroBtn) metroBtn.classList.add('is-active');
+    }
+  } catch(e) {
+    console.warn('地铁图层初始化失败（非致命）:', e);
+  }
+}, 300);
+
 /* 首次访问提示图例含义（localStorage 标记，仅显示一次） */
 setTimeout(() => {
   if (!localStorage.getItem('hasSeenLegend')) {

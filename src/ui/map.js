@@ -229,45 +229,87 @@ function getPickCoords() {
 }
 
 /* ============ 轨道交通图层 ============ */
-let metroLayerGroup = null; // 图层组：包含线路 polyline + 站点 circleMarker
+let metroLayerGroup = null; // 图层组：线路 polyline（底）+ 站点圆点（顶）
 
-/* 渲染轨道交通图层（线路 + 站点圆点） */
+/* Cardinal/Catmull-Rom 样条插值：三次Hermite曲线，严格经过所有控制点
+   - points: [[lat,lng], ...]  必须经过的锚点（站点坐标）
+   - tension: 0=标准Catmull-Rom（最自然），越大越紧绷，1退化为折线
+   - segments: 每段之间细分数（值越大越平滑，20段足够肉眼光滑）
+   端点处理：首尾切线用相邻段方向延伸（phantom point），保证首末锚点也在曲线上 */
+function cardinalSpline(points, tension, segments) {
+  if (!points || points.length < 2) return points ? points.slice() : [];
+  if (points.length === 2) return points.slice();
+  const t = tension == null ? 0 : tension;
+  const n = points.length;
+  const result = [];
+  /* 每三个相邻点（含phantom端点）算一段贝塞尔 */
+  for (let i = 0; i < n - 1; i++) {
+    const p0 = points[i === 0 ? i : i - 1];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[i + 2 < n ? i + 2 : i + 1];
+    /* 起点p1只在第一段加入（避免重复） */
+    if (i === 0) result.push([p1[0], p1[1]]);
+    /* 在p1→p2之间均匀采样segments段 */
+    for (let s = 1; s <= segments; s++) {
+      const tt = s / segments;
+      const tt2 = tt * tt;
+      const tt3 = tt2 * tt;
+      /* Cardinal 基函数矩阵（tension参数化） */
+      const s0 = -t * tt3 + 2 * t * tt2 - t * tt;
+      const s1 = (2 - t) * tt3 + (t - 3) * tt2 + 1;
+      const s2 = (t - 2) * tt3 + (3 - 2 * t) * tt2 + t * tt;
+      const s3 = t * tt3 - t * tt2;
+      result.push([
+        s0 * p0[0] + s1 * p1[0] + s2 * p2[0] + s3 * p3[0],
+        s0 * p0[1] + s1 * p1[1] + s2 * p2[1] + s3 * p3[1]
+      ]);
+    }
+  }
+  return result;
+}
+
+/* 渲染轨道交通图层（线路 polyline + 站点圆点，polyline 不拦截交互） */
 function renderMetroLayer() {
   if (metroLayerGroup) map.removeLayer(metroLayerGroup);
   metroLayerGroup = L.layerGroup();
 
   Object.keys(METRO_LINES).forEach(lineKey => {
     const line = METRO_LINES[lineKey];
-    // 绘制线路 polyline（按站点顺序连线）
-    const latlngs = line.stations.map(s => [s.lat, s.lng]);
-    if (latlngs.length >= 2) {
-      L.polyline(latlngs, {
+    /* 站点锚点：必须严格经过 */
+    const anchors = line.stations.map(s => [s.lat, s.lng]);
+    /* Cardinal样条平滑：tension=0.3（微紧，偏离小），每段20细分 */
+    const smoothPath = cardinalSpline(anchors, 0.3, 20);
+    // 绘制线路 polyline：interactive:false 不拦截点击，不影响地图拖拽和站点点击
+    if (smoothPath.length >= 2) {
+      L.polyline(smoothPath, {
         color: line.color,
-        weight: 3,
-        opacity: 0.7,
+        weight: 5,
+        opacity: 0.85,
         lineCap: 'round',
-        lineJoin: 'round'
+        lineJoin: 'round',
+        interactive: false
       }).addTo(metroLayerGroup);
     }
-
-    // 绘制站点圆点 marker
+    // 站点圆点在 polyline 上方绘制（zIndexOffset 高于 polyline，直接覆盖在线上）
     line.stations.forEach(s => {
       const color = METRO_COLORS[s.type] || '#999';
       const circle = L.circleMarker([s.lat, s.lng], {
-        radius: 6,
+        radius: 7,
         fillColor: color,
-        color: '#fff',
-        weight: 2,
+        color: '#ffffff',
+        weight: 2.5,
         opacity: 1,
-        fillOpacity: 0.9
+        fillOpacity: 0.95,
+        zIndexOffset: 500
       });
-      // 点击站点圆点：弹出 toast 显示厕所详情
       circle.bindTooltip(s.name + ' · ' + line.name, {
         direction: 'top',
         offset: [0, -10],
-        opacity: 0.9
+        opacity: 0.92
       });
-      circle.on('click', () => {
+      circle.on('click', (e) => {
+        L.DomEvent.stopPropagation(e);
         openMetroPanel(s, line);
       });
       circle.addTo(metroLayerGroup);
@@ -299,10 +341,19 @@ function openMetroPanel(station, line) {
   const statusLabel = station.type === 'inside' ? '站内有厕所' : station.type === 'outside' ? '车站外厕所' : '无厕所';
   const statusEmoji = station.type === 'inside' ? '🟢' : station.type === 'outside' ? '🟡' : '🔴';
 
+  // 根据线路区分 subtitle 和 hint 文案
+  const isLine9 = line.name.includes('9号线');
+  const subtitle = station.type === 'none'
+    ? '暂不具备设置条件'
+    : (isLine9 ? '站内标配厕所' : '环评标配厕所（新线）');
+  const hintText = station.type === 'none'
+    ? (isLine9 ? '💡 9号线21站中仅小东庄、胡家园无厕所，其余19站均有' : '')
+    : (isLine9 ? '💡 数据来源：天津轨道交通运营集团（厕所位置以站内指引为准）' : '💡 Z4线2026年新开通，环评标配厕所，具体位置以站内指引为准');
+
   body.innerHTML = `
     <div class="panel__header">
       <div class="panel__title">${station.name}</div>
-      <div class="panel__subtitle">${line.name} · ${station.type === 'none' ? '暂不具备设置条件' : '环评标配厕所'}</div>
+      <div class="panel__subtitle">${line.name} · ${subtitle}</div>
     </div>
     <div class="metro-panel__status" style="display:flex;align-items:center;gap:8px;padding:12px 0;">
       <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${statusColor};border:2px solid #fff;box-shadow:0 0 0 1px var(--md-outline-variant);flex-shrink:0;"></span>
@@ -317,7 +368,7 @@ function openMetroPanel(station, line) {
     </div>
     <div class="panel__divider"></div>
     <div class="panel__hint" style="font-size:12px;color:var(--text-hint);text-align:center;padding:8px 0;">
-      ${station.type === 'none' ? '💡 21站中仅小东庄、胡家园无厕所，其余19站均有' : '💡 数据来源：天津轨道交通运营集团 & Z4线环评文件'}
+      ${hintText}
     </div>
   `;
 
@@ -338,7 +389,7 @@ function toggleMetroLayer() {
   _metroLayerActive = !_metroLayerActive;
   if (_metroLayerActive) {
     renderMetroLayer();
-    showToast('🚇 轨道交通图层已开启 | 9号线21站 + Z4线北段10站');
+    showToast('🚇 轨道交通图层已开启 | 点击圆点查看厕所分布');
   } else {
     clearMetroLayer();
     showToast('轨道交通图层已关闭');
