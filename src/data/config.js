@@ -114,3 +114,14 @@ const AMAP_REGEO_URL = (lat, lng) => amapApiUrl('/geocode/regeo', { location: ln
 // 单次页面会话累计超过此值后阻止后续 API 请求，仅本地 Mock/Preset 可用
 // 正常 Demo 一次评审约 50-100 次请求，200 留 2x 安全 余量
 const SESSION_API_LIMIT = 200;
+
+// ======== 用户身份 mock（纯 localStorage，无后端） ========
+// 存储 key：昵称 + 头像emoji + 贡献统计
+const USER_PROFILE_KEY = 'cena_user_profile';
+// 头像候选池：厕所主题emoji
+const USER_AVATAR_POOL = ['🚻', '🧻', '🚽', '🚿', '🧼', '🪣', '🧴'];
+// 昵称前缀候选池：调查兵团风格
+const USER_NICK_PREFIXES = ['调查兵团', '侦察队', '突击队', '先遣组', '情报员'];
+// 昵称编号范围：1024 ~ 9999
+const USER_NICK_MIN = 1024;
+const USER_NICK_MAX = 9999;

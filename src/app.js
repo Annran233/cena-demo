@@ -765,14 +765,11 @@ window._hasGpsFix = true;
 setSearchCenter(CENTER, '海港公园', 15, null, true);
 setTimeout(() => map.invalidateSize(), 200);
 
-/* 默认开启轨道交通图层（在地图初始化完成后安全调用） */
+/* 默认开启轨道交通图层（在地图初始化完成后安全调用，不可关闭，作为默认POI图层） */
 setTimeout(() => {
   try {
     if (typeof renderMetroLayer === 'function' && map) {
       renderMetroLayer();
-      _metroLayerActive = true;
-      const metroBtn = document.getElementById('navMetroBtn');
-      if (metroBtn) metroBtn.classList.add('is-active');
     }
   } catch(e) {
     console.warn('地铁图层初始化失败（非致命）:', e);
@@ -787,6 +784,9 @@ setTimeout(() => {
   }
 }, 2000);
 
+/* 初始化导航栏头像emoji（从localStorage读取用户身份） */
+if (typeof updateNavAvatar === 'function') updateNavAvatar();
+
 /* 底部胶囊条：图例按钮点击弹出/关闭图例浮层 */
 const legendPopup = document.getElementById('legendPopup');
 document.getElementById('navLegendBtn').addEventListener('click', (e) => {
@@ -800,11 +800,12 @@ document.addEventListener('click', (e) => {
   }
 });
 
-/* 底部胶囊条：轨道交通图层切换按钮 */
-document.getElementById('navMetroBtn').addEventListener('click', (e) => {
+/* 底部胶囊条：「我的」按钮点击 → 弹出用户面板 */
+document.getElementById('navProfileBtn').addEventListener('click', (e) => {
   e.stopPropagation();
-  const active = toggleMetroLayer();
-  document.getElementById('navMetroBtn').classList.toggle('is-active', active);
+  if (typeof openProfilePanel === 'function') {
+    openProfilePanel();
+  }
 });
 
 /* 定时检查用户点位降级（30/90 天无确认，pointTier 纯函数基于时间实时计算） */

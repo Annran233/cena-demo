@@ -40,7 +40,14 @@ function renderNearbyList() {
     const cls = markerClass(t);
     const numCls = cls;
     const subParts = [];
-    if (t.source === 'amap-live') {
+    // 地铁站点POI：显示线路标识 + 厕所状态
+    if (t._isMetro) {
+      const metroEmoji = t._metroType === 'inside' ? '🚇' : (t._metroType === 'outside' ? '🚉' : '⛔');
+      subParts.push(metroEmoji + ' ' + t._metroLine);
+      if (t._metroType === 'none') subParts.push('无厕所');
+      else if (t._metroType === 'outside') subParts.push('站外厕所');
+      else subParts.push('站内厕所');
+    } else if (t.source === 'amap-live') {
       subParts.push('🟣 实时');
     } else {
       const st = statusMeta(t);
@@ -72,7 +79,12 @@ function renderNearbyList() {
       const t = getAllToilets().find(x => x.id === el.dataset.id);
       if (t) {
         map.setView([t.lat, t.lng], 17);
-        openPanel(t);
+        // 地铁站点：走openMetroPanel而非openPanel（数据结构不同）
+        if (t._isMetro && typeof triggerMetroStationClick === 'function') {
+          triggerMetroStationClick(t._metroLineKey, t.name);
+        } else {
+          openPanel(t);
+        }
         collapseNearbyList();
       }
     });
