@@ -6107,17 +6107,28 @@ function getPickCoords() {
 }
 
 /* ============ 轨道交通图层 ============ */
-let metroLayerGroup = null; // 图层组：仅包含站点圆点（线路由高德底图原生显示）
+let metroLayerGroup = null; // 图层组：线路 polyline（底）+ 站点圆点（顶）
 
-/* 渲染轨道交通图层（仅站点圆点，线路复用高德底图原生地铁线路） */
+/* 渲染轨道交通图层（线路 polyline + 站点圆点，polyline 不拦截交互） */
 function renderMetroLayer() {
   if (metroLayerGroup) map.removeLayer(metroLayerGroup);
   metroLayerGroup = L.layerGroup();
 
   Object.keys(METRO_LINES).forEach(lineKey => {
     const line = METRO_LINES[lineKey];
-    // 不绘制polyline：高德底图已原生显示地铁线路，自画线条因坐标精度问题无法与底图拟合
-    // 仅绘制站点圆点，z-index 高于厕所marker但不拦截地图拖拽
+    const latlngs = line.stations.map(s => [s.lat, s.lng]);
+    // 绘制线路 polyline：interactive:false 不拦截点击，不影响地图拖拽和站点点击
+    if (latlngs.length >= 2) {
+      L.polyline(latlngs, {
+        color: line.color,
+        weight: 4,
+        opacity: 0.75,
+        lineCap: 'round',
+        lineJoin: 'round',
+        interactive: false
+      }).addTo(metroLayerGroup);
+    }
+    // 站点圆点在 polyline 上方绘制（zIndexOffset 高于 polyline）
     line.stations.forEach(s => {
       const color = METRO_COLORS[s.type] || '#999';
       const circle = L.circleMarker([s.lat, s.lng], {
