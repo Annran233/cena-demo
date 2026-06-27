@@ -27,6 +27,7 @@ const JS_ORDER = [
   'core/confidence.js', // 依赖 geo.daysSince
   'core/status.js',     // 依赖 geo.daysSince
   'data/toilets.js',    // 无依赖（纯数据）
+  'data/metro.js',      // 无依赖（轨道交通厕所数据）
   'data/config.js',     // 无依赖（纯配置）
   'ui/utils.js',        // 无依赖
   'ui/map.js',          // 依赖 geo, status, data, panel.openPanel

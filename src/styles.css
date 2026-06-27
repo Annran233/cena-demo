@@ -747,6 +747,12 @@ body.is-dragging-sheet .nav-bar {
   border-radius: 50%;
   flex-shrink: 0;
 }
+/* 轨道交通图层按钮：激活态颜色为9号线蓝色 */
+.nav-bar__btn--metro.is-active {
+  color: #005BAC;
+  background: rgba(0, 91, 172, 0.12);
+}
+
 /* 定位中状态：旋转图标 + 禁止点击 */
 .nav-bar__btn.is-locating { pointer-events: none; opacity: 0.7; }
 .nav-bar__btn.is-locating .reloc-icon {

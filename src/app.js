@@ -786,6 +786,13 @@ document.addEventListener('click', (e) => {
   }
 });
 
+/* 底部胶囊条：轨道交通图层切换按钮 */
+document.getElementById('navMetroBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const active = toggleMetroLayer();
+  document.getElementById('navMetroBtn').classList.toggle('is-active', active);
+});
+
 /* 定时检查用户点位降级（30/90 天无确认，pointTier 纯函数基于时间实时计算） */
 setInterval(() => {
   renderMarkers();

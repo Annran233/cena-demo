@@ -227,3 +227,81 @@ function getPickCoords() {
   const pos = pickPinMarker.getLatLng();
   return [pos.lat, pos.lng];
 }
+
+/* ============ 轨道交通图层 ============ */
+let metroLayerGroup = null; // 图层组：包含线路 polyline + 站点 circleMarker
+
+/* 渲染轨道交通图层（线路 + 站点圆点） */
+function renderMetroLayer() {
+  if (metroLayerGroup) map.removeLayer(metroLayerGroup);
+  metroLayerGroup = L.layerGroup();
+
+  Object.keys(METRO_LINES).forEach(lineKey => {
+    const line = METRO_LINES[lineKey];
+    // 绘制线路 polyline（按站点顺序连线）
+    const latlngs = line.stations.map(s => [s.lat, s.lng]);
+    if (latlngs.length >= 2) {
+      L.polyline(latlngs, {
+        color: line.color,
+        weight: 3,
+        opacity: 0.7,
+        lineCap: 'round',
+        lineJoin: 'round'
+      }).addTo(metroLayerGroup);
+    }
+
+    // 绘制站点圆点 marker
+    line.stations.forEach(s => {
+      const color = METRO_COLORS[s.type] || '#999';
+      const circle = L.circleMarker([s.lat, s.lng], {
+        radius: 6,
+        fillColor: color,
+        color: '#fff',
+        weight: 2,
+        opacity: 1,
+        fillOpacity: 0.9
+      });
+      // 点击站点圆点：弹出 toast 显示厕所详情
+      circle.bindTooltip(s.name + ' · ' + line.name, {
+        direction: 'top',
+        offset: [0, -10],
+        opacity: 0.9
+      });
+      circle.on('click', () => {
+        const statusLabel = s.type === 'inside' ? '✅ 站内' : s.type === 'outside' ? '🟡 站外' : '❌ 无厕所';
+        showToast(line.name + ' · ' + s.name + ' | ' + statusLabel + ' | ' + s.detail, 3000);
+      });
+      circle.addTo(metroLayerGroup);
+    });
+  });
+
+  metroLayerGroup.addTo(map);
+}
+
+/* 清除轨道交通图层 */
+function clearMetroLayer() {
+  if (metroLayerGroup) {
+    map.removeLayer(metroLayerGroup);
+    metroLayerGroup = null;
+  }
+}
+
+/* 切换轨道交通图层激活/关闭 */
+let _metroLayerActive = false;
+function toggleMetroLayer() {
+  _metroLayerActive = !_metroLayerActive;
+  if (_metroLayerActive) {
+    renderMetroLayer();
+    showToast('🚇 轨道交通图层已开启 | 9号线21站 + Z4线北段10站');
+  } else {
+    clearMetroLayer();
+    showToast('轨道交通图层已关闭');
+  }
+  // 按钮 active 态由 app.js 的 toggle 逻辑设置
+  return _metroLayerActive;
+}
+
+/* 获取当前地铁图层状态（供 app.js 恢复按钮状态） */
+function isMetroLayerActive() {
+  return _metroLayerActive;
+}
