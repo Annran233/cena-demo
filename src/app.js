@@ -21,7 +21,7 @@ Object.keys(PRESET_LOCATIONS_RAW).forEach(k => {
 });
 
 /* ============ 地图初始化 ============ */
-map = L.map('map', { zoomControl: true, attributionControl: false }).setView(CENTER, 15);
+map = L.map('map', { zoomControl: false, attributionControl: false }).setView(CENTER, 15);
 L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', {
   maxZoom: 18, subdomains: ['1', '2', '3', '4'],
   errorTileUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
@@ -54,7 +54,9 @@ map.addLayer(clusterGroup);
   const header = document.getElementById('nearbyHeader');
   let startY = 0;             // 拖拽起点 Y 坐标
   let startHeight = 0;        // 拖拽起点时列表高度
-  let isDragging = false;     // 是否处于拖拽中
+  let startTime = 0;          // 拖拽起点时间戳（ms），用于无 move 事件的快速 flick 速度计算
+  let isDragging = false;     // 是否处于拖拽中（已通过阈值确认）
+  let pendingDrag = false;    // 触摸已开始但未达拖拽阈值（等待确认是拖拽还是点击）
   let moved = false;          // 是否发生过有效移动（用于抑制拖拽后合成的 click 误触）
   // 速度采样：用于快速 fling 时的 snap 判定，避免仅按位置 snap 导致快速滑动收不拢/展不开
   let lastY = 0;              // 上一次 move 采样的 Y 坐标
@@ -62,10 +64,15 @@ map.addLayer(clusterGroup);
   let velocity = 0;           // 最近一次 move 的瞬时速度（px/ms，正值=手指上移=展开方向）
   const HEADER_H = 56;
   const COLLAPSED_H_DESKTOP = 48;
+  const DRAG_THRESHOLD = 6;   // 拖拽激活阈值（px）：超过该位移才认定为拖拽，避免和点击冲突
   // 速度阈值（px/ms）：超过该值视为快速 fling，按方向 snap 而非按位置 snap
   const FLING_VELOCITY = 0.7;
   // move 采样有效性窗口（ms）：超过该时长认为速度已过期（事件丢失时避免用陈旧速度误判 snap）
   const VELOCITY_FRESH_MS = 100;
+  // 顶部安全间距：列表顶部与搜索栏底部之间的最小间距（px），防止穿模
+  const TOP_GAP = 8;
+  // 当前 snap 状态：'collapsed' | 'half' | 'expanded'
+  let _snapState = 'collapsed';
 
   function isDesktop() {
     return window.innerWidth >= 768;
@@ -75,12 +82,33 @@ map.addLayer(clusterGroup);
     const val = getComputedStyle(document.documentElement).getPropertyValue('--safe-bottom').trim();
     return parseFloat(val) || 0;
   }
+  function getSafeTop() {
+    if (isDesktop()) return 0;
+    const val = getComputedStyle(document.documentElement).getPropertyValue('--safe-top').trim();
+    return parseFloat(val) || 0;
+  }
+  /* 收起高度：只显示 header（56px + safe-bottom） */
   function getCollapsedH() {
     return (isDesktop() ? COLLAPSED_H_DESKTOP : HEADER_H) + getSafeBottom();
   }
-  function getExpandedH() {
-    const vh = isDesktop() ? 50 : 75;
-    return Math.floor(window.innerHeight * vh / 100);
+  /* 预览高度：35vh（两条半卡片预览，保留 65% 地图可见） */
+  function getHalfH() {
+    if (isDesktop()) return Math.floor(window.innerHeight * 0.5);
+    return Math.floor(window.innerHeight * 0.35);
+  }
+  /* 全展开高度：到搜索栏底部下方 TOP_GAP 处，不穿模盖住 topbar */
+  function getFullH() {
+    if (isDesktop()) return Math.floor(window.innerHeight * 0.5);
+    // 动态计算 topbar 底部 Y 坐标：标题行 + 搜索栏 + padding
+    const topbar = document.querySelector('.topbar');
+    if (topbar) {
+      const topbarBottom = topbar.getBoundingClientRect().bottom;
+      const maxH = window.innerHeight - topbarBottom - TOP_GAP;
+      return Math.max(getHalfH() + 40, Math.floor(maxH));
+    }
+    // 兜底：safe-top + 标题行(~50px) + 搜索栏(44px) + padding(~12px) + TOP_GAP
+    const fallback = getSafeTop() + 50 + 44 + 12 + TOP_GAP;
+    return window.innerHeight - fallback;
   }
   function getCurrentH() {
     return list.getBoundingClientRect().height;
@@ -88,73 +116,194 @@ map.addLayer(clusterGroup);
   function setHeight(px) {
     list.style.maxHeight = px + 'px';
   }
+  /* 根据当前高度判断所处的 snap 状态 */
+  function getSnapFromHeight(h) {
+    const ch = getCollapsedH();
+    const hh = getHalfH();
+    const fh = getFullH();
+    if (h <= (ch + hh) / 2) return 'collapsed';
+    if (h <= (hh + fh) / 2) return 'half';
+    return 'expanded';
+  }
+  function applySnapClass(snap) {
+    list.classList.remove('is-collapsed');
+    if (snap === 'collapsed') {
+      list.classList.add('is-collapsed');
+    }
+  }
   function onStart(y) {
-    isDragging = true;
+    // 只记录起点状态，不立即进入拖拽模式；等位移超阈值才激活（避免干扰点击）
+    pendingDrag = true;
+    isDragging = false;
     moved = false;
     startY = y;
     startHeight = getCurrentH();
-    // 重置速度采样，避免上一次拖拽残留速度影响本次 fling 判定
+    // 记录起始 snap 状态
+    _snapState = getSnapFromHeight(startHeight);
+    const now = performance.now();
+    startTime = now;
+    // 重置速度采样
     lastY = y;
-    lastTime = performance.now();
+    lastTime = now;
     velocity = 0;
+  }
+  /* 激活拖拽：位移超阈值后调用，添加视觉状态（禁止 transition、固定高度） */
+  function activateDrag() {
+    if (isDragging) return;
+    isDragging = true;
+    pendingDrag = false;
+    moved = true;
     list.classList.add('is-dragging');
     list.classList.remove('is-collapsed');
-    document.body.classList.add('is-dragging-sheet'); // 禁用 nav-bar bottom 过渡，确保跟手
+    document.body.classList.add('is-dragging-sheet');
     setHeight(startHeight);
   }
   function onMove(y) {
-    if (!isDragging) return;
+    if (!pendingDrag && !isDragging) return;
     const dy = startY - y;
-    const minH = getCollapsedH();
-    const newH = Math.max(minH, Math.min(getExpandedH(), startHeight + dy));
-    // 计算瞬时速度：上一次采样到本次采样之间的位移/时间，正值表示手指上移（展开方向）
+    // 计算瞬时速度
     const now = performance.now();
     const dt = now - lastTime;
     if (dt > 0) velocity = (lastY - y) / dt;
     lastY = y;
     lastTime = now;
-    // 有效移动判定：位移超阈值，或速度已达 fling 量级（快速短距滑动也视为拖拽，抑制 click 误触）
-    if (Math.abs(dy) > 4 || Math.abs(velocity) > FLING_VELOCITY) moved = true;
+    // 未激活拖拽时：判断是否超过拖拽阈值；快速 fling 也直接激活
+    if (!isDragging) {
+      if (Math.abs(dy) < DRAG_THRESHOLD && Math.abs(velocity) <= FLING_VELOCITY) return;
+      activateDrag();
+    }
+    const minH = getCollapsedH();
+    const maxH = getFullH();  // 拖拽上限：不超过 topbar 底部，防止穿模
+    // 拖拽高度限制在 [minH, maxH] 之间，手指可以自由拉到任意合法高度
+    const newH = Math.min(maxH, Math.max(minH, startHeight + dy));
     setHeight(newH);
-    // 拖拽过程中同步联动 nav-bar 位置
+    // 拖拽过程中只同步 nav-bar 位置（CSS 变量，轻量），不平移地图避免干扰 touch 事件
     if (window.updateNavBarPosition) window.updateNavBarPosition();
   }
-  function onEnd() {
-    if (!isDragging) return;
+  function onEnd(e) {
+    if (!pendingDrag && !isDragging) return;
+    const wasDragging = isDragging;
+    const wasPending = pendingDrag && !isDragging;
     isDragging = false;
-    // 关键：先读取拖拽终止时的实际高度用于 snap 判定，此时 inline maxHeight 仍为拖拽值，
-    // 避免先清空 maxHeight 导致高度回到 CSS 默认值（75vh）而误判 snap 方向
-    const h = getCurrentH();
-    const expandedH = getExpandedH();
-    const collapsedH = getCollapsedH();
-    // 清理拖拽状态：先移除 is-dragging（恢复 transition），再清空 inline maxHeight 触发平滑过渡
-    list.classList.remove('is-dragging');
-    document.body.classList.remove('is-dragging-sheet'); // 恢复 nav-bar bottom 过渡
-    list.style.maxHeight = '';
-    // snap 判定：快速 fling 优先按方向收起/展开，慢速拖拽按位置阈值 snap
-    const flingFresh = (performance.now() - lastTime) < VELOCITY_FRESH_MS; // 速度采样是否仍在有效窗口内
-    if (flingFresh && velocity > FLING_VELOCITY) {
-      list.classList.remove('is-collapsed'); // 快速向上滑 → 展开
-    } else if (flingFresh && velocity < -FLING_VELOCITY) {
-      list.classList.add('is-collapsed');    // 快速向下滑 → 收起
-    } else if (h < (collapsedH + expandedH) / 2) {
-      list.classList.add('is-collapsed');    // 位置低于中点 → 收起
-    } else {
-      list.classList.remove('is-collapsed'); // 位置高于中点 → 展开
+    pendingDrag = false;
+
+    let endY = lastY;
+    let endVelocity = velocity;
+    if (wasPending && e) {
+      const point = e.changedTouches ? e.changedTouches[0] : e;
+      if (point && typeof point.clientY === 'number') {
+        endY = point.clientY;
+        const totalDy = startY - endY;
+        const totalDt = performance.now() - startTime;
+        if (totalDt > 0) endVelocity = totalDy / totalDt;
+        moved = Math.abs(totalDy) > 3;
+      }
     }
-    // snap 结束后同步联动一次 nav-bar，确保位置与最终状态一致（MutationObserver 是异步微任务，快速滑动时补一次同步）
-    if (window.updateNavBarPosition) window.updateNavBarPosition();
+
+    const ch = getCollapsedH();
+    const hh = getHalfH();
+    const fh = getFullH();
+
+    const flingFresh = (performance.now() - lastTime) < VELOCITY_FRESH_MS || wasPending;
+    let targetSnap;
+
+    if (flingFresh && endVelocity > FLING_VELOCITY) {
+      // 快速上滑：升一档（collapsed→half→expanded）
+      targetSnap = _snapState === 'collapsed' ? 'half' : 'expanded';
+    } else if (flingFresh && endVelocity < -FLING_VELOCITY) {
+      // 快速下滑：降一档（expanded→half→collapsed）
+      targetSnap = _snapState === 'expanded' ? 'half' : 'collapsed';
+    } else if (wasDragging) {
+      // 慢速拖拽：按最终位置判定 snap
+      const h = getCurrentH();
+      targetSnap = getSnapFromHeight(h);
+    } else {
+      // 普通点击（非快速 flick 且非拖拽）：直接返回，由 click 事件处理 toggle
+      moved = false;
+      return;
+    }
+
+    // 执行过渡动画到目标 snap 高度
+    list.classList.remove('is-dragging');
+    if (wasPending) {
+      moved = true; // 快速 flick 抑制后续合成 click 事件
+    }
+
+    const targetH = targetSnap === 'collapsed' ? ch : targetSnap === 'half' ? hh : fh;
+    _snapState = targetSnap;
+
+    // 用内联样式锁定当前高度作为 transition 起点，然后设目标高度触发过渡
+    const startH = getCurrentH();
+    list.style.overflow = 'hidden';
+    list.style.maxHeight = startH + 'px';
+    void list.offsetHeight; // 强制 reflow 确保浏览器记录起始高度
+    applySnapClass(targetSnap);
+    list.style.maxHeight = targetH + 'px';
+
+    // 过渡结束后清理内联样式（overflow 恢复，但 maxHeight 保留给非collapsed状态防止CSS截断）
+    const cleanupAndSync = () => {
+      list.style.overflow = '';
+      if (targetSnap === 'collapsed') {
+        list.style.maxHeight = '';
+      }
+      // half/expanded 保留内联 maxHeight，因为 CSS 默认 max-height 是 90vh 兜底，
+      // 而 getFullH() 是动态计算的（基于 topbar 位置），需要内联精确控制
+    };
+    const onTransEnd = (ev) => {
+      if (ev.target === list && ev.propertyName === 'max-height') {
+        list.removeEventListener('transitionend', onTransEnd);
+        cleanupAndSync();
+      }
+    };
+    list.addEventListener('transitionend', onTransEnd);
+    setTimeout(cleanupAndSync, 380);
+
+    // snap 过渡期间用 rAF 循环同步 nav-bar 位置，结束后平移地图
+    if (window.syncNavBarDuringTransition) {
+      window.syncNavBarDuringTransition(400);
+    }
   }
 
+  /* 点击 header 时的 toggle 行为：
+     collapsed → half（预览两条半）；half/expanded → collapsed */
+  window._toggleNearbySheet = function() {
+    if (_snapState === 'collapsed') {
+      _snapState = 'half';
+      const hh = getHalfH();
+      list.style.overflow = 'hidden';
+      list.style.maxHeight = getCollapsedH() + 'px';
+      void list.offsetHeight;
+      list.classList.remove('is-collapsed');
+      list.style.maxHeight = hh + 'px';
+      setTimeout(() => { list.style.overflow = ''; }, 380);
+      if (window.syncNavBarDuringTransition) window.syncNavBarDuringTransition(400);
+    } else {
+      _snapState = 'collapsed';
+      const ch = getCollapsedH();
+      const startH = getCurrentH();
+      list.style.overflow = 'hidden';
+      list.style.maxHeight = startH + 'px';
+      void list.offsetHeight;
+      list.classList.add('is-collapsed');
+      list.style.maxHeight = ch + 'px';
+      setTimeout(() => { list.style.maxHeight = ''; list.style.overflow = ''; }, 380);
+      if (window.syncNavBarDuringTransition) window.syncNavBarDuringTransition(400);
+    }
+  };
+
+  /* 触摸事件：header 上 touchstart 启动拖拽；
+     list 内容区设了 touch-action: pan-y，浏览器原生处理垂直滚动，不启动拖拽。
+     touchmove/touchend 绑定到 document 确保手指滑出 header 后事件不丢失 */
   header.addEventListener('touchstart', (e) => {
     onStart(e.touches[0].clientY);
   }, { passive: true });
-  header.addEventListener('touchmove', (e) => {
+  document.addEventListener('touchmove', (e) => {
+    if (!pendingDrag && !isDragging) return;
     onMove(e.touches[0].clientY);
     if (isDragging) e.preventDefault();
   }, { passive: false });
-  header.addEventListener('touchend', onEnd);
-  header.addEventListener('touchcancel', onEnd);
+  document.addEventListener('touchend', (e) => onEnd(e));
+  document.addEventListener('touchcancel', (e) => onEnd(e));
 
   header.addEventListener('mousedown', (e) => {
     if (e.button !== 0) return;
@@ -162,14 +311,18 @@ map.addLayer(clusterGroup);
     e.preventDefault();
   });
   document.addEventListener('mousemove', (e) => {
-    if (!isDragging) return;
+    if (!pendingDrag && !isDragging) return;
     onMove(e.clientY);
   });
-  document.addEventListener('mouseup', onEnd);
+  document.addEventListener('mouseup', (e) => onEnd(e));
 
   header.addEventListener('click', (e) => {
     if (moved) { e.preventDefault(); e.stopPropagation(); moved = false; return; }
-    toggleNearbyList();
+    if (window._toggleNearbySheet) {
+      window._toggleNearbySheet();
+    } else {
+      toggleNearbyList();
+    }
   });
 })();
 
@@ -288,8 +441,15 @@ document.getElementById('relocBtn').addEventListener('click', () => {
   showToast('已定位到海港公园');
 });
 
-// 上报新厕所按钮
-document.getElementById('addBtn').addEventListener('click', openAddToiletPanel);
+// 上报新厕所按钮：toggle 行为——首次点击打开上报面板，再次点击（上报面板已打开）收起面板
+// 判断依据：pickPinMarker 存在说明处于上报拾取模式（面板关闭时 clearPickMode 会清空它）
+document.getElementById('addBtn').addEventListener('click', () => {
+  if (pickPinMarker) {
+    closePanel();
+  } else {
+    openAddToiletPanel();
+  }
+});
 
 /* ============ Panel Drag Handle（MD3 Bottom Sheet / Side Sheet 拖拽） ============ */
 (function initPanelDrag() {
@@ -317,7 +477,7 @@ document.getElementById('addBtn').addEventListener('click', openAddToiletPanel);
     const prevSnap = _currentSnap;
     _currentSnap = snap;
 
-    panel.classList.remove('is-half', 'is-expanded');
+    panel.classList.remove('is-half', 'is-expanded', 'is-compact');
 
     if (snap === 'closed') {
       panel.classList.remove('is-show');
@@ -328,7 +488,9 @@ document.getElementById('addBtn').addEventListener('click', openAddToiletPanel);
       document.getElementById('nearbyList').style.display = '';
     } else {
       panel.classList.add('is-show');
-      if (snap === 'half') {
+      if (snap === 'compact') {
+        panel.classList.add('is-compact');
+      } else if (snap === 'half') {
         panel.classList.add('is-half');
       } else if (snap === 'expanded') {
         panel.classList.add('is-expanded');
@@ -339,8 +501,15 @@ document.getElementById('addBtn').addEventListener('click', openAddToiletPanel);
       }
     }
 
-    if (snap !== 'closed' && prevSnap !== snap && typeof window.panelHeightChanged === 'function') {
-      setTimeout(() => window.panelHeightChanged(), 280);
+    if (snap !== 'closed' && prevSnap !== snap) {
+      // nav-bar 位置同步：用 rAF 循环在过渡期间持续更新，避免慢半拍
+      if (animate && window.syncNavBarDuringTransition) {
+        window.syncNavBarDuringTransition(400);
+      }
+      // 面板高度变化后平移 POI 到可见区域（panelHeightChanged 内部也会调 updateNavBarPosition，作为最终兜底）
+      if (typeof window.panelHeightChanged === 'function') {
+        setTimeout(() => window.panelHeightChanged(), 280);
+      }
     }
   }
 
@@ -413,7 +582,11 @@ document.getElementById('addBtn').addEventListener('click', openAddToiletPanel);
       }
 
       let offsetY = dy;
-      if (_currentSnap === 'half') {
+      if (_currentSnap === 'compact') {
+        if (dy < 0) {
+          offsetY = dy * 0.5;  /* compact→half 上滑阻尼 */
+        }
+      } else if (_currentSnap === 'half') {
         if (dy < 0) {
           offsetY = dy * 0.5;
         }
@@ -426,7 +599,7 @@ document.getElementById('addBtn').addEventListener('click', openAddToiletPanel);
       _currentY = offsetY;
       if (dt > 0) _velocity = (point.clientY - _lastY) / dt;
       panel.style.transform = `translateY(${_currentY}px)`;
-      // 拖拽过程中同步联动 nav-bar 位置（MutationObserver 异步，拖拽需同步避免延迟）
+      // 拖拽过程中只同步 nav-bar 位置，不平移地图避免干扰 touch 事件
       if (window.updateNavBarPosition) window.updateNavBarPosition();
     }
 
@@ -474,7 +647,9 @@ document.getElementById('addBtn').addEventListener('click', openAddToiletPanel);
 
     if (!moved) {
       if (_dragFromHandle) {
-        if (_currentSnap === 'half') {
+        if (_currentSnap === 'compact') {
+          setSnap('half');
+        } else if (_currentSnap === 'half') {
           setSnap('expanded');
         } else if (_currentSnap === 'expanded') {
           setSnap('half');
@@ -487,7 +662,13 @@ document.getElementById('addBtn').addEventListener('click', openAddToiletPanel);
     const fastUp = _velocity < -VELOCITY_THRESHOLD;
     const fastDown = _velocity > VELOCITY_THRESHOLD;
 
-    if (_currentSnap === 'half') {
+    if (_currentSnap === 'compact') {
+      if (totalDist < -SNAP_THRESHOLD || fastUp) {
+        targetSnap = 'half';
+      } else if (totalDist > SNAP_THRESHOLD || fastDown) {
+        targetSnap = 'closed';
+      }
+    } else if (_currentSnap === 'half') {
       if (totalDist < -SNAP_THRESHOLD || fastUp) {
         targetSnap = 'expanded';
       } else if (totalDist > SNAP_THRESHOLD || fastDown) {
@@ -542,7 +723,7 @@ document.getElementById('searchInput').addEventListener('focus', () => {
   const q = document.getElementById('searchInput').value.trim();
   if (q.length >= 2) onSearchInput();
 });
-document.getElementById('searchBtn').addEventListener('click', doSearch);
+// 搜索通过 Enter 键触发，无需额外按钮
 document.getElementById('searchInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') {
     document.getElementById('searchSuggest').classList.remove('is-show');
@@ -580,8 +761,8 @@ loadTagSupplements();
 loadDescSupplements();
 // 位置固定为海港公园
 window._hasGpsFix = true;
-// 以海港公园为中心拉取周边厕所
-setSearchCenter(CENTER, '海港公园', 15);
+// 以海港公园为中心拉取周边厕所（silent=true：初始加载不自动展开列表）
+setSearchCenter(CENTER, '海港公园', 15, null, true);
 setTimeout(() => map.invalidateSize(), 200);
 
 /* 首次访问提示图例含义（localStorage 标记，仅显示一次） */
@@ -603,6 +784,13 @@ document.addEventListener('click', (e) => {
   if (!e.target.closest('.legend-popup') && !e.target.closest('#navLegendBtn')) {
     legendPopup.classList.remove('is-show');
   }
+});
+
+/* 底部胶囊条：轨道交通图层切换按钮 */
+document.getElementById('navMetroBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const active = toggleMetroLayer();
+  document.getElementById('navMetroBtn').classList.toggle('is-active', active);
 });
 
 /* 定时检查用户点位降级（30/90 天无确认，pointTier 纯函数基于时间实时计算） */

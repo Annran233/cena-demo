@@ -488,53 +488,99 @@ function openPanel(t) {
   }
 }
 
-function panToiletToVisibleArea(t) {
-  if (!t || !t.lat || !t.lng) return;
-  if (isNaN(t.lat) || isNaN(t.lng)) return;
+/* ============ 地图自动平移：底部 Sheet 弹出时将关注点移到可见区域 ============ */
+/* 通用函数：计算 panel 和 nearby-list 中最高的遮挡线（遮挡线以上为可见地图区域），
+   将指定 latlng 平移到遮挡线上方 48px 安全边距处。
+   拖拽过程中每帧调用，使用 {animate:false} 实现跟手；动画结束后调用使用动画平滑。
+   关注点优先级：currentToilet（详情面板打开时）→ 指定 latlng → searchCenter（列表展开时） */
+function panToVisibleArea(latlng, animate) {
+  if (window.innerWidth >= 768) return;
   if (!map || !map.getSize) return;
-  const panelEl = document.getElementById('panel');
   const mapSize = map.getSize();
   if (!mapSize || !mapSize.x || !mapSize.y) return;
-  // 用 getBoundingClientRect 计算面板真实可见顶部（反映 transform 动画状态）
-  // 面板默认 translateY(calc(100%+20px)) 隐藏，动画中 rect.top > innerHeight
-  const panelRect = panelEl.getBoundingClientRect();
+
   const mapRect = map.getContainer().getBoundingClientRect();
-  // 面板顶部相对于地图容器的 Y 坐标（面板盖住地图底部，可见地图区域为 panelTopY 以上）
-  const panelTopY = panelRect.top - mapRect.top;
-  // 如果面板还没进入视口（动画刚开始）或面板在地图外，不做平移
-  if (panelTopY <= 0 || panelTopY >= mapSize.y) return;
-  // 给 POI 留 48px 安全边距（marker 高度+间距），确保完全在面板上方
-  const safeY = panelTopY - 48;
-  if (safeY <= 60) return; // 可见区域太小，不平移
-  const currentPoint = map.latLngToContainerPoint([t.lat, t.lng]);
+
+  /* 找出底部所有 sheet 中最靠上的顶部 Y 坐标（即遮挡线）：
+     两个 sheet 不会同时完全展开（openPanel 时 nearbyList display:none），
+     但拖拽过渡期间可能短暂重叠，取较高的遮挡线确保安全 */
+  let sheetTopY = mapSize.y; // 默认无遮挡
+  const panelEl = document.getElementById('panel');
+  const listEl = document.getElementById('nearbyList');
+
+  if (panelEl && panelEl.classList.contains('is-show')) {
+    const pr = panelEl.getBoundingClientRect();
+    const topInMap = pr.top - mapRect.top;
+    if (topInMap > 0 && topInMap < sheetTopY) sheetTopY = topInMap;
+  }
+  const listHidden = listEl && (listEl.style.display === 'none' || listEl.classList.contains('is-collapsed'));
+  if (listEl && !listHidden) {
+    const lr = listEl.getBoundingClientRect();
+    const topInMap = lr.top - mapRect.top;
+    if (topInMap > 0 && topInMap < sheetTopY) sheetTopY = topInMap;
+  }
+
+  // 安全边距：marker 高度 + 间距
+  const safeY = sheetTopY - 48;
+  if (safeY <= 80) return; // 可见区域太小，不平移
+
+  // 确定关注点：优先用传入 latlng，其次 currentToilet，最后 searchCenter
+  let focus = latlng;
+  if (!focus && currentToilet && currentToilet.lat && currentToilet.lng) {
+    focus = [currentToilet.lat, currentToilet.lng];
+  }
+  if (!focus && typeof searchCenter !== 'undefined' && searchCenter) {
+    focus = searchCenter;
+  }
+  if (!focus) return;
+
+  const currentPoint = map.latLngToContainerPoint(focus);
   if (!currentPoint || isNaN(currentPoint.x) || isNaN(currentPoint.y)) return;
-  // 只向下平移地图（让 POI 向上移动到可见区）：如果 POI 已经在面板上方可见区域，不动
+  // 如果关注点已在可见区域（safeY 以上），不需要向下平移
+  // 注意：只处理向下平移（POI 被底部遮挡），不处理向上平移（避免卡片收起时地图跳动）
   if (currentPoint.y <= safeY) return;
-  // 需要让 POI 上移到 safeY 位置 → 地图向下平移 → dy 为正
   const dy = currentPoint.y - safeY;
+  // 水平居中
   const dx = Math.round(mapSize.x / 2) - currentPoint.x;
   if (isNaN(dx) || isNaN(dy)) return;
   if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
-    map.panBy([dx, dy], { animate: true, duration: 0.3 });
+    map.panBy([dx, dy], animate ? { animate: true, duration: 0.3 } : { animate: false });
   }
 }
 
+/* 兼容旧函数名：详情面板打开时平移当前厕所到可见区 */
+function panToiletToVisibleArea(t) {
+  if (!t) return;
+  panToVisibleArea([t.lat, t.lng], true);
+}
+
+/* 关闭详情面板（清除高亮、关闭移动端 sheet、恢复 nearbyList 显示） */
 function closePanel() {
-  // 移动端关闭面板时同步清理导航 ActionSheet，避免残留
   closeNavActionSheet();
-  clearMarkerHighlight(); // 清除选中高亮
+  clearMarkerHighlight();
   const panel = document.getElementById('panel');
   if (window.innerWidth < 768 && window._closePanelMobile) {
     window._closePanelMobile();
     return;
   }
-  panel.classList.remove('is-show', 'is-half', 'is-expanded');
+  panel.classList.remove('is-show', 'is-half', 'is-expanded', 'is-compact');
   panel.style.transform = '';
   panel.style.transition = '';
   currentToilet = null;
   clearPickMode();
   document.getElementById('nearbyList').style.display = '';
 }
+
+/* 暴露给 app.js：拖拽过程中实时平移地图让关注点可见 */
+window.panToVisibleArea = panToVisibleArea;
+
+window.panelHeightChanged = function() {
+  if (window.innerWidth >= 768) return;
+  requestAnimationFrame(() => {
+    panToVisibleArea(null, true);
+    if (window.updateNavBarPosition) window.updateNavBarPosition();
+  });
+};
 
 /* ============ 导航前往 ActionSheet（MD3 Bottom Sheet 风格） ============ */
 /* 检测微信内置浏览器（不可拉起原生 App，直接走网页版） */
@@ -839,27 +885,19 @@ async function openAddToiletPanel() {
     setTimeout(() => openPanel(newToilet), 300);
   });
 
-  document.getElementById('panel').classList.add('is-show', 'is-expanded');
-  document.getElementById('panel').classList.remove('is-half');
+  // 初始以 compact 态弹出（约一条半高），上滑可展开至 expanded
+  document.getElementById('panel').classList.add('is-show', 'is-compact');
+  document.getElementById('panel').classList.remove('is-expanded', 'is-half');
   if (window.innerWidth < 768 && window._setPanelSnap) {
-    window._setPanelSnap('expanded', false);
+    window._setPanelSnap('compact', false);
   }
 }
 
-window.panelHeightChanged = function() {
-  if (window.innerWidth >= 768) return;
-  const panel = document.getElementById('panel');
-  if (!panel.classList.contains('is-show')) return;
-  requestAnimationFrame(() => {
-    if (currentToilet) panToiletToVisibleArea(currentToilet);
-    // 面板高度变化时同步更新 nav-bar 位置
-    if (window.updateNavBarPosition) window.updateNavBarPosition();
-  });
-};
-
 /* ============ nav-bar 联动底部 Sheet 高度 ============ */
-/* 面板 / 周边列表 打开或展开时，nav-bar 上浮到 Sheet 顶部上方，避免遮挡内容
+/* nav-bar 现位于右侧竖向排列，水平方向不再与 sheet 冲突；
+   但面板/列表展开较高时仍会纵向遮挡 nav-bar，故需上浮到 sheet 顶部上方。
    实现：通过 CSS 变量 --nav-bar-bottom 统一控制 nav-bar 和 legend-popup 的 bottom
+   （right 定位不影响 bottom 计算，JS 无需关心水平位置）
    覆盖时机：MutationObserver 监听 panel + nearbyList class/style 变化，
             app.js 拖拽 move 中同步调用 */
 function updateNavBarPosition() {
@@ -895,7 +933,20 @@ function updateNavBarPosition() {
 
   // nav-bar 放在 Sheet 顶部上方 8px 间距
   const visibleHeight = window.innerHeight - top;
-  document.documentElement.style.setProperty('--nav-bar-bottom', `${visibleHeight + 8}px`);
+  const desiredBottom = visibleHeight + 8;
+  // 防穿模：nav-bar 顶部不能超过 topbar 底部，否则会盖住搜索栏
+  const navBarEl = document.querySelector('.nav-bar');
+  const navBarH = navBarEl ? navBarEl.getBoundingClientRect().height : 0;
+  const topbarEl = document.querySelector('.topbar');
+  const topbarBottom = topbarEl ? topbarEl.getBoundingClientRect().bottom : 0;
+  const maxBottom = window.innerHeight - topbarBottom - navBarH - 8;
+  if (maxBottom > 0) {
+    // 有空间：clamp 到不超过 topbar 底部
+    document.documentElement.style.setProperty('--nav-bar-bottom', `${Math.min(desiredBottom, maxBottom)}px`);
+  } else {
+    // 空间不足（列表全展开）：nav-bar 放到屏幕底部，被列表遮住（z-index 900 < 999）
+    document.documentElement.style.setProperty('--nav-bar-bottom', `0px`);
+  }
 }
 
 // 监听 panel 和 nearbyList 的 class/style 变化（覆盖 setSnap、openPanel、closePanel、列表展开/收起等）
@@ -918,6 +969,31 @@ document.getElementById('nearbyList').addEventListener('transitionend', (e) => {
 
 // 窗口尺寸变化时重算（如旋转屏幕）
 window.addEventListener('resize', updateNavBarPosition);
+
+/* ============ snap 过渡期间持续同步 nav-bar 位置 ============ */
+/* 列表/面板 snap 动画期间，用 rAF 循环每帧更新 CSS 变量，
+   同时禁用 nav-bar 自身的 bottom transition，避免 nav-bar 慢半拍。
+   地图平移在过渡结束后做一次带动画的 pan，不在每帧调用避免干扰。 */
+let _navSyncRafId = null;
+window.syncNavBarDuringTransition = function(duration) {
+  if (window.innerWidth >= 768) return;
+  document.body.classList.add('is-dragging-sheet');
+  if (_navSyncRafId) cancelAnimationFrame(_navSyncRafId);
+  const start = performance.now();
+  function tick() {
+    updateNavBarPosition();
+    if (performance.now() - start < duration) {
+      _navSyncRafId = requestAnimationFrame(tick);
+    } else {
+      _navSyncRafId = null;
+      document.body.classList.remove('is-dragging-sheet');
+      updateNavBarPosition();
+      // 过渡结束后做一次带动画的地图平移，让关注点移到卡片上方可见区
+      if (window.panToVisibleArea) panToVisibleArea(null, true);
+    }
+  }
+  _navSyncRafId = requestAnimationFrame(tick);
+};
 
 // 暴露给 app.js 拖拽过程中同步调用（MutationObserver 是异步微任务，拖拽时需同步更新避免延迟）
 window.updateNavBarPosition = updateNavBarPosition;

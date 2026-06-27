@@ -227,3 +227,127 @@ function getPickCoords() {
   const pos = pickPinMarker.getLatLng();
   return [pos.lat, pos.lng];
 }
+
+/* ============ 轨道交通图层 ============ */
+let metroLayerGroup = null; // 图层组：包含线路 polyline + 站点 circleMarker
+
+/* 渲染轨道交通图层（线路 + 站点圆点） */
+function renderMetroLayer() {
+  if (metroLayerGroup) map.removeLayer(metroLayerGroup);
+  metroLayerGroup = L.layerGroup();
+
+  Object.keys(METRO_LINES).forEach(lineKey => {
+    const line = METRO_LINES[lineKey];
+    // 绘制线路 polyline（按站点顺序连线）
+    const latlngs = line.stations.map(s => [s.lat, s.lng]);
+    if (latlngs.length >= 2) {
+      L.polyline(latlngs, {
+        color: line.color,
+        weight: 3,
+        opacity: 0.7,
+        lineCap: 'round',
+        lineJoin: 'round'
+      }).addTo(metroLayerGroup);
+    }
+
+    // 绘制站点圆点 marker
+    line.stations.forEach(s => {
+      const color = METRO_COLORS[s.type] || '#999';
+      const circle = L.circleMarker([s.lat, s.lng], {
+        radius: 6,
+        fillColor: color,
+        color: '#fff',
+        weight: 2,
+        opacity: 1,
+        fillOpacity: 0.9
+      });
+      // 点击站点圆点：弹出 toast 显示厕所详情
+      circle.bindTooltip(s.name + ' · ' + line.name, {
+        direction: 'top',
+        offset: [0, -10],
+        opacity: 0.9
+      });
+      circle.on('click', () => {
+        openMetroPanel(s, line);
+      });
+      circle.addTo(metroLayerGroup);
+    });
+  });
+
+  metroLayerGroup.addTo(map);
+}
+
+/* 清除轨道交通图层 */
+function clearMetroLayer() {
+  if (metroLayerGroup) {
+    map.removeLayer(metroLayerGroup);
+    metroLayerGroup = null;
+  }
+}
+
+/* 打开地铁站点详情面板（轻量，复用现有 panel DOM） */
+function openMetroPanel(station, line) {
+  // 先清理现有面板状态
+  closePanel();
+  clearMarkerHighlight();
+  document.getElementById('nearbyList').style.display = 'none';
+
+  const panel = document.getElementById('panel');
+  const body = document.getElementById('panelBody');
+
+  const statusColor = METRO_COLORS[station.type] || '#999';
+  const statusLabel = station.type === 'inside' ? '站内有厕所' : station.type === 'outside' ? '车站外厕所' : '无厕所';
+  const statusEmoji = station.type === 'inside' ? '🟢' : station.type === 'outside' ? '🟡' : '🔴';
+
+  body.innerHTML = `
+    <div class="panel__header">
+      <div class="panel__title">${station.name}</div>
+      <div class="panel__subtitle">${line.name} · ${station.type === 'none' ? '暂不具备设置条件' : '环评标配厕所'}</div>
+    </div>
+    <div class="metro-panel__status" style="display:flex;align-items:center;gap:8px;padding:12px 0;">
+      <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${statusColor};border:2px solid #fff;box-shadow:0 0 0 1px var(--md-outline-variant);flex-shrink:0;"></span>
+      <span style="font-size:15px;font-weight:500;">${statusEmoji} ${statusLabel}</span>
+    </div>
+    <div class="metro-panel__detail" style="padding:10px 14px;background:var(--md-surface-container-low);border-radius:12px;font-size:13px;line-height:1.6;color:var(--md-on-surface-variant);">
+      ${station.detail}
+    </div>
+    <div class="metro-panel__line-info" style="margin-top:12px;display:flex;align-items:center;gap:6px;font-size:13px;color:var(--md-on-surface-variant);">
+      <span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${line.color};flex-shrink:0;"></span>
+      <span>${line.name} · 共${line.stations.length}站</span>
+    </div>
+    <div class="panel__divider"></div>
+    <div class="panel__hint" style="font-size:12px;color:var(--text-hint);text-align:center;padding:8px 0;">
+      ${station.type === 'none' ? '💡 21站中仅小东庄、胡家园无厕所，其余19站均有' : '💡 数据来源：天津轨道交通运营集团 & Z4线环评文件'}
+    </div>
+  `;
+
+  // 显示面板：移动端用 half snap，桌面端直接显示
+  if (window.innerWidth < 768) {
+    panel.classList.add('is-show', 'is-half');
+    panel.style.transform = '';
+    if (window._setPanelSnap) window._setPanelSnap('half', false);
+  } else {
+    panel.classList.add('is-show', 'is-half');
+    panel.style.transform = '';
+  }
+}
+
+/* 切换轨道交通图层激活/关闭 */
+let _metroLayerActive = false;
+function toggleMetroLayer() {
+  _metroLayerActive = !_metroLayerActive;
+  if (_metroLayerActive) {
+    renderMetroLayer();
+    showToast('🚇 轨道交通图层已开启 | 9号线21站 + Z4线北段10站');
+  } else {
+    clearMetroLayer();
+    showToast('轨道交通图层已关闭');
+  }
+  // 按钮 active 态由 app.js 的 toggle 逻辑设置
+  return _metroLayerActive;
+}
+
+/* 获取当前地铁图层状态（供 app.js 恢复按钮状态） */
+function isMetroLayerActive() {
+  return _metroLayerActive;
+}
