@@ -217,8 +217,13 @@ html, body {
 .topbar {
   display: flex;
   flex-direction: column;
-  padding: calc(var(--sp-2) + var(--safe-top)) var(--sp-4) var(--sp-2);
-  background: transparent;
+  padding: calc(var(--sp-2) + var(--safe-top)) var(--sp-4) calc(var(--sp-3) + 12px);
+  /* 白色向下渐变：搜索框区域完全白底，底部渐隐到透明，地图自然过渡 */
+  background: linear-gradient(to bottom,
+    #ffffff 0%,
+    #ffffff 75%,
+    rgba(255,255,255,0.95) 88%,
+    rgba(255,255,255,0) 100%);
   z-index: 2000;
   flex-shrink: 0;
   position: relative;
@@ -250,18 +255,18 @@ html, body {
   letter-spacing: -0.5px;
   line-height: 1.1;
 }
-/* 右上角+按钮：纯白圆形 */
+/* 右上角+按钮：纯白圆形（白色浮层，与搜索框统一视觉层级） */
 .topbar__add {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: none;
-  background: var(--md-surface-container-low);
+  border: 1px solid var(--md-outline-variant);
+  background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--md-on-surface);
-  box-shadow: var(--md-elevation-1);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
   cursor: pointer;
   flex-shrink: 0;
   position: relative;
@@ -283,35 +288,34 @@ html, body {
 .topbar__add:active { transform: scale(0.95); }
 .topbar__add svg { display: block; }
 
-/* ============ 5. SearchWrap 搜索栏（MD3 Search Bar 标准） ============ */
-/* 浅灰胶囊：搜索图标 + 输入框 + 清除，统一 48px 高度 */
+/* ============ 5. SearchWrap 搜索栏（与+按钮统一白色浮层风格） ============ */
+/* 纯白圆角胶囊：白底 + 浅边框 + 轻阴影，与右上角+按钮视觉层级一致 */
 .search-wrap {
   flex: 1;
   min-width: 0;
   position: relative;
   display: flex;
   align-items: center;
-  background: var(--md-surface-container-high);  /* MD3 Search Bar 使用 surface-container-high */
-  border: none;
+  background: #ffffff;
+  border: 1px solid var(--md-outline-variant);
   border-radius: var(--md-shape-full);
-  padding: 0 12px;
-  height: 46px;
-  gap: var(--sp-2);
-  margin-top: 4px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);  /* 极轻阴影，避免厚重浮板感 */
+  padding: 0 14px;
+  height: 44px;
+  gap: 10px;
+  margin-top: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
   transition: box-shadow var(--md-dur-short) var(--md-easing-standard),
-              background var(--md-dur-short) var(--md-easing-standard);
+              border-color var(--md-dur-short) var(--md-easing-standard);
 }
 .search-wrap:focus-within {
-  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
-  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(66,133,244,0.18);
+  border-color: var(--md-primary);
 }
 /* 左侧搜索图标 */
 .search-wrap__icon {
   flex-shrink: 0;
   color: var(--md-on-surface-variant);
   pointer-events: none;
-  opacity: 0.8;
 }
 /* 搜索输入框 */
 .search-wrap__input {
@@ -324,7 +328,7 @@ html, body {
   color: var(--md-on-surface);
   height: 100%;
 }
-.search-wrap__input::placeholder { color: var(--text-hint); opacity: 0.9; }
+.search-wrap__input::placeholder { color: var(--text-hint); }
 
 /* 搜索清除按钮（MD3 Icon Button 风格，输入后显示） */
 .search-wrap__clear {
@@ -1614,7 +1618,7 @@ body.is-dragging-sheet .nav-bar {
 @media (max-width: 767px) {
   /* --- TopBar 移动端 --- */
   .topbar {
-    padding: var(--sp-1) var(--sp-3) 0;
+    padding: var(--sp-1) var(--sp-3) var(--sp-2);
   }
   .topbar__title-row {
     padding: calc(var(--safe-top) + var(--sp-1)) var(--sp-1) var(--sp-2);
@@ -1623,11 +1627,11 @@ body.is-dragging-sheet .nav-bar {
   .topbar__brand-sub { font-size: var(--fs-xs); }
 
   /* --- 搜索栏移动端 --- */
-  .search-wrap { height: 44px; padding: 0 var(--sp-2); gap: var(--sp-1); }
+  .search-wrap { height: 42px; padding: 0 12px; gap: 8px; margin-top: 4px; border-radius: 22px; }
   .search-wrap__input { font-size: 16px; }  /* 16px 防止 iOS 缩放 */
   .search-wrap__clear { width: 18px; height: 18px; }
-  /* Filter FAB 移动端：紧凑图标-only 模式 */
-  .filter-fab { top: calc(var(--safe-top) + 108px); }
+  /* Filter FAB 移动端：紧凑图标-only 模式（位置随topbar高度微调） */
+  .filter-fab { top: calc(var(--safe-top) + 112px); }
   .filter-fab__btn { padding: 0 12px; height: 40px; }
   .filter-fab__label { display: none; }  /* 移动端只显示漏斗图标 */
 
