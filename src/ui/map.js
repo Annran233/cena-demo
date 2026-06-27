@@ -229,45 +229,35 @@ function getPickCoords() {
 }
 
 /* ============ 轨道交通图层 ============ */
-let metroLayerGroup = null; // 图层组：包含线路 polyline + 站点 circleMarker
+let metroLayerGroup = null; // 图层组：仅包含站点圆点（线路由高德底图原生显示）
 
-/* 渲染轨道交通图层（线路 + 站点圆点） */
+/* 渲染轨道交通图层（仅站点圆点，线路复用高德底图原生地铁线路） */
 function renderMetroLayer() {
   if (metroLayerGroup) map.removeLayer(metroLayerGroup);
   metroLayerGroup = L.layerGroup();
 
   Object.keys(METRO_LINES).forEach(lineKey => {
     const line = METRO_LINES[lineKey];
-    // 绘制线路 polyline（按站点顺序连线）
-    const latlngs = line.stations.map(s => [s.lat, s.lng]);
-    if (latlngs.length >= 2) {
-      L.polyline(latlngs, {
-        color: line.color,
-        weight: 3,
-        opacity: 0.7,
-        lineCap: 'round',
-        lineJoin: 'round'
-      }).addTo(metroLayerGroup);
-    }
-
-    // 绘制站点圆点 marker
+    // 不绘制polyline：高德底图已原生显示地铁线路，自画线条因坐标精度问题无法与底图拟合
+    // 仅绘制站点圆点，z-index 高于厕所marker但不拦截地图拖拽
     line.stations.forEach(s => {
       const color = METRO_COLORS[s.type] || '#999';
       const circle = L.circleMarker([s.lat, s.lng], {
-        radius: 6,
+        radius: 7,
         fillColor: color,
-        color: '#fff',
-        weight: 2,
+        color: '#ffffff',
+        weight: 2.5,
         opacity: 1,
-        fillOpacity: 0.9
+        fillOpacity: 0.95,
+        zIndexOffset: 500
       });
-      // 点击站点圆点：弹出 toast 显示厕所详情
       circle.bindTooltip(s.name + ' · ' + line.name, {
         direction: 'top',
         offset: [0, -10],
-        opacity: 0.9
+        opacity: 0.92
       });
-      circle.on('click', () => {
+      circle.on('click', (e) => {
+        L.DomEvent.stopPropagation(e);
         openMetroPanel(s, line);
       });
       circle.addTo(metroLayerGroup);
@@ -338,7 +328,7 @@ function toggleMetroLayer() {
   _metroLayerActive = !_metroLayerActive;
   if (_metroLayerActive) {
     renderMetroLayer();
-    showToast('🚇 轨道交通图层已开启 | 9号线21站 + Z4线北段10站');
+    showToast('🚇 轨道交通图层已开启 | 点击圆点查看厕所分布');
   } else {
     clearMetroLayer();
     showToast('轨道交通图层已关闭');
