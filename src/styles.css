@@ -878,6 +878,7 @@ body.is-dragging-sheet .nav-bar {
 .nearby-list__items {
   padding: var(--sp-2) var(--sp-3) var(--sp-3);
   background: var(--md-surface);
+  touch-action: pan-y;  /* 允许浏览器原生垂直滚动，不被 document touchmove(passive:false) 阻断 */
 }
 
 /* 列表项：纯白胶囊卡片样式（TimeTrace风格：浅灰背景上的白色胶囊） */

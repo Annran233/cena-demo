@@ -62,8 +62,6 @@ map.addLayer(clusterGroup);
   let lastY = 0;              // 上一次 move 采样的 Y 坐标
   let lastTime = 0;           // 上一次 move 采样的时间戳（ms）
   let velocity = 0;           // 最近一次 move 的瞬时速度（px/ms，正值=手指上移=展开方向）
-  let dragFromList = false;    // 拖拽是否起源于列表内容区（非 header）
-  let startScrollTop = 0;      // touchstart 时列表的 scrollTop，用于判断是否应让浏览器接管滚动
   const HEADER_H = 56;
   const COLLAPSED_H_DESKTOP = 48;
   const DRAG_THRESHOLD = 6;   // 拖拽激活阈值（px）：超过该位移才认定为拖拽，避免和点击冲突
@@ -162,12 +160,6 @@ map.addLayer(clusterGroup);
   }
   function onMove(y) {
     if (!pendingDrag && !isDragging) return;
-    // 从列表内容区启动的触摸：如果列表已滚动（scrollTop>0），说明用户在浏览内容，
-    // 取消拖拽让浏览器接管原生滚动，避免 preventDefault 阻断列表滑动
-    if (pendingDrag && !isDragging && dragFromList && list.scrollTop > 0) {
-      pendingDrag = false;
-      return;
-    }
     const dy = startY - y;
     // 计算瞬时速度
     const now = performance.now();
@@ -299,21 +291,12 @@ map.addLayer(clusterGroup);
     }
   };
 
-  /* 触摸事件：touchstart 在 header/list 上触发（支持从内容区开始拖拽），
-     但从 list 内容区启动时，若列表已滚动（scrollTop>0）则不拦截，让浏览器处理原生滚动。
-     touchmove/touchend 绑定到 document 确保手指滑出区域后事件不丢失 */
-  const dragTargets = [header, list];
-  dragTargets.forEach(target => {
-    target.addEventListener('touchstart', (e) => {
-      dragFromList = (target === list);
-      if (dragFromList) {
-        startScrollTop = list.scrollTop;
-        // 列表已滚动：用户在浏览内容，不启动拖拽，让浏览器接管滚动
-        if (startScrollTop > 0) return;
-      }
-      onStart(e.touches[0].clientY);
-    }, { passive: true });
-  });
+  /* 触摸事件：header 上 touchstart 启动拖拽；
+     list 内容区设了 touch-action: pan-y，浏览器原生处理垂直滚动，不启动拖拽。
+     touchmove/touchend 绑定到 document 确保手指滑出 header 后事件不丢失 */
+  header.addEventListener('touchstart', (e) => {
+    onStart(e.touches[0].clientY);
+  }, { passive: true });
   document.addEventListener('touchmove', (e) => {
     if (!pendingDrag && !isDragging) return;
     onMove(e.touches[0].clientY);
@@ -324,7 +307,6 @@ map.addLayer(clusterGroup);
 
   header.addEventListener('mousedown', (e) => {
     if (e.button !== 0) return;
-    dragFromList = false; // 鼠标拖拽只从 header 触发
     onStart(e.clientY);
     e.preventDefault();
   });
