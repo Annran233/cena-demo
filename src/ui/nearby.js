@@ -5,6 +5,7 @@
 
 function renderNearbyList() {
   const allToilets = getAllToilets();
+  // 筛选 → 计算距离 → 按距离升序排序
   const items = allToilets
     .filter(toiletPassesFilter)
     .map(t => {
@@ -16,12 +17,24 @@ function renderNearbyList() {
   document.getElementById('nearbyTitle').textContent = searchCenterName + '附近厕所';
 
   const container = document.getElementById('nearbyItems');
+  // 空数据处理
   if (items.length === 0) {
     container.innerHTML = '<div style="padding:14px;color:var(--text-sub);font-size:13px;text-align:center;">附近暂无厕所数据</div>';
     return;
   }
 
-  container.innerHTML = items.map((item, idx) => {
+  // 移动端限流：屏幕小，列表太长影响体验，最多显示 20 条
+  const MOBILE_MAX = 20;
+  const isMobile = window.innerWidth < 768;
+  const totalCount = items.length;
+  // 桌面端不限制（取全部），移动端取最近的 N 条
+  const displayItems = isMobile ? items.slice(0, MOBILE_MAX) : items;
+  const displayCount = displayItems.length;
+  // 是否触发了截断（仅移动端且总数超过限制时为 true）
+  const isTruncated = isMobile && totalCount > displayCount;
+
+  // 渲染列表项（idx 为显示序号，用于编号）
+  container.innerHTML = displayItems.map((item, idx) => {
     const t = item.t;
     const d = formatDist(item.dist);
     const cls = markerClass(t);
@@ -48,8 +61,12 @@ function renderNearbyList() {
         <div class="nearby-item__dist">${distText}<span class="nearby-item__walk">${d.walk}</span></div>
       </div>
     `;
-  }).join('');
+  }).join('') + (isTruncated
+    // 截断时在列表底部追加提示：灰色小字、居中、padding 与空数据样式一致
+    ? `<div style="padding:14px;color:var(--text-sub);font-size:13px;text-align:center;">已显示最近 ${displayCount} 条，共 ${totalCount} 条</div>`
+    : '');
 
+  // 仅对实际渲染出的 nearby-item 绑定点击事件（提示 div 不含 .nearby-item，不会被绑定）
   container.querySelectorAll('.nearby-item').forEach(el => {
     el.addEventListener('click', () => {
       const t = getAllToilets().find(x => x.id === el.dataset.id);

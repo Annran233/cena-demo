@@ -172,7 +172,8 @@ function renderMarkers() {
       openPanel(t);
       collapseNearbyList(); // 移动端：点击 marker 收起列表，不遮挡地图
     });
-    if (useCluster) {
+    // 聚合模式下，选中的 marker 单独直显（不被收进 cluster），保持高亮可见
+    if (useCluster && t.id !== selectedToiletId) {
       clusterGroup.addLayer(m);
     } else {
       m.addTo(map);

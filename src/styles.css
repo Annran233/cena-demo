@@ -710,8 +710,8 @@ html, body {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  bottom: calc(56px + var(--safe-bottom) + 8px);
-  z-index: 1000;
+  bottom: var(--nav-bar-bottom, calc(56px + var(--safe-bottom) + 8px)); /* JS 联动面板高度时更新此变量 */
+  z-index: 2200;            /* 高于 panel.is-expanded(2100)，确保详情面板展开时定位/图例按钮可见 */
   display: flex;
   align-items: center;
   gap: 0;
@@ -719,6 +719,11 @@ html, body {
   border-radius: var(--md-shape-full);
   box-shadow: 0 4px 16px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.08);
   padding: 4px;
+  transition: bottom var(--md-dur-medium) var(--md-easing-emphasized); /* 联动面板时平滑过渡 */
+}
+/* 拖拽 sheet 时禁用 nav-bar 的 bottom 过渡，确保跟手 */
+body.is-dragging-sheet .nav-bar {
+  transition: none;
 }
 .nav-bar__btn {
   width: 48px;
@@ -777,8 +782,8 @@ html, body {
   position: absolute;
   left: calc(50% + 26px);
   transform: translateX(-50%) translateY(8px);
-  bottom: calc(56px + var(--safe-bottom) + 8px + 52px + 8px);
-  z-index: 1001;
+  bottom: calc(var(--nav-bar-bottom, calc(56px + var(--safe-bottom) + 8px)) + 52px + 8px); /* 跟随 nav-bar 联动 */
+  z-index: 2201;            /* 高于 nav-bar(2200)，弹窗在按钮上方 */
   background: #ffffff;
   border-radius: var(--md-shape-lg);
   box-shadow: 0 4px 16px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.08);
@@ -1649,7 +1654,7 @@ html, body {
 
   /* --- NavBar 移动端：更大触摸目标 --- */
   .nav-bar {
-    bottom: calc(56px + var(--safe-bottom) + 8px);
+    bottom: var(--nav-bar-bottom, calc(56px + var(--safe-bottom) + 8px)); /* 跟随 Sheet 高度联动，fallback 为默认底部位置 */
   }
   .nav-bar__btn {
     width: 52px;
