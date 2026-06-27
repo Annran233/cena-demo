@@ -42,21 +42,23 @@ const METRO_LINES = {
       { name: '东海路',     lng: 117.737288, lat: 39.040571, type: 'inside',  detail: '非付费区 | 站厅B出入口旁（终点站）' }
     ]
   },
-  /* Z4线一期北段：寨上—北塘，全长23.7km，10站（2026-01-18开通） */
+  /* Z4线一期北段：寨上—北塘，全长23.7km，10站（2026-01-18开通）
+     注意：Z4线为新开通线路，环评文件确认标配厕所，但站内厕所具体位置（付费区/非付费区/方位）
+     暂无官方公开数据，detail 不做位置臆测，标注"具体位置待核实" */
   z4north: {
     name: 'Z4线北段',
     color: '#C4A36A',  /* Z4线官方香槟金 */
     stations: [
-      { name: '寨上',       lng: 117.8150, lat: 39.2420, type: 'inside', detail: '滨城首条地铁 | 终点站·紧邻车辆段' },
-      { name: '汉沽医院',   lng: 117.8080, lat: 39.2250, type: 'inside', detail: '出站直达总医院滨海医院新院区' },
-      { name: '中心渔港',   lng: 117.8040, lat: 39.2000, type: 'inside', detail: '高架站·鱼塘虾塘特色景观' },
-      { name: '玉砂道',     lng: 117.8025, lat: 39.1820, type: 'inside', detail: '岛式站台·辐射科研院所' },
-      { name: '航母公园',   lng: 117.802015, lat: 39.166619, type: 'inside', detail: '军舰舷窗设计·蓝天白云吊顶' },
-      { name: '软件园',     lng: 117.7880, lat: 39.1480, type: 'inside', detail: '信创产业聚集区·标识设施完善' },
-      { name: '绿创园',     lng: 117.7750, lat: 39.1330, type: 'inside', detail: '海洋元素·串联湿地公园' },
-      { name: '和顺路',     lng: 117.762927, lat: 39.118959, type: 'inside', detail: '生态城片区·绿色低碳主题' },
-      { name: '中新生态城', lng: 117.752486, lat: 39.108335, type: 'inside', detail: '国际生态城·绿色波点装饰' },
-      { name: '北塘',       lng: 117.724432, lat: 39.093467, type: 'inside', detail: '渔家风情·明清仿古设计 | 换乘Z2线' }
+      { name: '寨上',       lng: 117.817838, lat: 39.227289, type: 'inside', detail: 'Z4线环评标配 | 具体位置待核实（终点站）' },
+      { name: '汉沽医院',   lng: 117.830121, lat: 39.221343, type: 'inside', detail: 'Z4线环评标配 | 具体位置待核实' },
+      { name: '中心渔港',   lng: 117.850375, lat: 39.208928, type: 'inside', detail: 'Z4线环评标配 | 具体位置待核实' },
+      { name: '玉砂道',     lng: 117.818402, lat: 39.182932, type: 'inside', detail: 'Z4线环评标配 | 具体位置待核实' },
+      { name: '航母公园',   lng: 117.802015, lat: 39.166619, type: 'inside', detail: 'Z4线环评标配 | 具体位置待核实' },
+      { name: '软件园',     lng: 117.792060, lat: 39.150538, type: 'inside', detail: 'Z4线环评标配 | 具体位置待核实' },
+      { name: '绿创园',     lng: 117.778870, lat: 39.135219, type: 'inside', detail: 'Z4线环评标配 | 具体位置待核实' },
+      { name: '和顺路',     lng: 117.762927, lat: 39.118959, type: 'inside', detail: 'Z4线环评标配 | 具体位置待核实' },
+      { name: '中新生态城', lng: 117.752486, lat: 39.108335, type: 'inside', detail: 'Z4线环评标配 | 具体位置待核实' },
+      { name: '北塘',       lng: 117.724432, lat: 39.093467, type: 'inside', detail: 'Z4线环评标配 | 具体位置待核实（换乘Z2线）' }
     ]
   }
 };

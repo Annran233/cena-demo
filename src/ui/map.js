@@ -300,10 +300,19 @@ function openMetroPanel(station, line) {
   const statusLabel = station.type === 'inside' ? '站内有厕所' : station.type === 'outside' ? '车站外厕所' : '无厕所';
   const statusEmoji = station.type === 'inside' ? '🟢' : station.type === 'outside' ? '🟡' : '🔴';
 
+  // 根据线路区分 subtitle 和 hint 文案
+  const isLine9 = line.name.includes('9号线');
+  const subtitle = station.type === 'none'
+    ? '暂不具备设置条件'
+    : (isLine9 ? '站内标配厕所' : '环评标配厕所（新线）');
+  const hintText = station.type === 'none'
+    ? (isLine9 ? '💡 9号线21站中仅小东庄、胡家园无厕所，其余19站均有' : '')
+    : (isLine9 ? '💡 数据来源：天津轨道交通运营集团（厕所位置以站内指引为准）' : '💡 Z4线2026年新开通，环评标配厕所，具体位置以站内指引为准');
+
   body.innerHTML = `
     <div class="panel__header">
       <div class="panel__title">${station.name}</div>
-      <div class="panel__subtitle">${line.name} · ${station.type === 'none' ? '暂不具备设置条件' : '环评标配厕所'}</div>
+      <div class="panel__subtitle">${line.name} · ${subtitle}</div>
     </div>
     <div class="metro-panel__status" style="display:flex;align-items:center;gap:8px;padding:12px 0;">
       <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${statusColor};border:2px solid #fff;box-shadow:0 0 0 1px var(--md-outline-variant);flex-shrink:0;"></span>
@@ -318,7 +327,7 @@ function openMetroPanel(station, line) {
     </div>
     <div class="panel__divider"></div>
     <div class="panel__hint" style="font-size:12px;color:var(--text-hint);text-align:center;padding:8px 0;">
-      ${station.type === 'none' ? '💡 21站中仅小东庄、胡家园无厕所，其余19站均有' : '💡 数据来源：天津轨道交通运营集团 & Z4线环评文件'}
+      ${hintText}
     </div>
   `;
 
