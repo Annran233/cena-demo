@@ -1899,6 +1899,11 @@ body.is-dark {
   --c-uncertain: rgba(255,82,82,0.5);
   --c-stale:     #BDBDBD;
 
+  /* --- 筛选标签专用色（暗色下提亮一档，保证暗背景可辨） --- */
+  --c-accessible: #b69dff;
+  --c-family:     #5cdbd3;
+  --c-water:      #69b1ff;
+
   /* --- Legacy 别名跟随覆盖 --- */
   --c-success: #81c995;
   --c-warning: #fdd663;

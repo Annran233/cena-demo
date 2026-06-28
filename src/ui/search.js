@@ -53,6 +53,8 @@ function renderSuggest(items) {
 function selectSuggest(item) {
   document.getElementById('searchSuggest').classList.remove('is-show');
   document.getElementById('searchInput').value = item.name;
+  // 编程式赋值不触发 input 事件，手动同步清除按钮显隐
+  document.getElementById('searchClear').classList.toggle('is-show', item.name.length > 0);
   addSearchHistory(item.name);  // 记录搜索历史
   hideSearchHistory();          // 选择后隐藏历史下拉
   const [lng, lat] = item.location.split(',').map(Number);
@@ -135,6 +137,8 @@ const onSearchInput = debounce(() => {
 function doSearch() {
   const q = document.getElementById('searchInput').value.trim();
   if (!q) return;
+  // 编程式触发搜索时同步清除按钮显隐（用户从历史点击进来时 q 已在输入框）
+  document.getElementById('searchClear').classList.toggle('is-show', q.length > 0);
   // 精确匹配厕所名称
   const hit = MOCK_TOILETS.find(t => t.name.includes(q) || t.name.toLowerCase().includes(q.toLowerCase()));
   if (hit) {

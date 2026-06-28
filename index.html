@@ -1929,6 +1929,11 @@ body.is-dark {
   --c-uncertain: rgba(255,82,82,0.5);
   --c-stale:     #BDBDBD;
 
+  /* --- 筛选标签专用色（暗色下提亮一档，保证暗背景可辨） --- */
+  --c-accessible: #b69dff;
+  --c-family:     #5cdbd3;
+  --c-water:      #69b1ff;
+
   /* --- Legacy 别名跟随覆盖 --- */
   --c-success: #81c995;
   --c-warning: #fdd663;
@@ -8176,6 +8181,8 @@ function renderSuggest(items) {
 function selectSuggest(item) {
   document.getElementById('searchSuggest').classList.remove('is-show');
   document.getElementById('searchInput').value = item.name;
+  // 编程式赋值不触发 input 事件，手动同步清除按钮显隐
+  document.getElementById('searchClear').classList.toggle('is-show', item.name.length > 0);
   addSearchHistory(item.name);  // 记录搜索历史
   hideSearchHistory();          // 选择后隐藏历史下拉
   const [lng, lat] = item.location.split(',').map(Number);
@@ -8258,6 +8265,8 @@ const onSearchInput = debounce(() => {
 function doSearch() {
   const q = document.getElementById('searchInput').value.trim();
   if (!q) return;
+  // 编程式触发搜索时同步清除按钮显隐（用户从历史点击进来时 q 已在输入框）
+  document.getElementById('searchClear').classList.toggle('is-show', q.length > 0);
   // 精确匹配厕所名称
   const hit = MOCK_TOILETS.find(t => t.name.includes(q) || t.name.toLowerCase().includes(q.toLowerCase()));
   if (hit) {
@@ -8811,12 +8820,14 @@ map.on('click', (e) => {
   const hasOverlay = panel.classList.contains('is-show')
     || !list.classList.contains('is-collapsed')
     || searchSuggest.classList.contains('is-show')
+    || document.getElementById('searchHistory').classList.contains('is-show')
     || filterDropdown.classList.contains('is-show');
 
   if (hasOverlay) {
     closePanel();
     collapseNearbyList();
     searchSuggest.classList.remove('is-show');
+    hideSearchHistory();
     filterDropdown.classList.remove('is-show');
     filterBtn.classList.remove('is-active');
     document.getElementById('searchInput').blur();
@@ -9229,18 +9240,17 @@ document.getElementById('navProfileBtn').addEventListener('click', (e) => {
    - localStorage → wx.setStorageSync('theme', 'dark'|'light')
    - 图标切换 → data 驱动 wxml 条件渲染
    - theme-color meta → wx.setNavigationBarColor
-   注意：地图瓦片暗色由 CSS filter 处理（Web 专用），小程序原生 map 组件用 dark 样式 */
-
-/* 太阳图标 SVG（暗色态显示，点击切回浅色） */
-const ICON_SUN = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
-/* 月亮图标 SVG（浅色态显示，点击切到暗色） */
-const ICON_MOON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+   注意：地图瓦片暗色由 CSS filter 处理（Web 专用），小程序原生 map 组件用 dark 样式
+   健壮性：图标常量内联到 applyTheme 内部，避免 CDN 加载失败导致脚本中断时 TDZ 报错 */
 
 /* 应用主题：切换 body class + 更新图标 + 同步 theme-color meta */
 function applyTheme(isDark) {
+  // 图标 SVG 内联定义（避免外部常量因脚本中断未初始化）
+  const ICON_SUN = '<svg id="themeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+  const ICON_MOON = '<svg id="themeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
   document.body.classList.toggle('is-dark', isDark);
   const iconEl = document.getElementById('themeIcon');
-  if (iconEl) iconEl.outerHTML = isDark ? ICON_SUN.replace('<svg', '<svg id="themeIcon"') : ICON_MOON.replace('<svg', '<svg id="themeIcon"');
+  if (iconEl) iconEl.outerHTML = isDark ? ICON_SUN : ICON_MOON;
   // 同步浏览器地址栏/状态栏颜色（移动端沉浸感）
   const metaTheme = document.querySelector('meta[name="theme-color"]');
   if (metaTheme) metaTheme.setAttribute('content', isDark ? '#121316' : '#ffffff');
