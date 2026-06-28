@@ -409,12 +409,14 @@ map.on('click', (e) => {
   const hasOverlay = panel.classList.contains('is-show')
     || !list.classList.contains('is-collapsed')
     || searchSuggest.classList.contains('is-show')
+    || document.getElementById('searchHistory').classList.contains('is-show')
     || filterDropdown.classList.contains('is-show');
 
   if (hasOverlay) {
     closePanel();
     collapseNearbyList();
     searchSuggest.classList.remove('is-show');
+    hideSearchHistory();
     filterDropdown.classList.remove('is-show');
     filterBtn.classList.remove('is-active');
     document.getElementById('searchInput').blur();
@@ -719,14 +721,24 @@ document.getElementById('filterDropdown').addEventListener('click', e => {
 });
 
 document.getElementById('searchInput').addEventListener('input', onSearchInput);
+document.getElementById('searchInput').addEventListener('input', () => {
+  // 输入内容时隐藏搜索历史（避免与联想建议重叠）
+  hideSearchHistory();
+});
 document.getElementById('searchInput').addEventListener('focus', () => {
   const q = document.getElementById('searchInput').value.trim();
-  if (q.length >= 2) onSearchInput();
+  if (q.length >= 2) {
+    onSearchInput();
+  } else {
+    // 输入为空且聚焦时显示搜索历史（小程序迁移：bindfocus 触发渲染）
+    renderSearchHistory();
+  }
 });
 // 搜索通过 Enter 键触发，无需额外按钮
 document.getElementById('searchInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') {
     document.getElementById('searchSuggest').classList.remove('is-show');
+    hideSearchHistory();
     doSearch();
   }
 });
@@ -739,12 +751,15 @@ searchClear.addEventListener('click', () => {
   document.getElementById('searchInput').value = '';
   searchClear.classList.remove('is-show');
   document.getElementById('searchSuggest').classList.remove('is-show');
+  // 清空后聚焦，显示搜索历史
+  renderSearchHistory();
   document.getElementById('searchInput').focus();
 });
-// 点击外部关闭搜索建议和筛选下拉
+// 点击外部关闭搜索建议、搜索历史和筛选下拉
 document.addEventListener('click', e => {
   if (!e.target.closest('.search-wrap')) {
     document.getElementById('searchSuggest').classList.remove('is-show');
+    hideSearchHistory();
   }
   if (!e.target.closest('.filter-dropdown') && !e.target.closest('#filterBtn')) {
     document.getElementById('filterDropdown').classList.remove('is-show');
@@ -807,6 +822,58 @@ document.getElementById('navProfileBtn').addEventListener('click', (e) => {
     openProfilePanel();
   }
 });
+
+/* ============ 暗色模式切换 ============ */
+/* 小程序迁移映射：
+   - body.is-dark class → page 容器 class 或 wx.setPageStyle 注入
+   - localStorage → wx.setStorageSync('theme', 'dark'|'light')
+   - 图标切换 → data 驱动 wxml 条件渲染
+   - theme-color meta → wx.setNavigationBarColor
+   注意：地图瓦片暗色由 CSS filter 处理（Web 专用），小程序原生 map 组件用 dark 样式
+   健壮性：图标常量内联到 applyTheme 内部，避免 CDN 加载失败导致脚本中断时 TDZ 报错 */
+
+/* 应用主题：切换 body class + 更新图标 + 同步 theme-color meta */
+function applyTheme(isDark) {
+  // 图标 SVG 内联定义（避免外部常量因脚本中断未初始化）
+  const ICON_SUN = '<svg id="themeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+  const ICON_MOON = '<svg id="themeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+  document.body.classList.toggle('is-dark', isDark);
+  const iconEl = document.getElementById('themeIcon');
+  if (iconEl) iconEl.outerHTML = isDark ? ICON_SUN : ICON_MOON;
+  // 同步浏览器地址栏/状态栏颜色（移动端沉浸感）
+  const metaTheme = document.querySelector('meta[name="theme-color"]');
+  if (metaTheme) metaTheme.setAttribute('content', isDark ? '#121316' : '#ffffff');
+}
+
+/* 读取 localStorage 主题偏好并应用（启动时调用一次） */
+function initTheme() {
+  let isDark = false;
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === 'dark') isDark = true;
+    else if (saved === 'light') isDark = false;
+    else {
+      // 未显式设置时跟随系统偏好（prefers-color-scheme）
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        isDark = true;
+      }
+    }
+  } catch (e) { /* localStorage 禁用时默认浅色 */ }
+  applyTheme(isDark);
+}
+
+/* 切换主题按钮：点击切换并持久化 */
+document.getElementById('themeBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const isDark = !document.body.classList.contains('is-dark');
+  applyTheme(isDark);
+  try {
+    localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light');
+  } catch (e) { /* 静默失败 */ }
+});
+
+/* 启动时初始化主题（尽早执行避免闪屏，放在事件绑定区末尾） */
+initTheme();
 
 /* 定时检查用户点位降级（30/90 天无确认，pointTier 纯函数基于时间实时计算） */
 setInterval(() => {

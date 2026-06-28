@@ -53,6 +53,10 @@ function renderSuggest(items) {
 function selectSuggest(item) {
   document.getElementById('searchSuggest').classList.remove('is-show');
   document.getElementById('searchInput').value = item.name;
+  // 编程式赋值不触发 input 事件，手动同步清除按钮显隐
+  document.getElementById('searchClear').classList.toggle('is-show', item.name.length > 0);
+  addSearchHistory(item.name);  // 记录搜索历史
+  hideSearchHistory();          // 选择后隐藏历史下拉
   const [lng, lat] = item.location.split(',').map(Number);
   setSearchCenter([lat, lng], item.name, 15);
   showToast('已定位到：' + item.name + '，周边厕所已更新');
@@ -133,9 +137,13 @@ const onSearchInput = debounce(() => {
 function doSearch() {
   const q = document.getElementById('searchInput').value.trim();
   if (!q) return;
+  // 编程式触发搜索时同步清除按钮显隐（用户从历史点击进来时 q 已在输入框）
+  document.getElementById('searchClear').classList.toggle('is-show', q.length > 0);
   // 精确匹配厕所名称
   const hit = MOCK_TOILETS.find(t => t.name.includes(q) || t.name.toLowerCase().includes(q.toLowerCase()));
   if (hit) {
+    addSearchHistory(hit.name);  // 记录搜索历史
+    hideSearchHistory();
     setSearchCenter([hit.lat, hit.lng], hit.name, 16);
     openPanel(hit);
     showToast('已定位到：' + hit.name);
@@ -144,6 +152,8 @@ function doSearch() {
   // 匹配预设地点
   for (const [key, coords] of Object.entries(PRESET_LOCATIONS)) {
     if (q.includes(key)) {
+      addSearchHistory(key);  // 记录搜索历史
+      hideSearchHistory();
       setSearchCenter(coords, key, 15);
       showToast('已定位到：' + key + '，周边厕所已更新');
       return;
@@ -175,4 +185,96 @@ function doSearch() {
   } else {
     showToast('未找到地点，换个关键词试试');
   }
+}
+
+/* ============ 搜索历史（localStorage，最近 8 条） ============ */
+/* 小程序迁移映射：
+   - localStorage → wx.getStorageSync / wx.setStorageSync
+   - DOM 渲染 → wxml wx:for + bindtap
+   - 点击历史 → 复用 doSearch 逻辑（填入 input + 触发搜索） */
+
+/* 读取搜索历史数组（最近 SEARCH_HISTORY_MAX 条，新→旧） */
+function getSearchHistory() {
+  try {
+    const raw = localStorage.getItem(SEARCH_HISTORY_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.slice(0, SEARCH_HISTORY_MAX) : [];
+  } catch (e) {
+    return [];  // 解析失败返回空，避免污染主流程
+  }
+}
+
+/* 写入一条搜索历史：去重（移除同名旧记录）+ 置顶 + 截断到上限 */
+function addSearchHistory(name) {
+  if (!name || typeof name !== 'string') return;
+  const trimmed = name.trim();
+  if (!trimmed) return;
+  try {
+    const list = getSearchHistory();
+    // 去重：过滤掉同名记录后置于首位
+    const filtered = list.filter(item => item !== trimmed);
+    filtered.unshift(trimmed);
+    localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(filtered.slice(0, SEARCH_HISTORY_MAX)));
+  } catch (e) {
+    /* localStorage 满或禁用时静默失败，不影响搜索主流程 */
+  }
+}
+
+/* 清空全部搜索历史 */
+function clearSearchHistory() {
+  try {
+    localStorage.removeItem(SEARCH_HISTORY_KEY);
+  } catch (e) { /* 静默失败 */ }
+  hideSearchHistory();
+}
+
+/* 渲染搜索历史下拉（聚焦且输入为空时调用） */
+function renderSearchHistory() {
+  const box = document.getElementById('searchHistory');
+  if (!box) return;
+  const list = getSearchHistory();
+  if (list.length === 0) {
+    box.innerHTML = '<div class="search-history__empty">暂无搜索历史</div>';
+  } else {
+    box.innerHTML = `
+      <div class="search-history__header">
+        <span>搜索历史</span>
+        <button class="search-history__clear" id="searchHistoryClear" type="button">清空</button>
+      </div>
+      ${list.map((name, idx) => `
+        <div class="search-history-item" data-idx="${idx}">
+          <span class="search-history-item__icon">🕐</span>
+          <span class="search-history-item__name">${name}</span>
+        </div>
+      `).join('')}
+    `;
+    // 绑定历史项点击：填入搜索框并触发搜索
+    box.querySelectorAll('.search-history-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const idx = parseInt(el.dataset.idx, 10);
+        const name = list[idx];
+        if (!name) return;
+        document.getElementById('searchInput').value = name;
+        hideSearchHistory();
+        doSearch();  // 复用搜索逻辑（doSearch 内部会记录历史，去重后等价于置顶）
+      });
+    });
+    // 绑定清空按钮
+    const clearBtn = document.getElementById('searchHistoryClear');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        clearSearchHistory();
+        showToast('已清空搜索历史');
+      });
+    }
+  }
+  box.classList.add('is-show');
+}
+
+/* 隐藏搜索历史下拉 */
+function hideSearchHistory() {
+  const box = document.getElementById('searchHistory');
+  if (box) box.classList.remove('is-show');
 }

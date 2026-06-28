@@ -125,3 +125,12 @@ const USER_NICK_PREFIXES = ['调查兵团', '侦察队', '突击队', '先遣组
 // 昵称编号范围：1024 ~ 9999
 const USER_NICK_MIN = 1024;
 const USER_NICK_MAX = 9999;
+
+// ======== 搜索历史（纯 localStorage，无后端） ========
+// 小程序迁移映射：localStorage → wx.setStorageSync('search_history', [...])
+const SEARCH_HISTORY_KEY = 'cena_search_history';
+const SEARCH_HISTORY_MAX = 8;  // 最多保留 8 条（移动端可视范围内）
+
+// ======== 主题偏好（暗色/浅色，纯 localStorage） ========
+// 小程序迁移映射：localStorage → wx.setStorageSync('theme', 'dark'|'light')
+const THEME_KEY = 'cena_theme';

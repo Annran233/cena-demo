@@ -515,6 +515,93 @@ html, body {
   font-size: var(--fs-sm);
 }
 
+/* ============ 6.5 SearchHistory 搜索历史（MD3 Menu 变体） ============ */
+/* 小程序迁移映射：view 容器 + wx:for 渲染历史项 + bindtap 触发跳转
+   样式与 .search-suggest 一致，仅在输入为空且聚焦时显示 */
+.search-history {
+  position: absolute;
+  left: -1px; right: -1px;
+  top: calc(100% + 4px);
+  background: var(--md-surface-container);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-md);
+  box-shadow: var(--md-elevation-2);
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 2000;
+  display: none;
+}
+.search-history.is-show { display: block; }
+/* 历史标题行：左侧"搜索历史"标签 + 右侧"清空"按钮 */
+.search-history__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px var(--sp-4);
+  border-bottom: 1px solid var(--md-outline-variant);
+  color: var(--md-on-surface-variant);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+}
+.search-history__clear {
+  border: none;
+  background: transparent;
+  color: var(--md-primary);
+  font-size: var(--fs-xs);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: var(--md-shape-xs);
+}
+.search-history__clear:active { opacity: 0.6; }
+/* 历史项（复用 suggest-item 视觉风格） */
+.search-history-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 10px var(--sp-4);
+  cursor: pointer;
+  border-bottom: 1px solid var(--md-outline-variant);
+  transition: background var(--md-dur-short) var(--md-easing-standard);
+  position: relative;
+  overflow: hidden;
+}
+.search-history-item:last-child { border-bottom: none; }
+.search-history-item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  transition: opacity var(--md-dur-short) var(--md-easing-standard);
+}
+.search-history-item:hover::before { opacity: var(--md-state-hover); }
+.search-history-item:hover { background: var(--md-surface-container-high); }
+.search-history-item__icon {
+  font-size: var(--fs-sm);
+  flex-shrink: 0;
+  color: var(--md-on-surface-variant);
+  width: 20px;
+  text-align: center;
+}
+.search-history-item__name {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-sm);
+  color: var(--md-on-surface);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 历史空状态 */
+.search-history__empty {
+  padding: var(--sp-5) var(--sp-4);
+  text-align: center;
+  color: var(--md-on-surface-variant);
+  font-size: var(--fs-sm);
+}
+
 /* ============ 7. FilterDropdown 筛选下拉（MD3 Menu） ============ */
 /* 同搜索建议样式：surface-container 背景、elevation 阴影 */
 .filter-dropdown {
@@ -1783,6 +1870,158 @@ body.is-dragging-sheet .nav-bar {
   color: var(--md-primary);
 }
 
+/* ============ 21.5 暗色模式（Dark Mode） ============ */
+/* 小程序迁移映射：
+   - body.is-dark → page.is-dark（或 wx.setPageStyle 动态注入）
+   - CSS 变量覆盖 → page{} 内重定义同名变量（wxss 支持变量覆盖）
+   - 地图暗色 → 小程序原生 <map> 组件使用 dark 样式或 enable-3D + 自定义样式
+   - localStorage 记忆 → wx.setStorageSync('theme', 'dark')
+   - 切换按钮 → 自定义导航栏按钮组件，bindtap 触发 toggleTheme
+   约束兼容：仅覆盖 CSS 变量 + 少量硬编码白色元素，不引入 color-mix/:has */
+body.is-dark {
+  /* --- MD3 Primary（暗色主色提亮一档，保证暗背景对比度） --- */
+  --md-primary:              #a8c7fa;
+  --md-on-primary:           #062e6f;
+  --md-primary-container:    #004a77;
+  --md-on-primary-container: #d3e4ff;
+  --md-primary-hover:        #b8d0fb;
+
+  /* --- MD3 Secondary --- */
+  --md-secondary:              #c3c7cf;
+  --md-on-secondary:           #2d3135;
+  --md-secondary-container:    #43474e;
+  --md-on-secondary-container: #dee3eb;
+
+  /* --- MD3 Tertiary --- */
+  --md-tertiary:              #cfbcff;
+  --md-on-tertiary:           #382087;
+  --md-tertiary-container:    #4f378b;
+  --md-on-tertiary-container: #e9ddff;
+
+  /* --- MD3 Error --- */
+  --md-error:              #ffb4ab;
+  --md-on-error:           #690005;
+  --md-error-container:    #93000a;
+  --md-on-error-container: #ffdad6;
+
+  /* --- MD3 Surface（暗色表面色阶，从深到浅 5 级） --- */
+  --md-surface:                    #121316;
+  --md-on-surface:                 #e3e2e6;
+  --md-on-surface-variant:         #c3c7cf;
+  --md-surface-container-lowest:   #0c0e10;
+  --md-surface-container-low:      #1a1c1e;
+  --md-surface-container:          #1f2123;
+  --md-surface-container-high:     #26282b;
+  --md-surface-container-highest:  #2f3033;
+
+  /* --- MD3 Outline --- */
+  --md-outline:         #8d9199;
+  --md-outline-variant: #43474e;
+
+  /* --- MD3 Inverse（暗色下反色变浅色） --- */
+  --md-inverse-surface:    #e3e2e6;
+  --md-inverse-on-surface: #121316;
+  --md-inverse-primary:    #4285f4;
+
+  /* --- 语义色（暗色下提亮以保证户外/夜间可辨） --- */
+  --c-ok:        #00E676;
+  --c-fail:      #FF5252;
+  --c-uncertain: rgba(255,82,82,0.5);
+  --c-stale:     #BDBDBD;
+
+  /* --- 筛选标签专用色（暗色下提亮一档，保证暗背景可辨） --- */
+  --c-accessible: #b69dff;
+  --c-family:     #5cdbd3;
+  --c-water:      #69b1ff;
+
+  /* --- Legacy 别名跟随覆盖 --- */
+  --c-success: #81c995;
+  --c-warning: #fdd663;
+
+  --text-hint:    #8b9098;
+  --border-light: #2f3033;
+
+  color-scheme: dark;  /* 原生表单控件跟随暗色 */
+}
+
+/* --- 暗色模式：硬编码白色元素覆盖 --- */
+/* TopBar 渐变背景：白色 → 暗色表面渐变 */
+body.is-dark .topbar {
+  background: linear-gradient(to bottom,
+    var(--md-surface-container-low) 0%,
+    var(--md-surface-container-low) 75%,
+    rgba(26,28,30,0.95) 88%,
+    rgba(26,28,30,0) 100%);
+}
+/* 搜索栏 / 添加按钮 / 胶囊条 / 面板 等硬编码 #ffffff 元素 → 暗色容器 */
+body.is-dark .topbar__add,
+body.is-dark .search-wrap,
+body.is-dark .nav-bar,
+body.is-dark .panel,
+body.is-dark .legend-popup,
+body.is-dark .profile-card,
+body.is-dark .filter-dropdown {
+  background: var(--md-surface-container-low);
+}
+body.is-dark .legend-popup__arrow { background: var(--md-surface-container-low); }
+/* 卡片类硬编码白底 */
+body.is-dark .report-section,
+body.is-dark .desc-card,
+body.is-dark .supplement-btn,
+body.is-dark .report-btn,
+body.is-dark .suggest-item,
+body.is-dark .search-history-item {
+  background: var(--md-surface-container);
+}
+/* 选中态建议项 */
+body.is-dark .suggest-item:hover,
+body.is-dark .search-history-item:hover {
+  background: var(--md-surface-container-high);
+}
+
+/* --- 暗色模式：地图瓦片反色（高德瓦片无公开暗色URL，用 CSS filter 实现） --- */
+/* 小程序迁移：原生 <map> 组件用 dark 样式，无需 filter；此处为 Web 专用 */
+body.is-dark .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.92) saturate(0.8);
+}
+/* 地图版权/归属文字保持可读 */
+body.is-dark .leaflet-container { background: #121316; }
+
+/* --- 暗色切换按钮（TopBar 标题行，日月图标） --- */
+/* 复用 .topbar__add 圆形按钮样式，仅图标不同 */
+.topbar__theme {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--md-outline-variant);
+  background: var(--md-surface-container-lowest);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-on-surface);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  transition: all var(--md-dur-short) var(--md-easing-standard);
+  margin-right: var(--sp-2);
+}
+.topbar__theme::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  transition: opacity var(--md-dur-short) var(--md-easing-standard);
+}
+.topbar__theme:hover::before { opacity: var(--md-state-hover); }
+.topbar__theme:active::before { opacity: var(--md-state-pressed); }
+.topbar__theme:active { transform: scale(0.95); }
+.topbar__theme svg { display: block; }
+
 /* ============ 22. 响应式：移动端（<768px） ============ */
 @media (max-width: 767px) {
   /* --- TopBar 移动端 --- */
@@ -2020,9 +2259,16 @@ body.is-dragging-sheet .nav-bar {
           <span class="topbar__brand-sub">找公厕</span>
           <h1 class="topbar__brand-title">厕哪</h1>
         </div>
-        <button class="topbar__add" id="addBtn" aria-label="上报新厕所">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        </button>
+        <div style="display:flex;align-items:center;gap:0;">
+          <!-- 暗色模式切换按钮（小程序迁移：自定义导航栏按钮，bindtap 触发 toggleTheme） -->
+          <button class="topbar__theme" id="themeBtn" aria-label="切换暗色模式" title="切换深色/浅色">
+            <!-- 浅色态显示月亮（点击切到暗色），暗色态显示太阳（点击切回浅色），JS 动态切换 -->
+            <svg id="themeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          </button>
+          <button class="topbar__add" id="addBtn" aria-label="上报新厕所">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+        </div>
       </div>
       <div class="search-wrap">
         <svg class="search-wrap__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -2035,7 +2281,10 @@ body.is-dragging-sheet .nav-bar {
           aria-label="搜索地点"
         />
         <button class="search-wrap__clear" id="searchClear" title="清除" aria-label="清除搜索内容">×</button>
+        <!-- 搜索建议下拉（输入时联想） -->
         <div class="search-suggest" id="searchSuggest" role="listbox"></div>
+        <!-- 搜索历史下拉（聚焦且输入为空时显示，小程序迁移：view + wx:for + bindtap） -->
+        <div class="search-history" id="searchHistory" role="listbox" aria-label="搜索历史"></div>
       </div>
     </header>
 
@@ -5989,6 +6238,15 @@ const USER_NICK_PREFIXES = ['调查兵团', '侦察队', '突击队', '先遣组
 const USER_NICK_MIN = 1024;
 const USER_NICK_MAX = 9999;
 
+// ======== 搜索历史（纯 localStorage，无后端） ========
+// 小程序迁移映射：localStorage → wx.setStorageSync('search_history', [...])
+const SEARCH_HISTORY_KEY = 'cena_search_history';
+const SEARCH_HISTORY_MAX = 8;  // 最多保留 8 条（移动端可视范围内）
+
+// ======== 主题偏好（暗色/浅色，纯 localStorage） ========
+// 小程序迁移映射：localStorage → wx.setStorageSync('theme', 'dark'|'light')
+const THEME_KEY = 'cena_theme';
+
 
 /* === ui/utils.js === */
 /* ui/utils.js — UI 工具函数
@@ -6381,9 +6639,15 @@ function cardinalSpline(points, tension, segments) {
 }
 
 /* 渲染轨道交通图层（线路 polyline + 站点圆点，polyline 不拦截交互） */
+/* 地铁站点 circleMarker 引用表（用于选中高亮/取消高亮） */
+let _metroCircleMarkers = [];
+let _selectedMetroCircle = null;
+
 function renderMetroLayer() {
   if (metroLayerGroup) map.removeLayer(metroLayerGroup);
   metroLayerGroup = L.layerGroup();
+  _metroCircleMarkers = [];
+  _selectedMetroCircle = null;
 
   Object.keys(METRO_LINES).forEach(lineKey => {
     const line = METRO_LINES[lineKey];
@@ -6421,13 +6685,27 @@ function renderMetroLayer() {
       });
       circle.on('click', (e) => {
         L.DomEvent.stopPropagation(e);
+        highlightMetroCircle(circle);
         openMetroPanel(s, line);
       });
       circle.addTo(metroLayerGroup);
+      // 存储引用：用于从附近列表点击时高亮
+      _metroCircleMarkers.push({ circle, station: s, line, lineKey });
     });
   });
 
   metroLayerGroup.addTo(map);
+}
+
+/* 高亮地铁站点 circleMarker：放大半径+加粗白边，与普通 marker is-selected 视觉一致 */
+function highlightMetroCircle(circle) {
+  // 先恢复上一个选中的圆点
+  if (_selectedMetroCircle && _selectedMetroCircle !== circle) {
+    _selectedMetroCircle.setStyle({ radius: 7, weight: 2.5 });
+  }
+  // 高亮当前圆点：半径 9 + 白边 4px（模拟 marker is-selected 的白色光环）
+  circle.setStyle({ radius: 9, weight: 4 });
+  _selectedMetroCircle = circle;
 }
 
 /* 清除轨道交通图层 */
@@ -6438,14 +6716,16 @@ function clearMetroLayer() {
   }
 }
 
-/* 从附近列表点击地铁站点时触发：找到原始站点数据并打开面板 */
+/* 从附近列表点击地铁站点时触发：找到原始站点数据+circleMarker，高亮并打开面板 */
 function triggerMetroStationClick(lineKey, stationName) {
   if (!METRO_LINES[lineKey]) return;
   const line = METRO_LINES[lineKey];
   const station = line.stations.find(s => s.name === stationName);
-  if (station) {
-    openMetroPanel(station, line);
-  }
+  if (!station) return;
+  // 找到对应的 circleMarker 并高亮
+  const found = _metroCircleMarkers.find(m => m.lineKey === lineKey && m.station.name === stationName);
+  if (found) highlightMetroCircle(found.circle);
+  openMetroPanel(station, line);
 }
 
 /* 打开地铁站点详情面板（轻量，复用现有 panel DOM） */
@@ -6472,26 +6752,43 @@ function openMetroPanel(station, line) {
     : (isLine9 ? '💡 数据来源：天津轨道交通运营集团（厕所位置以站内指引为准）' : '💡 Z4线2026年新开通，环评标配厕所，具体位置以站内指引为准');
 
   body.innerHTML = `
-    <div class="panel__header">
-      <div class="panel__title">${station.name}</div>
-      <div class="panel__subtitle">${line.name} · ${subtitle}</div>
+    <div class="panel__title-row">
+      <h2 class="panel__title">${station.name}站</h2>
+      <button id="shareBtn" class="nav-btn" type="button" aria-label="分享地铁站厕所" title="分享给好友"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+      <button id="navBtn" class="nav-btn" type="button" aria-label="导航前往" title="导航前往"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M21.71 11.29l-9-9a1 1 0 00-1.42 0l-9 9a1 1 0 000 1.42l9 9a1 1 0 001.42 0l9-9a1 1 0 000-1.42zM14 14.5V12h-4v3H8v-4a1 1 0 011-1h5V7.5l3.5 3.5z"/></svg></button>
     </div>
-    <div class="metro-panel__status" style="display:flex;align-items:center;gap:8px;padding:12px 0;">
-      <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${statusColor};border:2px solid #fff;box-shadow:0 0 0 1px var(--md-outline-variant);flex-shrink:0;"></span>
-      <span style="font-size:15px;font-weight:500;">${statusEmoji} ${statusLabel}</span>
+    <div class="panel__addr">${line.name} · ${subtitle}</div>
+    <div class="meta">
+      <span class="tag" style="background:${statusColor}22;color:${statusColor};">${statusEmoji} ${statusLabel}</span>
+      <span class="tag" style="background:${line.color}22;color:${line.color};">🚇 ${line.name}</span>
     </div>
-    <div class="metro-panel__detail" style="padding:10px 14px;background:var(--md-surface-container-low);border-radius:12px;font-size:13px;line-height:1.6;color:var(--md-on-surface-variant);">
-      ${station.detail}
-    </div>
-    <div class="metro-panel__line-info" style="margin-top:12px;display:flex;align-items:center;gap:6px;font-size:13px;color:var(--md-on-surface-variant);">
-      <span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${line.color};flex-shrink:0;"></span>
-      <span>${line.name} · 共${line.stations.length}站</span>
-    </div>
+    <div class="info-row"><span class="k">位置描述</span><span class="v" style="font-size:var(--fs-sm);line-height:1.5;">${station.detail}</span></div>
+    <div class="info-row"><span class="k">线路信息</span><span class="v">共${line.stations.length}站</span></div>
     <div class="panel__divider"></div>
     <div class="panel__hint" style="font-size:12px;color:var(--text-hint);text-align:center;padding:8px 0;">
       ${hintText}
     </div>
   `;
+
+  // 导航按钮：复用 showNavActionSheet，传入站点坐标和名称
+  const navBtn = body.querySelector('#navBtn');
+  if (navBtn) {
+    navBtn.addEventListener('click', () => showNavActionSheet({
+      lat: station.lat,
+      lng: station.lng,
+      name: station.name + '站'
+    }));
+  }
+  // 分享按钮：复用 shareToilet，传入地铁站信息
+  const shareBtn = body.querySelector('#shareBtn');
+  if (shareBtn) {
+    shareBtn.addEventListener('click', () => shareToilet({
+      name: station.name + '站',
+      address: line.name + ' · ' + subtitle,
+      lat: station.lat,
+      lng: station.lng
+    }));
+  }
 
   // 显示面板：移动端用 half snap，桌面端直接显示
   if (window.innerWidth < 768) {
@@ -6681,6 +6978,7 @@ function openPanel(t) {
   body.innerHTML = `
     <div class="panel__title-row">
       <h2 class="panel__title">${t.name}</h2>
+      <button id="shareBtn" class="nav-btn" type="button" aria-label="分享厕所" title="分享给好友"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
       <button id="navBtn" class="nav-btn" type="button" aria-label="导航前往" title="导航前往"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M21.71 11.29l-9-9a1 1 0 00-1.42 0l-9 9a1 1 0 000 1.42l9 9a1 1 0 001.42 0l9-9a1 1 0 000-1.42zM14 14.5V12h-4v3H8v-4a1 1 0 011-1h5V7.5l3.5 3.5z"/></svg></button>
     </div>
     ${addrHtml}
@@ -7008,6 +7306,11 @@ function openPanel(t) {
   if (navBtn) {
     navBtn.addEventListener('click', () => showNavActionSheet(t));
   }
+  /* ============ 分享厕所：Web Share API + clipboard 兜底 ============ */
+  const shareBtn = body.querySelector('#shareBtn');
+  if (shareBtn) {
+    shareBtn.addEventListener('click', () => shareToilet(t));
+  }
 
   document.getElementById('panel').classList.add('is-show', 'is-half');
   document.getElementById('panel').classList.remove('is-expanded');
@@ -7119,6 +7422,67 @@ window.panelHeightChanged = function() {
 /* 检测微信内置浏览器（不可拉起原生 App，直接走网页版） */
 function isWeixinBrowser() {
   return /MicroMessenger/i.test(navigator.userAgent);
+}
+
+/* ============ 分享厕所（Web Share API + clipboard 兜底） ============ */
+/* 小程序迁移映射：
+   - navigator.share → <button open-type="share"> + onShareAppMessage
+   - clipboard 兜底 → wx.setClipboardData（小程序原生支持，无需兜底）
+   - 分享内容：厕所名称 + 地址 + 高德地图坐标链接
+   坐标说明：t.lat/t.lng 为 GCJ-02 坐标（与地图一致），高德链接直接可用 */
+function shareToilet(t) {
+  if (!t || !t.name) return;
+  // 构造分享文本：名称 + 地址 + 高德地图定位链接（GCJ-02 坐标）
+  const addr = t.address || '';
+  const shareText = `【厕哪】${t.name}\n${addr ? addr + '\n' : ''}位置：https://uri.amap.com/marker?position=${t.lng},${t.lat}&name=${encodeURIComponent(t.name)}`;
+  const shareTitle = `厕哪 — ${t.name}`;
+
+  // 优先使用 Web Share API（移动端原生分享面板，体验最佳）
+  if (navigator.share) {
+    navigator.share({
+      title: shareTitle,
+      text: shareText,
+      url: `https://uri.amap.com/marker?position=${t.lng},${t.lat}&name=${encodeURIComponent(t.name)}`
+    }).then(() => {
+      showToast('已分享');
+    }).catch((err) => {
+      // 用户取消分享不提示错误，其他错误静默
+      if (err && err.name !== 'AbortError') {
+        showToast('分享取消');
+      }
+    });
+    return;
+  }
+
+  // 兜底：复制到剪贴板 + 提示
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(shareText).then(() => {
+      showToast('已复制到剪贴板，可粘贴给好友');
+    }).catch(() => {
+      fallbackCopyText(shareText);
+    });
+    return;
+  }
+  // 最终兜底：execCommand（兼容旧浏览器）
+  fallbackCopyText(shareText);
+}
+
+/* execCommand 复制兜底（兼容不支持 clipboard API 的环境） */
+function fallbackCopyText(text) {
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.top = '-9999px';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast(ok ? '已复制到剪贴板，可粘贴给好友' : '复制失败，请手动选择文本');
+  } catch (e) {
+    showToast('复制失败，请手动选择文本');
+  }
 }
 
 /* 打开导航 ActionSheet：选择高德/百度地图拉起导航 */
@@ -7718,7 +8082,9 @@ function renderNearbyList() {
         map.setView([t.lat, t.lng], 17);
         // 地铁站点：走openMetroPanel而非openPanel（数据结构不同）
         if (t._isMetro && typeof triggerMetroStationClick === 'function') {
-          triggerMetroStationClick(t._metroLineKey, t.name);
+          // POI name 格式为"寨上站·Z4线北段"，需拆出纯站名"寨上"用于匹配 metro.js 数据
+          const pureName = t.name.replace(/站·.*$/, '');
+          triggerMetroStationClick(t._metroLineKey, pureName);
         } else {
           openPanel(t);
         }
@@ -7815,6 +8181,10 @@ function renderSuggest(items) {
 function selectSuggest(item) {
   document.getElementById('searchSuggest').classList.remove('is-show');
   document.getElementById('searchInput').value = item.name;
+  // 编程式赋值不触发 input 事件，手动同步清除按钮显隐
+  document.getElementById('searchClear').classList.toggle('is-show', item.name.length > 0);
+  addSearchHistory(item.name);  // 记录搜索历史
+  hideSearchHistory();          // 选择后隐藏历史下拉
   const [lng, lat] = item.location.split(',').map(Number);
   setSearchCenter([lat, lng], item.name, 15);
   showToast('已定位到：' + item.name + '，周边厕所已更新');
@@ -7895,9 +8265,13 @@ const onSearchInput = debounce(() => {
 function doSearch() {
   const q = document.getElementById('searchInput').value.trim();
   if (!q) return;
+  // 编程式触发搜索时同步清除按钮显隐（用户从历史点击进来时 q 已在输入框）
+  document.getElementById('searchClear').classList.toggle('is-show', q.length > 0);
   // 精确匹配厕所名称
   const hit = MOCK_TOILETS.find(t => t.name.includes(q) || t.name.toLowerCase().includes(q.toLowerCase()));
   if (hit) {
+    addSearchHistory(hit.name);  // 记录搜索历史
+    hideSearchHistory();
     setSearchCenter([hit.lat, hit.lng], hit.name, 16);
     openPanel(hit);
     showToast('已定位到：' + hit.name);
@@ -7906,6 +8280,8 @@ function doSearch() {
   // 匹配预设地点
   for (const [key, coords] of Object.entries(PRESET_LOCATIONS)) {
     if (q.includes(key)) {
+      addSearchHistory(key);  // 记录搜索历史
+      hideSearchHistory();
       setSearchCenter(coords, key, 15);
       showToast('已定位到：' + key + '，周边厕所已更新');
       return;
@@ -7937,6 +8313,98 @@ function doSearch() {
   } else {
     showToast('未找到地点，换个关键词试试');
   }
+}
+
+/* ============ 搜索历史（localStorage，最近 8 条） ============ */
+/* 小程序迁移映射：
+   - localStorage → wx.getStorageSync / wx.setStorageSync
+   - DOM 渲染 → wxml wx:for + bindtap
+   - 点击历史 → 复用 doSearch 逻辑（填入 input + 触发搜索） */
+
+/* 读取搜索历史数组（最近 SEARCH_HISTORY_MAX 条，新→旧） */
+function getSearchHistory() {
+  try {
+    const raw = localStorage.getItem(SEARCH_HISTORY_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.slice(0, SEARCH_HISTORY_MAX) : [];
+  } catch (e) {
+    return [];  // 解析失败返回空，避免污染主流程
+  }
+}
+
+/* 写入一条搜索历史：去重（移除同名旧记录）+ 置顶 + 截断到上限 */
+function addSearchHistory(name) {
+  if (!name || typeof name !== 'string') return;
+  const trimmed = name.trim();
+  if (!trimmed) return;
+  try {
+    const list = getSearchHistory();
+    // 去重：过滤掉同名记录后置于首位
+    const filtered = list.filter(item => item !== trimmed);
+    filtered.unshift(trimmed);
+    localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(filtered.slice(0, SEARCH_HISTORY_MAX)));
+  } catch (e) {
+    /* localStorage 满或禁用时静默失败，不影响搜索主流程 */
+  }
+}
+
+/* 清空全部搜索历史 */
+function clearSearchHistory() {
+  try {
+    localStorage.removeItem(SEARCH_HISTORY_KEY);
+  } catch (e) { /* 静默失败 */ }
+  hideSearchHistory();
+}
+
+/* 渲染搜索历史下拉（聚焦且输入为空时调用） */
+function renderSearchHistory() {
+  const box = document.getElementById('searchHistory');
+  if (!box) return;
+  const list = getSearchHistory();
+  if (list.length === 0) {
+    box.innerHTML = '<div class="search-history__empty">暂无搜索历史</div>';
+  } else {
+    box.innerHTML = `
+      <div class="search-history__header">
+        <span>搜索历史</span>
+        <button class="search-history__clear" id="searchHistoryClear" type="button">清空</button>
+      </div>
+      ${list.map((name, idx) => `
+        <div class="search-history-item" data-idx="${idx}">
+          <span class="search-history-item__icon">🕐</span>
+          <span class="search-history-item__name">${name}</span>
+        </div>
+      `).join('')}
+    `;
+    // 绑定历史项点击：填入搜索框并触发搜索
+    box.querySelectorAll('.search-history-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const idx = parseInt(el.dataset.idx, 10);
+        const name = list[idx];
+        if (!name) return;
+        document.getElementById('searchInput').value = name;
+        hideSearchHistory();
+        doSearch();  // 复用搜索逻辑（doSearch 内部会记录历史，去重后等价于置顶）
+      });
+    });
+    // 绑定清空按钮
+    const clearBtn = document.getElementById('searchHistoryClear');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        clearSearchHistory();
+        showToast('已清空搜索历史');
+      });
+    }
+  }
+  box.classList.add('is-show');
+}
+
+/* 隐藏搜索历史下拉 */
+function hideSearchHistory() {
+  const box = document.getElementById('searchHistory');
+  if (box) box.classList.remove('is-show');
 }
 
 
@@ -8352,12 +8820,14 @@ map.on('click', (e) => {
   const hasOverlay = panel.classList.contains('is-show')
     || !list.classList.contains('is-collapsed')
     || searchSuggest.classList.contains('is-show')
+    || document.getElementById('searchHistory').classList.contains('is-show')
     || filterDropdown.classList.contains('is-show');
 
   if (hasOverlay) {
     closePanel();
     collapseNearbyList();
     searchSuggest.classList.remove('is-show');
+    hideSearchHistory();
     filterDropdown.classList.remove('is-show');
     filterBtn.classList.remove('is-active');
     document.getElementById('searchInput').blur();
@@ -8662,14 +9132,24 @@ document.getElementById('filterDropdown').addEventListener('click', e => {
 });
 
 document.getElementById('searchInput').addEventListener('input', onSearchInput);
+document.getElementById('searchInput').addEventListener('input', () => {
+  // 输入内容时隐藏搜索历史（避免与联想建议重叠）
+  hideSearchHistory();
+});
 document.getElementById('searchInput').addEventListener('focus', () => {
   const q = document.getElementById('searchInput').value.trim();
-  if (q.length >= 2) onSearchInput();
+  if (q.length >= 2) {
+    onSearchInput();
+  } else {
+    // 输入为空且聚焦时显示搜索历史（小程序迁移：bindfocus 触发渲染）
+    renderSearchHistory();
+  }
 });
 // 搜索通过 Enter 键触发，无需额外按钮
 document.getElementById('searchInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') {
     document.getElementById('searchSuggest').classList.remove('is-show');
+    hideSearchHistory();
     doSearch();
   }
 });
@@ -8682,12 +9162,15 @@ searchClear.addEventListener('click', () => {
   document.getElementById('searchInput').value = '';
   searchClear.classList.remove('is-show');
   document.getElementById('searchSuggest').classList.remove('is-show');
+  // 清空后聚焦，显示搜索历史
+  renderSearchHistory();
   document.getElementById('searchInput').focus();
 });
-// 点击外部关闭搜索建议和筛选下拉
+// 点击外部关闭搜索建议、搜索历史和筛选下拉
 document.addEventListener('click', e => {
   if (!e.target.closest('.search-wrap')) {
     document.getElementById('searchSuggest').classList.remove('is-show');
+    hideSearchHistory();
   }
   if (!e.target.closest('.filter-dropdown') && !e.target.closest('#filterBtn')) {
     document.getElementById('filterDropdown').classList.remove('is-show');
@@ -8750,6 +9233,58 @@ document.getElementById('navProfileBtn').addEventListener('click', (e) => {
     openProfilePanel();
   }
 });
+
+/* ============ 暗色模式切换 ============ */
+/* 小程序迁移映射：
+   - body.is-dark class → page 容器 class 或 wx.setPageStyle 注入
+   - localStorage → wx.setStorageSync('theme', 'dark'|'light')
+   - 图标切换 → data 驱动 wxml 条件渲染
+   - theme-color meta → wx.setNavigationBarColor
+   注意：地图瓦片暗色由 CSS filter 处理（Web 专用），小程序原生 map 组件用 dark 样式
+   健壮性：图标常量内联到 applyTheme 内部，避免 CDN 加载失败导致脚本中断时 TDZ 报错 */
+
+/* 应用主题：切换 body class + 更新图标 + 同步 theme-color meta */
+function applyTheme(isDark) {
+  // 图标 SVG 内联定义（避免外部常量因脚本中断未初始化）
+  const ICON_SUN = '<svg id="themeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+  const ICON_MOON = '<svg id="themeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+  document.body.classList.toggle('is-dark', isDark);
+  const iconEl = document.getElementById('themeIcon');
+  if (iconEl) iconEl.outerHTML = isDark ? ICON_SUN : ICON_MOON;
+  // 同步浏览器地址栏/状态栏颜色（移动端沉浸感）
+  const metaTheme = document.querySelector('meta[name="theme-color"]');
+  if (metaTheme) metaTheme.setAttribute('content', isDark ? '#121316' : '#ffffff');
+}
+
+/* 读取 localStorage 主题偏好并应用（启动时调用一次） */
+function initTheme() {
+  let isDark = false;
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === 'dark') isDark = true;
+    else if (saved === 'light') isDark = false;
+    else {
+      // 未显式设置时跟随系统偏好（prefers-color-scheme）
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        isDark = true;
+      }
+    }
+  } catch (e) { /* localStorage 禁用时默认浅色 */ }
+  applyTheme(isDark);
+}
+
+/* 切换主题按钮：点击切换并持久化 */
+document.getElementById('themeBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const isDark = !document.body.classList.contains('is-dark');
+  applyTheme(isDark);
+  try {
+    localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light');
+  } catch (e) { /* 静默失败 */ }
+});
+
+/* 启动时初始化主题（尽早执行避免闪屏，放在事件绑定区末尾） */
+initTheme();
 
 /* 定时检查用户点位降级（30/90 天无确认，pointTier 纯函数基于时间实时计算） */
 setInterval(() => {
