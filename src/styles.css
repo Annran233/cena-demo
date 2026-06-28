@@ -485,6 +485,93 @@ html, body {
   font-size: var(--fs-sm);
 }
 
+/* ============ 6.5 SearchHistory 搜索历史（MD3 Menu 变体） ============ */
+/* 小程序迁移映射：view 容器 + wx:for 渲染历史项 + bindtap 触发跳转
+   样式与 .search-suggest 一致，仅在输入为空且聚焦时显示 */
+.search-history {
+  position: absolute;
+  left: -1px; right: -1px;
+  top: calc(100% + 4px);
+  background: var(--md-surface-container);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-shape-md);
+  box-shadow: var(--md-elevation-2);
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 2000;
+  display: none;
+}
+.search-history.is-show { display: block; }
+/* 历史标题行：左侧"搜索历史"标签 + 右侧"清空"按钮 */
+.search-history__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px var(--sp-4);
+  border-bottom: 1px solid var(--md-outline-variant);
+  color: var(--md-on-surface-variant);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+}
+.search-history__clear {
+  border: none;
+  background: transparent;
+  color: var(--md-primary);
+  font-size: var(--fs-xs);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: var(--md-shape-xs);
+}
+.search-history__clear:active { opacity: 0.6; }
+/* 历史项（复用 suggest-item 视觉风格） */
+.search-history-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 10px var(--sp-4);
+  cursor: pointer;
+  border-bottom: 1px solid var(--md-outline-variant);
+  transition: background var(--md-dur-short) var(--md-easing-standard);
+  position: relative;
+  overflow: hidden;
+}
+.search-history-item:last-child { border-bottom: none; }
+.search-history-item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  transition: opacity var(--md-dur-short) var(--md-easing-standard);
+}
+.search-history-item:hover::before { opacity: var(--md-state-hover); }
+.search-history-item:hover { background: var(--md-surface-container-high); }
+.search-history-item__icon {
+  font-size: var(--fs-sm);
+  flex-shrink: 0;
+  color: var(--md-on-surface-variant);
+  width: 20px;
+  text-align: center;
+}
+.search-history-item__name {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-sm);
+  color: var(--md-on-surface);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 历史空状态 */
+.search-history__empty {
+  padding: var(--sp-5) var(--sp-4);
+  text-align: center;
+  color: var(--md-on-surface-variant);
+  font-size: var(--fs-sm);
+}
+
 /* ============ 7. FilterDropdown 筛选下拉（MD3 Menu） ============ */
 /* 同搜索建议样式：surface-container 背景、elevation 阴影 */
 .filter-dropdown {
@@ -1752,6 +1839,153 @@ body.is-dragging-sheet .nav-bar {
   background: transparent;
   color: var(--md-primary);
 }
+
+/* ============ 21.5 暗色模式（Dark Mode） ============ */
+/* 小程序迁移映射：
+   - body.is-dark → page.is-dark（或 wx.setPageStyle 动态注入）
+   - CSS 变量覆盖 → page{} 内重定义同名变量（wxss 支持变量覆盖）
+   - 地图暗色 → 小程序原生 <map> 组件使用 dark 样式或 enable-3D + 自定义样式
+   - localStorage 记忆 → wx.setStorageSync('theme', 'dark')
+   - 切换按钮 → 自定义导航栏按钮组件，bindtap 触发 toggleTheme
+   约束兼容：仅覆盖 CSS 变量 + 少量硬编码白色元素，不引入 color-mix/:has */
+body.is-dark {
+  /* --- MD3 Primary（暗色主色提亮一档，保证暗背景对比度） --- */
+  --md-primary:              #a8c7fa;
+  --md-on-primary:           #062e6f;
+  --md-primary-container:    #004a77;
+  --md-on-primary-container: #d3e4ff;
+  --md-primary-hover:        #b8d0fb;
+
+  /* --- MD3 Secondary --- */
+  --md-secondary:              #c3c7cf;
+  --md-on-secondary:           #2d3135;
+  --md-secondary-container:    #43474e;
+  --md-on-secondary-container: #dee3eb;
+
+  /* --- MD3 Tertiary --- */
+  --md-tertiary:              #cfbcff;
+  --md-on-tertiary:           #382087;
+  --md-tertiary-container:    #4f378b;
+  --md-on-tertiary-container: #e9ddff;
+
+  /* --- MD3 Error --- */
+  --md-error:              #ffb4ab;
+  --md-on-error:           #690005;
+  --md-error-container:    #93000a;
+  --md-on-error-container: #ffdad6;
+
+  /* --- MD3 Surface（暗色表面色阶，从深到浅 5 级） --- */
+  --md-surface:                    #121316;
+  --md-on-surface:                 #e3e2e6;
+  --md-on-surface-variant:         #c3c7cf;
+  --md-surface-container-lowest:   #0c0e10;
+  --md-surface-container-low:      #1a1c1e;
+  --md-surface-container:          #1f2123;
+  --md-surface-container-high:     #26282b;
+  --md-surface-container-highest:  #2f3033;
+
+  /* --- MD3 Outline --- */
+  --md-outline:         #8d9199;
+  --md-outline-variant: #43474e;
+
+  /* --- MD3 Inverse（暗色下反色变浅色） --- */
+  --md-inverse-surface:    #e3e2e6;
+  --md-inverse-on-surface: #121316;
+  --md-inverse-primary:    #4285f4;
+
+  /* --- 语义色（暗色下提亮以保证户外/夜间可辨） --- */
+  --c-ok:        #00E676;
+  --c-fail:      #FF5252;
+  --c-uncertain: rgba(255,82,82,0.5);
+  --c-stale:     #BDBDBD;
+
+  /* --- Legacy 别名跟随覆盖 --- */
+  --c-success: #81c995;
+  --c-warning: #fdd663;
+
+  --text-hint:    #8b9098;
+  --border-light: #2f3033;
+
+  color-scheme: dark;  /* 原生表单控件跟随暗色 */
+}
+
+/* --- 暗色模式：硬编码白色元素覆盖 --- */
+/* TopBar 渐变背景：白色 → 暗色表面渐变 */
+body.is-dark .topbar {
+  background: linear-gradient(to bottom,
+    var(--md-surface-container-low) 0%,
+    var(--md-surface-container-low) 75%,
+    rgba(26,28,30,0.95) 88%,
+    rgba(26,28,30,0) 100%);
+}
+/* 搜索栏 / 添加按钮 / 胶囊条 / 面板 等硬编码 #ffffff 元素 → 暗色容器 */
+body.is-dark .topbar__add,
+body.is-dark .search-wrap,
+body.is-dark .nav-bar,
+body.is-dark .panel,
+body.is-dark .legend-popup,
+body.is-dark .profile-card,
+body.is-dark .filter-dropdown {
+  background: var(--md-surface-container-low);
+}
+body.is-dark .legend-popup__arrow { background: var(--md-surface-container-low); }
+/* 卡片类硬编码白底 */
+body.is-dark .report-section,
+body.is-dark .desc-card,
+body.is-dark .supplement-btn,
+body.is-dark .report-btn,
+body.is-dark .suggest-item,
+body.is-dark .search-history-item {
+  background: var(--md-surface-container);
+}
+/* 选中态建议项 */
+body.is-dark .suggest-item:hover,
+body.is-dark .search-history-item:hover {
+  background: var(--md-surface-container-high);
+}
+
+/* --- 暗色模式：地图瓦片反色（高德瓦片无公开暗色URL，用 CSS filter 实现） --- */
+/* 小程序迁移：原生 <map> 组件用 dark 样式，无需 filter；此处为 Web 专用 */
+body.is-dark .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.92) saturate(0.8);
+}
+/* 地图版权/归属文字保持可读 */
+body.is-dark .leaflet-container { background: #121316; }
+
+/* --- 暗色切换按钮（TopBar 标题行，日月图标） --- */
+/* 复用 .topbar__add 圆形按钮样式，仅图标不同 */
+.topbar__theme {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--md-outline-variant);
+  background: var(--md-surface-container-lowest);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-on-surface);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  transition: all var(--md-dur-short) var(--md-easing-standard);
+  margin-right: var(--sp-2);
+}
+.topbar__theme::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  transition: opacity var(--md-dur-short) var(--md-easing-standard);
+}
+.topbar__theme:hover::before { opacity: var(--md-state-hover); }
+.topbar__theme:active::before { opacity: var(--md-state-pressed); }
+.topbar__theme:active { transform: scale(0.95); }
+.topbar__theme svg { display: block; }
 
 /* ============ 22. 响应式：移动端（<768px） ============ */
 @media (max-width: 767px) {

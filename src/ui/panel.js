@@ -153,6 +153,7 @@ function openPanel(t) {
   body.innerHTML = `
     <div class="panel__title-row">
       <h2 class="panel__title">${t.name}</h2>
+      <button id="shareBtn" class="nav-btn" type="button" aria-label="分享厕所" title="分享给好友"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
       <button id="navBtn" class="nav-btn" type="button" aria-label="导航前往" title="导航前往"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M21.71 11.29l-9-9a1 1 0 00-1.42 0l-9 9a1 1 0 000 1.42l9 9a1 1 0 001.42 0l9-9a1 1 0 000-1.42zM14 14.5V12h-4v3H8v-4a1 1 0 011-1h5V7.5l3.5 3.5z"/></svg></button>
     </div>
     ${addrHtml}
@@ -480,6 +481,11 @@ function openPanel(t) {
   if (navBtn) {
     navBtn.addEventListener('click', () => showNavActionSheet(t));
   }
+  /* ============ 分享厕所：Web Share API + clipboard 兜底 ============ */
+  const shareBtn = body.querySelector('#shareBtn');
+  if (shareBtn) {
+    shareBtn.addEventListener('click', () => shareToilet(t));
+  }
 
   document.getElementById('panel').classList.add('is-show', 'is-half');
   document.getElementById('panel').classList.remove('is-expanded');
@@ -591,6 +597,67 @@ window.panelHeightChanged = function() {
 /* 检测微信内置浏览器（不可拉起原生 App，直接走网页版） */
 function isWeixinBrowser() {
   return /MicroMessenger/i.test(navigator.userAgent);
+}
+
+/* ============ 分享厕所（Web Share API + clipboard 兜底） ============ */
+/* 小程序迁移映射：
+   - navigator.share → <button open-type="share"> + onShareAppMessage
+   - clipboard 兜底 → wx.setClipboardData（小程序原生支持，无需兜底）
+   - 分享内容：厕所名称 + 地址 + 高德地图坐标链接
+   坐标说明：t.lat/t.lng 为 GCJ-02 坐标（与地图一致），高德链接直接可用 */
+function shareToilet(t) {
+  if (!t || !t.name) return;
+  // 构造分享文本：名称 + 地址 + 高德地图定位链接（GCJ-02 坐标）
+  const addr = t.address || '';
+  const shareText = `【厕哪】${t.name}\n${addr ? addr + '\n' : ''}位置：https://uri.amap.com/marker?position=${t.lng},${t.lat}&name=${encodeURIComponent(t.name)}`;
+  const shareTitle = `厕哪 — ${t.name}`;
+
+  // 优先使用 Web Share API（移动端原生分享面板，体验最佳）
+  if (navigator.share) {
+    navigator.share({
+      title: shareTitle,
+      text: shareText,
+      url: `https://uri.amap.com/marker?position=${t.lng},${t.lat}&name=${encodeURIComponent(t.name)}`
+    }).then(() => {
+      showToast('已分享');
+    }).catch((err) => {
+      // 用户取消分享不提示错误，其他错误静默
+      if (err && err.name !== 'AbortError') {
+        showToast('分享取消');
+      }
+    });
+    return;
+  }
+
+  // 兜底：复制到剪贴板 + 提示
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(shareText).then(() => {
+      showToast('已复制到剪贴板，可粘贴给好友');
+    }).catch(() => {
+      fallbackCopyText(shareText);
+    });
+    return;
+  }
+  // 最终兜底：execCommand（兼容旧浏览器）
+  fallbackCopyText(shareText);
+}
+
+/* execCommand 复制兜底（兼容不支持 clipboard API 的环境） */
+function fallbackCopyText(text) {
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.top = '-9999px';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast(ok ? '已复制到剪贴板，可粘贴给好友' : '复制失败，请手动选择文本');
+  } catch (e) {
+    showToast('复制失败，请手动选择文本');
+  }
 }
 
 /* 打开导航 ActionSheet：选择高德/百度地图拉起导航 */

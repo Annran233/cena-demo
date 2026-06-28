@@ -415,6 +415,7 @@ function openMetroPanel(station, line) {
   body.innerHTML = `
     <div class="panel__title-row">
       <h2 class="panel__title">${station.name}站</h2>
+      <button id="shareBtn" class="nav-btn" type="button" aria-label="分享地铁站厕所" title="分享给好友"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
       <button id="navBtn" class="nav-btn" type="button" aria-label="导航前往" title="导航前往"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M21.71 11.29l-9-9a1 1 0 00-1.42 0l-9 9a1 1 0 000 1.42l9 9a1 1 0 001.42 0l9-9a1 1 0 000-1.42zM14 14.5V12h-4v3H8v-4a1 1 0 011-1h5V7.5l3.5 3.5z"/></svg></button>
     </div>
     <div class="panel__addr">${line.name} · ${subtitle}</div>
@@ -437,6 +438,16 @@ function openMetroPanel(station, line) {
       lat: station.lat,
       lng: station.lng,
       name: station.name + '站'
+    }));
+  }
+  // 分享按钮：复用 shareToilet，传入地铁站信息
+  const shareBtn = body.querySelector('#shareBtn');
+  if (shareBtn) {
+    shareBtn.addEventListener('click', () => shareToilet({
+      name: station.name + '站',
+      address: line.name + ' · ' + subtitle,
+      lat: station.lat,
+      lng: station.lng
     }));
   }
 
