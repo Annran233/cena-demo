@@ -7746,7 +7746,9 @@ function renderNearbyList() {
         map.setView([t.lat, t.lng], 17);
         // 地铁站点：走openMetroPanel而非openPanel（数据结构不同）
         if (t._isMetro && typeof triggerMetroStationClick === 'function') {
-          triggerMetroStationClick(t._metroLineKey, t.name);
+          // POI name 格式为"寨上站·Z4线北段"，需拆出纯站名"寨上"用于匹配 metro.js 数据
+          const pureName = t.name.replace(/站·.*$/, '');
+          triggerMetroStationClick(t._metroLineKey, pureName);
         } else {
           openPanel(t);
         }
