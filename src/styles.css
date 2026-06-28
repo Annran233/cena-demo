@@ -747,10 +747,143 @@ body.is-dragging-sheet .nav-bar {
   border-radius: 50%;
   flex-shrink: 0;
 }
-/* 轨道交通图层按钮：激活态颜色为9号线蓝色 */
-.nav-bar__btn--metro.is-active {
-  color: #005BAC;
-  background: rgba(0, 91, 172, 0.12);
+/* 轨道交通图层按钮样式已移除（图层默认开启不可关闭，按钮位置改为「我的」） */
+
+/* 「我的」按钮头像样式 */
+.profile-avatar {
+  font-size: 22px;
+  line-height: 1;
+  display: block;
+}
+.nav-bar__btn--profile:hover::before { opacity: 0.08; }
+
+/* ======== 「我的」面板样式 ======== */
+.profile-panel {
+  padding: 0 4px;
+}
+.profile-panel__header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0 20px;
+}
+.profile-panel__avatar {
+  font-size: 48px;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--md-surface-container-high, #f0f0f0);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.profile-panel__info {
+  flex: 1;
+}
+.profile-panel__nick {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--md-on-surface, #1a1a1a);
+  margin-bottom: 4px;
+}
+.profile-panel__sub {
+  font-size: 13px;
+  color: var(--text-sub, #888);
+}
+.profile-panel__stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.profile-stat {
+  text-align: center;
+  padding: 12px 4px;
+  background: var(--md-surface-container-low, #f7f7f7);
+  border-radius: 12px;
+}
+.profile-stat__num {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--md-primary, #005BAC);
+  line-height: 1.2;
+}
+.profile-stat__label {
+  font-size: 11px;
+  color: var(--text-sub, #888);
+  margin-top: 4px;
+}
+.profile-panel__total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--md-surface-container-low, #f7f7f7);
+  border-radius: 12px;
+  font-size: 14px;
+  color: var(--text-sub, #888);
+  margin-bottom: 20px;
+}
+.profile-panel__total-num {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--md-primary, #005BAC);
+}
+.profile-panel__edit {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.profile-panel__input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid var(--md-outline-variant, #ddd);
+  border-radius: 8px;
+  font-size: 14px;
+  background: var(--md-surface, #fff);
+  color: var(--md-on-surface, #1a1a1a);
+  outline: none;
+  transition: border-color var(--md-dur-short) var(--md-easing-standard);
+}
+.profile-panel__input:focus {
+  border-color: var(--md-primary, #005BAC);
+}
+.profile-panel__btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  background: var(--md-primary, #005BAC);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity var(--md-dur-short) var(--md-easing-standard);
+}
+.profile-panel__btn:active { opacity: 0.8; }
+.profile-panel__avatars {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  padding: 8px 0;
+}
+.profile-avatar-btn {
+  width: 44px;
+  height: 44px;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: var(--md-surface-container-low, #f7f7f7);
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--md-dur-short) var(--md-easing-standard);
+}
+.profile-avatar-btn:hover { background: var(--md-surface-container-high, #f0f0f0); }
+.profile-avatar-btn.is-selected {
+  border-color: var(--md-primary, #005BAC);
+  background: rgba(0, 91, 172, 0.08);
 }
 
 /* 定位中状态：旋转图标 + 禁止点击 */

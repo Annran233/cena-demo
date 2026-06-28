@@ -59,7 +59,36 @@ function getAllToilets() {
     return copy;
   });
 
-  return [...visibleUser, ...liveWithSupplements, ...nearbyMock];
+  // 5. 地铁站点厕所：作为附近POI参与距离排序和列表渲染
+  //    坐标为GCJ-02（与地图一致），3km距离过滤，id以metro_前缀避免冲突
+  const metroStations = (typeof getAllMetroStations === 'function' ? getAllMetroStations() : [])
+    .filter(s => {
+      const d = haversine(searchCenter[0], searchCenter[1], s.lat, s.lng);
+      return d <= 3000;
+    })
+    .map(s => ({
+      id: 'metro_' + s.lineKey + '_' + s.name,
+      name: s.name + '站·' + s.lineName,
+      lat: s.lat,
+      lng: s.lng,
+      source: 'metro',
+      status: s.type === 'none' ? 'unknown' : 'open',
+      accessible: false,
+      family: false,
+      water: false,
+      rating: 0,
+      confidence: 0.5,
+      last_update: Date.now(),
+      created_by: 'metro',
+      address: s.detail || '',
+      _isMetro: true,
+      _metroType: s.type,
+      _metroLine: s.lineName,
+      _metroLineKey: s.lineKey,
+      _metroLineColor: s.lineColor
+    }));
+
+  return [...visibleUser, ...liveWithSupplements, ...nearbyMock, ...metroStations];
 }
 
 /* 清除所有 marker（含聚合层） */
@@ -157,7 +186,8 @@ function renderMarkers() {
   const iconSize = isMobile ? [28, 28] : [30, 30];
   const iconAnchor = isMobile ? [14, 14] : [15, 30];
 
-  getAllToilets().filter(toiletPassesFilter).forEach(t => {
+  // 排除地铁站点POI：它们由地铁图层独立渲染circleMarker，不参与普通marker聚合
+  getAllToilets().filter(t => !t._isMetro).filter(toiletPassesFilter).forEach(t => {
     const cls = markerClass(t);
     const icon = L.divIcon({
       className: '',
@@ -324,6 +354,16 @@ function clearMetroLayer() {
   if (metroLayerGroup) {
     map.removeLayer(metroLayerGroup);
     metroLayerGroup = null;
+  }
+}
+
+/* 从附近列表点击地铁站点时触发：找到原始站点数据并打开面板 */
+function triggerMetroStationClick(lineKey, stationName) {
+  if (!METRO_LINES[lineKey]) return;
+  const line = METRO_LINES[lineKey];
+  const station = line.stations.find(s => s.name === stationName);
+  if (station) {
+    openMetroPanel(station, line);
   }
 }
 

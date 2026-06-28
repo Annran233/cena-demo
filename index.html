@@ -777,10 +777,143 @@ body.is-dragging-sheet .nav-bar {
   border-radius: 50%;
   flex-shrink: 0;
 }
-/* 轨道交通图层按钮：激活态颜色为9号线蓝色 */
-.nav-bar__btn--metro.is-active {
-  color: #005BAC;
-  background: rgba(0, 91, 172, 0.12);
+/* 轨道交通图层按钮样式已移除（图层默认开启不可关闭，按钮位置改为「我的」） */
+
+/* 「我的」按钮头像样式 */
+.profile-avatar {
+  font-size: 22px;
+  line-height: 1;
+  display: block;
+}
+.nav-bar__btn--profile:hover::before { opacity: 0.08; }
+
+/* ======== 「我的」面板样式 ======== */
+.profile-panel {
+  padding: 0 4px;
+}
+.profile-panel__header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0 20px;
+}
+.profile-panel__avatar {
+  font-size: 48px;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--md-surface-container-high, #f0f0f0);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.profile-panel__info {
+  flex: 1;
+}
+.profile-panel__nick {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--md-on-surface, #1a1a1a);
+  margin-bottom: 4px;
+}
+.profile-panel__sub {
+  font-size: 13px;
+  color: var(--text-sub, #888);
+}
+.profile-panel__stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.profile-stat {
+  text-align: center;
+  padding: 12px 4px;
+  background: var(--md-surface-container-low, #f7f7f7);
+  border-radius: 12px;
+}
+.profile-stat__num {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--md-primary, #005BAC);
+  line-height: 1.2;
+}
+.profile-stat__label {
+  font-size: 11px;
+  color: var(--text-sub, #888);
+  margin-top: 4px;
+}
+.profile-panel__total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--md-surface-container-low, #f7f7f7);
+  border-radius: 12px;
+  font-size: 14px;
+  color: var(--text-sub, #888);
+  margin-bottom: 20px;
+}
+.profile-panel__total-num {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--md-primary, #005BAC);
+}
+.profile-panel__edit {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.profile-panel__input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid var(--md-outline-variant, #ddd);
+  border-radius: 8px;
+  font-size: 14px;
+  background: var(--md-surface, #fff);
+  color: var(--md-on-surface, #1a1a1a);
+  outline: none;
+  transition: border-color var(--md-dur-short) var(--md-easing-standard);
+}
+.profile-panel__input:focus {
+  border-color: var(--md-primary, #005BAC);
+}
+.profile-panel__btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  background: var(--md-primary, #005BAC);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity var(--md-dur-short) var(--md-easing-standard);
+}
+.profile-panel__btn:active { opacity: 0.8; }
+.profile-panel__avatars {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  padding: 8px 0;
+}
+.profile-avatar-btn {
+  width: 44px;
+  height: 44px;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: var(--md-surface-container-low, #f7f7f7);
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--md-dur-short) var(--md-easing-standard);
+}
+.profile-avatar-btn:hover { background: var(--md-surface-container-high, #f0f0f0); }
+.profile-avatar-btn.is-selected {
+  border-color: var(--md-primary, #005BAC);
+  background: rgba(0, 91, 172, 0.08);
 }
 
 /* 定位中状态：旋转图标 + 禁止点击 */
@@ -1935,17 +2068,13 @@ body.is-dragging-sheet .nav-bar {
       <div class="nearby-list__items" id="nearbyItems"></div>
     </aside>
 
-    <!-- ======== 底部悬浮胶囊操作条（定位 + 地铁图层 + 图例） ======== -->
+    <!-- ======== 底部悬浮胶囊操作条（定位 + 我的 + 图例） ======== -->
     <div class="nav-bar" id="navBar">
       <button class="nav-bar__btn" id="relocBtn" aria-label="定位到海港公园">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3m10-10h-3M5 12H2"/></svg>
       </button>
-      <button class="nav-bar__btn nav-bar__btn--metro" id="navMetroBtn" aria-label="轨道交通图层">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="4" y="3" width="16" height="18" rx="2"/>
-          <line x1="8" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="16" y2="21"/>
-          <line x1="4" y1="10" x2="8" y2="10"/><line x1="16" y1="10" x2="20" y2="10"/>
-        </svg>
+      <button class="nav-bar__btn nav-bar__btn--profile" id="navProfileBtn" aria-label="我的">
+        <span class="profile-avatar" id="navProfileAvatar">🚻</span>
       </button>
       <button class="nav-bar__btn nav-bar__btn--legend" id="navLegendBtn" aria-label="颜色图例">
         <span class="legend-dots">
@@ -5683,21 +5812,23 @@ const METRO_LINES = {
       { name: '东海路',     lng: 117.737288, lat: 39.040571, type: 'inside',  detail: '非付费区 | 站厅B出入口旁（终点站）' }
     ]
   },
-  /* Z4线一期北段：寨上—北塘，全长23.7km，10站（2026-01-18开通） */
+  /* Z4线一期北段：寨上—北塘，全长23.7km，10站（2026-01-18开通）
+     注意：Z4线为新开通线路，环评文件确认标配厕所，但站内厕所具体位置（付费区/非付费区/方位）
+     暂无官方公开数据，detail 不做位置臆测，标注"具体位置待核实" */
   z4north: {
     name: 'Z4线北段',
-    color: '#C4A36A',  /* Z4线官方香槟金 */
+    color: '#C864B8',  /* Z4线官方藕荷色/粉紫色（高德地图实际显示色） */
     stations: [
-      { name: '寨上',       lng: 117.8150, lat: 39.2420, type: 'inside', detail: '滨城首条地铁 | 终点站·紧邻车辆段' },
-      { name: '汉沽医院',   lng: 117.8080, lat: 39.2250, type: 'inside', detail: '出站直达总医院滨海医院新院区' },
-      { name: '中心渔港',   lng: 117.8040, lat: 39.2000, type: 'inside', detail: '高架站·鱼塘虾塘特色景观' },
-      { name: '玉砂道',     lng: 117.8025, lat: 39.1820, type: 'inside', detail: '岛式站台·辐射科研院所' },
-      { name: '航母公园',   lng: 117.802015, lat: 39.166619, type: 'inside', detail: '军舰舷窗设计·蓝天白云吊顶' },
-      { name: '软件园',     lng: 117.7880, lat: 39.1480, type: 'inside', detail: '信创产业聚集区·标识设施完善' },
-      { name: '绿创园',     lng: 117.7750, lat: 39.1330, type: 'inside', detail: '海洋元素·串联湿地公园' },
-      { name: '和顺路',     lng: 117.762927, lat: 39.118959, type: 'inside', detail: '生态城片区·绿色低碳主题' },
-      { name: '中新生态城', lng: 117.752486, lat: 39.108335, type: 'inside', detail: '国际生态城·绿色波点装饰' },
-      { name: '北塘',       lng: 117.724432, lat: 39.093467, type: 'inside', detail: '渔家风情·明清仿古设计 | 换乘Z2线' }
+      { name: '寨上',       lng: 117.817838, lat: 39.227289, type: 'inside', detail: 'Z4线环评标配 | 具体位置待核实（终点站）' },
+      { name: '汉沽医院',   lng: 117.830121, lat: 39.221343, type: 'inside', detail: 'Z4线环评标配 | 具体位置待核实' },
+      { name: '中心渔港',   lng: 117.850375, lat: 39.208928, type: 'inside', detail: 'Z4线环评标配 | 具体位置待核实' },
+      { name: '玉砂道',     lng: 117.818402, lat: 39.182932, type: 'inside', detail: 'Z4线环评标配 | 具体位置待核实' },
+      { name: '航母公园',   lng: 117.802015, lat: 39.166619, type: 'inside', detail: 'Z4线环评标配 | 具体位置待核实' },
+      { name: '软件园',     lng: 117.792060, lat: 39.150538, type: 'inside', detail: 'Z4线环评标配 | 具体位置待核实' },
+      { name: '绿创园',     lng: 117.778870, lat: 39.135219, type: 'inside', detail: 'Z4线环评标配 | 具体位置待核实' },
+      { name: '和顺路',     lng: 117.762927, lat: 39.118959, type: 'inside', detail: 'Z4线环评标配 | 具体位置待核实' },
+      { name: '中新生态城', lng: 117.752486, lat: 39.108335, type: 'inside', detail: 'Z4线环评标配 | 具体位置待核实' },
+      { name: '北塘',       lng: 117.724432, lat: 39.093467, type: 'inside', detail: 'Z4线环评标配 | 具体位置待核实（换乘Z2线）' }
     ]
   }
 };
@@ -5847,6 +5978,17 @@ const AMAP_REGEO_URL = (lat, lng) => amapApiUrl('/geocode/regeo', { location: ln
 // 正常 Demo 一次评审约 50-100 次请求，200 留 2x 安全 余量
 const SESSION_API_LIMIT = 200;
 
+// ======== 用户身份 mock（纯 localStorage，无后端） ========
+// 存储 key：昵称 + 头像emoji + 贡献统计
+const USER_PROFILE_KEY = 'cena_user_profile';
+// 头像候选池：厕所主题emoji
+const USER_AVATAR_POOL = ['🚻', '🧻', '🚽', '🚿', '🧼', '🪣', '🧴'];
+// 昵称前缀候选池：调查兵团风格
+const USER_NICK_PREFIXES = ['调查兵团', '侦察队', '突击队', '先遣组', '情报员'];
+// 昵称编号范围：1024 ~ 9999
+const USER_NICK_MIN = 1024;
+const USER_NICK_MAX = 9999;
+
 
 /* === ui/utils.js === */
 /* ui/utils.js — UI 工具函数
@@ -5872,6 +6014,67 @@ function showToast(msg) {
 function debounce(fn, wait) {
   let t;
   return function(...args) { clearTimeout(t); t = setTimeout(() => fn.apply(this, args), wait); };
+}
+
+// ======== 用户身份 mock（纯 localStorage，无后端） ========
+
+/* 获取当前用户身份：首次访问时随机生成昵称+头像，持久化到localStorage */
+function getUserProfile() {
+  let profile = null;
+  try {
+    const raw = localStorage.getItem(USER_PROFILE_KEY);
+    if (raw) profile = JSON.parse(raw);
+  } catch(e) { /* 忽略解析失败 */ }
+  // 首次访问或解析失败：生成新身份
+  if (!profile || !profile.nick || !profile.avatar) {
+    profile = generateUserProfile();
+    saveUserProfile(profile);
+  }
+  return profile;
+}
+
+/* 随机生成用户身份：昵称=前缀+#编号，头像=emoji池随机取 */
+function generateUserProfile() {
+  const prefix = USER_NICK_PREFIXES[Math.floor(Math.random() * USER_NICK_PREFIXES.length)];
+  const num = Math.floor(Math.random() * (USER_NICK_MAX - USER_NICK_MIN + 1)) + USER_NICK_MIN;
+  const avatar = USER_AVATAR_POOL[Math.floor(Math.random() * USER_AVATAR_POOL.length)];
+  return {
+    nick: prefix + '#' + num,
+    avatar: avatar,
+    createdAt: Date.now(),
+    // 贡献统计
+    reports: 0,     // 上报厕所次数
+    confirms: 0,    // 状态确认次数
+    comments: 0,    // 评论次数
+    tags: 0         // 设施标签补充次数
+  };
+}
+
+/* 保存用户身份到localStorage */
+function saveUserProfile(profile) {
+  try {
+    localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(profile));
+  } catch(e) { /* 忽略写入失败 */ }
+}
+
+/* 获取当前用户昵称（评论/上报时使用，替代固定"你"） */
+function getUserNick() {
+  return getUserProfile().nick;
+}
+
+/* 增加贡献计数：type = reports|confirms|comments|tags */
+function incrUserContribution(type, count) {
+  const profile = getUserProfile();
+  profile[type] = (profile[type] || 0) + (count || 1);
+  saveUserProfile(profile);
+  // 同步导航栏头像（无视觉变化，但确保profile已初始化）
+  updateNavAvatar();
+}
+
+/* 更新导航栏头像emoji */
+function updateNavAvatar() {
+  const el = document.getElementById('navProfileAvatar');
+  if (el) el.textContent = getUserProfile().avatar;
 }
 
 
@@ -5937,7 +6140,36 @@ function getAllToilets() {
     return copy;
   });
 
-  return [...visibleUser, ...liveWithSupplements, ...nearbyMock];
+  // 5. 地铁站点厕所：作为附近POI参与距离排序和列表渲染
+  //    坐标为GCJ-02（与地图一致），3km距离过滤，id以metro_前缀避免冲突
+  const metroStations = (typeof getAllMetroStations === 'function' ? getAllMetroStations() : [])
+    .filter(s => {
+      const d = haversine(searchCenter[0], searchCenter[1], s.lat, s.lng);
+      return d <= 3000;
+    })
+    .map(s => ({
+      id: 'metro_' + s.lineKey + '_' + s.name,
+      name: s.name + '站·' + s.lineName,
+      lat: s.lat,
+      lng: s.lng,
+      source: 'metro',
+      status: s.type === 'none' ? 'unknown' : 'open',
+      accessible: false,
+      family: false,
+      water: false,
+      rating: 0,
+      confidence: 0.5,
+      last_update: Date.now(),
+      created_by: 'metro',
+      address: s.detail || '',
+      _isMetro: true,
+      _metroType: s.type,
+      _metroLine: s.lineName,
+      _metroLineKey: s.lineKey,
+      _metroLineColor: s.lineColor
+    }));
+
+  return [...visibleUser, ...liveWithSupplements, ...nearbyMock, ...metroStations];
 }
 
 /* 清除所有 marker（含聚合层） */
@@ -6035,7 +6267,8 @@ function renderMarkers() {
   const iconSize = isMobile ? [28, 28] : [30, 30];
   const iconAnchor = isMobile ? [14, 14] : [15, 30];
 
-  getAllToilets().filter(toiletPassesFilter).forEach(t => {
+  // 排除地铁站点POI：它们由地铁图层独立渲染circleMarker，不参与普通marker聚合
+  getAllToilets().filter(t => !t._isMetro).filter(toiletPassesFilter).forEach(t => {
     const cls = markerClass(t);
     const icon = L.divIcon({
       className: '',
@@ -6109,6 +6342,44 @@ function getPickCoords() {
 /* ============ 轨道交通图层 ============ */
 let metroLayerGroup = null; // 图层组：线路 polyline（底）+ 站点圆点（顶）
 
+/* Cardinal/Catmull-Rom 样条插值：三次Hermite曲线，严格经过所有控制点
+   - points: [[lat,lng], ...]  必须经过的锚点（站点坐标）
+   - tension: 0=标准Catmull-Rom（最自然），越大越紧绷，1退化为折线
+   - segments: 每段之间细分数（值越大越平滑，20段足够肉眼光滑）
+   端点处理：首尾切线用相邻段方向延伸（phantom point），保证首末锚点也在曲线上 */
+function cardinalSpline(points, tension, segments) {
+  if (!points || points.length < 2) return points ? points.slice() : [];
+  if (points.length === 2) return points.slice();
+  const t = tension == null ? 0 : tension;
+  const n = points.length;
+  const result = [];
+  /* 每三个相邻点（含phantom端点）算一段贝塞尔 */
+  for (let i = 0; i < n - 1; i++) {
+    const p0 = points[i === 0 ? i : i - 1];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[i + 2 < n ? i + 2 : i + 1];
+    /* 起点p1只在第一段加入（避免重复） */
+    if (i === 0) result.push([p1[0], p1[1]]);
+    /* 在p1→p2之间均匀采样segments段 */
+    for (let s = 1; s <= segments; s++) {
+      const tt = s / segments;
+      const tt2 = tt * tt;
+      const tt3 = tt2 * tt;
+      /* Cardinal 基函数矩阵（tension参数化） */
+      const s0 = -t * tt3 + 2 * t * tt2 - t * tt;
+      const s1 = (2 - t) * tt3 + (t - 3) * tt2 + 1;
+      const s2 = (t - 2) * tt3 + (3 - 2 * t) * tt2 + t * tt;
+      const s3 = t * tt3 - t * tt2;
+      result.push([
+        s0 * p0[0] + s1 * p1[0] + s2 * p2[0] + s3 * p3[0],
+        s0 * p0[1] + s1 * p1[1] + s2 * p2[1] + s3 * p3[1]
+      ]);
+    }
+  }
+  return result;
+}
+
 /* 渲染轨道交通图层（线路 polyline + 站点圆点，polyline 不拦截交互） */
 function renderMetroLayer() {
   if (metroLayerGroup) map.removeLayer(metroLayerGroup);
@@ -6116,19 +6387,22 @@ function renderMetroLayer() {
 
   Object.keys(METRO_LINES).forEach(lineKey => {
     const line = METRO_LINES[lineKey];
-    const latlngs = line.stations.map(s => [s.lat, s.lng]);
+    /* 站点锚点：必须严格经过 */
+    const anchors = line.stations.map(s => [s.lat, s.lng]);
+    /* Cardinal样条平滑：tension=0.3（微紧，偏离小），每段20细分 */
+    const smoothPath = cardinalSpline(anchors, 0.3, 20);
     // 绘制线路 polyline：interactive:false 不拦截点击，不影响地图拖拽和站点点击
-    if (latlngs.length >= 2) {
-      L.polyline(latlngs, {
+    if (smoothPath.length >= 2) {
+      L.polyline(smoothPath, {
         color: line.color,
-        weight: 4,
-        opacity: 0.75,
+        weight: 5,
+        opacity: 0.85,
         lineCap: 'round',
         lineJoin: 'round',
         interactive: false
       }).addTo(metroLayerGroup);
     }
-    // 站点圆点在 polyline 上方绘制（zIndexOffset 高于 polyline）
+    // 站点圆点在 polyline 上方绘制（zIndexOffset 高于 polyline，直接覆盖在线上）
     line.stations.forEach(s => {
       const color = METRO_COLORS[s.type] || '#999';
       const circle = L.circleMarker([s.lat, s.lng], {
@@ -6164,6 +6438,16 @@ function clearMetroLayer() {
   }
 }
 
+/* 从附近列表点击地铁站点时触发：找到原始站点数据并打开面板 */
+function triggerMetroStationClick(lineKey, stationName) {
+  if (!METRO_LINES[lineKey]) return;
+  const line = METRO_LINES[lineKey];
+  const station = line.stations.find(s => s.name === stationName);
+  if (station) {
+    openMetroPanel(station, line);
+  }
+}
+
 /* 打开地铁站点详情面板（轻量，复用现有 panel DOM） */
 function openMetroPanel(station, line) {
   // 先清理现有面板状态
@@ -6178,10 +6462,19 @@ function openMetroPanel(station, line) {
   const statusLabel = station.type === 'inside' ? '站内有厕所' : station.type === 'outside' ? '车站外厕所' : '无厕所';
   const statusEmoji = station.type === 'inside' ? '🟢' : station.type === 'outside' ? '🟡' : '🔴';
 
+  // 根据线路区分 subtitle 和 hint 文案
+  const isLine9 = line.name.includes('9号线');
+  const subtitle = station.type === 'none'
+    ? '暂不具备设置条件'
+    : (isLine9 ? '站内标配厕所' : '环评标配厕所（新线）');
+  const hintText = station.type === 'none'
+    ? (isLine9 ? '💡 9号线21站中仅小东庄、胡家园无厕所，其余19站均有' : '')
+    : (isLine9 ? '💡 数据来源：天津轨道交通运营集团（厕所位置以站内指引为准）' : '💡 Z4线2026年新开通，环评标配厕所，具体位置以站内指引为准');
+
   body.innerHTML = `
     <div class="panel__header">
       <div class="panel__title">${station.name}</div>
-      <div class="panel__subtitle">${line.name} · ${station.type === 'none' ? '暂不具备设置条件' : '环评标配厕所'}</div>
+      <div class="panel__subtitle">${line.name} · ${subtitle}</div>
     </div>
     <div class="metro-panel__status" style="display:flex;align-items:center;gap:8px;padding:12px 0;">
       <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${statusColor};border:2px solid #fff;box-shadow:0 0 0 1px var(--md-outline-variant);flex-shrink:0;"></span>
@@ -6196,7 +6489,7 @@ function openMetroPanel(station, line) {
     </div>
     <div class="panel__divider"></div>
     <div class="panel__hint" style="font-size:12px;color:var(--text-hint);text-align:center;padding:8px 0;">
-      ${station.type === 'none' ? '💡 21站中仅小东庄、胡家园无厕所，其余19站均有' : '💡 数据来源：天津轨道交通运营集团 & Z4线环评文件'}
+      ${hintText}
     </div>
   `;
 
@@ -6501,6 +6794,7 @@ function openPanel(t) {
       }
       p.last_update = Date.now();
       saveUserToilets();
+      incrUserContribution('confirms'); // 状态确认贡献+1
       renderMarkers();
       renderNearbyList();
       openPanel(p);
@@ -6528,10 +6822,12 @@ function openPanel(t) {
           t[tag] = true;
           t.last_update = Date.now();
           saveUserToilets();
+          incrUserContribution('tags'); // 标签补充贡献+1
           showToast('已补充：' + tagLabel);
         } else if (isLive) {
           // live 点位：走坐标匹配补充（count+1）
           addTagSupplement(t.lat, t.lng, tag);
+          incrUserContribution('tags'); // 标签补充贡献+1
           const status = getSupplementStatus(t, tag);
           showToast(status === 'confirmed'
             ? '已确认：' + tagLabel + '（多人补充）'
@@ -6541,6 +6837,7 @@ function openPanel(t) {
           const p = ensurePersisted(t);
           p[tag] = true;
           saveUserToilets();
+          incrUserContribution('tags'); // 标签补充贡献+1
           showToast('已补充：' + tagLabel + '（已纳入众包数据）');
           renderMarkers(); renderNearbyList();
           openPanel(p);
@@ -6693,7 +6990,8 @@ function openPanel(t) {
       const time = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
       // 评论也需要持久化：先 ensurePersisted 再操作
       const p = ensurePersisted(t);
-      p.comments.unshift({ user: '你', rating, text, time });
+      p.comments.unshift({ user: getUserNick(), rating, text, time });
+      incrUserContribution('comments');
       const sum = p.comments.reduce((a, c) => a + c.rating, 0);
       p.rating = sum / p.comments.length;
       p.last_update = Date.now();
@@ -7100,7 +7398,7 @@ async function openAddToiletPanel() {
       name, desc, lat: parseFloat(lat), lng: parseFloat(lng),
       source: 'user', status: newStatus,
       accessible: newTags.accessible, family: newTags.family, water: newTags.water,
-      rating: 0, last_update: Date.now(), created_by: 'you',
+      rating: 0, last_update: Date.now(), created_by: getUserNick(),
       // 上报者自己是第一个确认人：confirm_count=1（pending→suspected）
       // 报"不存在"也走疑似拆除链路（confirm_count=1，removedTier 判定 suspected）
       confirm_count: 1, last_confirm_time: Date.now(),
@@ -7110,6 +7408,7 @@ async function openAddToiletPanel() {
     };
 
     addUserToilet(newToilet);
+    incrUserContribution('reports');
     incrReportCount();
     // 先退出拾取模式再渲染（避免图钉被 renderMarkers 误清）
     clearPickMode();
@@ -7237,6 +7536,103 @@ window.updateNavBarPosition = updateNavBarPosition;
 // 延迟一帧确保 DOM 布局完成
 requestAnimationFrame(() => updateNavBarPosition());
 
+/* ============ 「我的」面板（用户身份 + 贡献统计） ============ */
+
+/* 打开「我的」面板：复用现有 panel DOM，展示昵称/头像/贡献统计 */
+function openProfilePanel() {
+  const profile = getUserProfile();
+  // 先清理现有面板状态
+  closePanel();
+  clearMarkerHighlight();
+  document.getElementById('nearbyList').style.display = 'none';
+
+  const panel = document.getElementById('panel');
+  const body = document.getElementById('panelBody');
+
+  // 贡献统计：从 localStorage 实时读取
+  const totalContrib = (profile.reports || 0) + (profile.confirms || 0) + (profile.comments || 0) + (profile.tags || 0);
+
+  // 注册天数
+  const daysActive = Math.max(1, Math.floor((Date.now() - (profile.createdAt || Date.now())) / 86400000));
+
+  body.innerHTML = `
+    <div class="profile-panel">
+      <div class="profile-panel__header">
+        <div class="profile-panel__avatar">${profile.avatar}</div>
+        <div class="profile-panel__info">
+          <div class="profile-panel__nick">${profile.nick}</div>
+          <div class="profile-panel__sub">已加入 ${daysActive} 天</div>
+        </div>
+      </div>
+      <div class="profile-panel__stats">
+        <div class="profile-stat">
+          <div class="profile-stat__num">${profile.reports || 0}</div>
+          <div class="profile-stat__label">上报厕所</div>
+        </div>
+        <div class="profile-stat">
+          <div class="profile-stat__num">${profile.confirms || 0}</div>
+          <div class="profile-stat__label">状态确认</div>
+        </div>
+        <div class="profile-stat">
+          <div class="profile-stat__num">${profile.comments || 0}</div>
+          <div class="profile-stat__label">评论评价</div>
+        </div>
+        <div class="profile-stat">
+          <div class="profile-stat__num">${profile.tags || 0}</div>
+          <div class="profile-stat__label">标签补充</div>
+        </div>
+      </div>
+      <div class="profile-panel__total">
+        <span>总贡献值</span>
+        <span class="profile-panel__total-num">${totalContrib}</span>
+      </div>
+      <div class="profile-panel__edit">
+        <input type="text" id="profileNickInput" class="profile-panel__input" value="${profile.nick}" maxlength="20" placeholder="自定义昵称" />
+        <button id="profileNickSave" class="profile-panel__btn">保存</button>
+      </div>
+      <div class="profile-panel__avatars">
+        ${USER_AVATAR_POOL.map(a => `<button class="profile-avatar-btn ${a === profile.avatar ? 'is-selected' : ''}" data-avatar="${a}">${a}</button>`).join('')}
+      </div>
+      <div class="panel__divider"></div>
+      <div class="panel__hint" style="font-size:12px;color:var(--text-hint);text-align:center;padding:8px 0;">
+        💡 纯本地身份，数据存储在本设备浏览器中
+      </div>
+    </div>
+  `;
+
+  // 保存昵称按钮
+  document.getElementById('profileNickSave').addEventListener('click', () => {
+    const input = document.getElementById('profileNickInput');
+    const newNick = input.value.trim();
+    if (!newNick) {
+      showToast('昵称不能为空');
+      return;
+    }
+    profile.nick = newNick;
+    saveUserProfile(profile);
+    showToast('昵称已更新');
+    openProfilePanel(); // 刷新面板
+  });
+
+  // 头像选择
+  document.querySelectorAll('.profile-avatar-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      profile.avatar = btn.dataset.avatar;
+      saveUserProfile(profile);
+      updateNavAvatar();
+      showToast('头像已更新');
+      openProfilePanel(); // 刷新面板
+    });
+  });
+
+  // 显示面板
+  panel.classList.add('is-show', 'is-half');
+  panel.style.transform = '';
+  if (window.innerWidth < 768 && window._setPanelSnap) {
+    window._setPanelSnap('half', false);
+  }
+}
+
 
 /* === ui/nearby.js === */
 /* ui/nearby.js — 周边推荐列表（按 Haversine 距离排序）
@@ -7281,7 +7677,14 @@ function renderNearbyList() {
     const cls = markerClass(t);
     const numCls = cls;
     const subParts = [];
-    if (t.source === 'amap-live') {
+    // 地铁站点POI：显示线路标识 + 厕所状态
+    if (t._isMetro) {
+      const metroEmoji = t._metroType === 'inside' ? '🚇' : (t._metroType === 'outside' ? '🚉' : '⛔');
+      subParts.push(metroEmoji + ' ' + t._metroLine);
+      if (t._metroType === 'none') subParts.push('无厕所');
+      else if (t._metroType === 'outside') subParts.push('站外厕所');
+      else subParts.push('站内厕所');
+    } else if (t.source === 'amap-live') {
       subParts.push('🟣 实时');
     } else {
       const st = statusMeta(t);
@@ -7313,7 +7716,12 @@ function renderNearbyList() {
       const t = getAllToilets().find(x => x.id === el.dataset.id);
       if (t) {
         map.setView([t.lat, t.lng], 17);
-        openPanel(t);
+        // 地铁站点：走openMetroPanel而非openPanel（数据结构不同）
+        if (t._isMetro && typeof triggerMetroStationClick === 'function') {
+          triggerMetroStationClick(t._metroLineKey, t.name);
+        } else {
+          openPanel(t);
+        }
         collapseNearbyList();
       }
     });
@@ -8300,14 +8708,11 @@ window._hasGpsFix = true;
 setSearchCenter(CENTER, '海港公园', 15, null, true);
 setTimeout(() => map.invalidateSize(), 200);
 
-/* 默认开启轨道交通图层（在地图初始化完成后安全调用） */
+/* 默认开启轨道交通图层（在地图初始化完成后安全调用，不可关闭，作为默认POI图层） */
 setTimeout(() => {
   try {
     if (typeof renderMetroLayer === 'function' && map) {
       renderMetroLayer();
-      _metroLayerActive = true;
-      const metroBtn = document.getElementById('navMetroBtn');
-      if (metroBtn) metroBtn.classList.add('is-active');
     }
   } catch(e) {
     console.warn('地铁图层初始化失败（非致命）:', e);
@@ -8322,6 +8727,9 @@ setTimeout(() => {
   }
 }, 2000);
 
+/* 初始化导航栏头像emoji（从localStorage读取用户身份） */
+if (typeof updateNavAvatar === 'function') updateNavAvatar();
+
 /* 底部胶囊条：图例按钮点击弹出/关闭图例浮层 */
 const legendPopup = document.getElementById('legendPopup');
 document.getElementById('navLegendBtn').addEventListener('click', (e) => {
@@ -8335,11 +8743,12 @@ document.addEventListener('click', (e) => {
   }
 });
 
-/* 底部胶囊条：轨道交通图层切换按钮 */
-document.getElementById('navMetroBtn').addEventListener('click', (e) => {
+/* 底部胶囊条：「我的」按钮点击 → 弹出用户面板 */
+document.getElementById('navProfileBtn').addEventListener('click', (e) => {
   e.stopPropagation();
-  const active = toggleMetroLayer();
-  document.getElementById('navMetroBtn').classList.toggle('is-active', active);
+  if (typeof openProfilePanel === 'function') {
+    openProfilePanel();
+  }
 });
 
 /* 定时检查用户点位降级（30/90 天无确认，pointTier 纯函数基于时间实时计算） */

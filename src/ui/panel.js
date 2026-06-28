@@ -266,6 +266,7 @@ function openPanel(t) {
       }
       p.last_update = Date.now();
       saveUserToilets();
+      incrUserContribution('confirms'); // 状态确认贡献+1
       renderMarkers();
       renderNearbyList();
       openPanel(p);
@@ -293,10 +294,12 @@ function openPanel(t) {
           t[tag] = true;
           t.last_update = Date.now();
           saveUserToilets();
+          incrUserContribution('tags'); // 标签补充贡献+1
           showToast('已补充：' + tagLabel);
         } else if (isLive) {
           // live 点位：走坐标匹配补充（count+1）
           addTagSupplement(t.lat, t.lng, tag);
+          incrUserContribution('tags'); // 标签补充贡献+1
           const status = getSupplementStatus(t, tag);
           showToast(status === 'confirmed'
             ? '已确认：' + tagLabel + '（多人补充）'
@@ -306,6 +309,7 @@ function openPanel(t) {
           const p = ensurePersisted(t);
           p[tag] = true;
           saveUserToilets();
+          incrUserContribution('tags'); // 标签补充贡献+1
           showToast('已补充：' + tagLabel + '（已纳入众包数据）');
           renderMarkers(); renderNearbyList();
           openPanel(p);
@@ -458,7 +462,8 @@ function openPanel(t) {
       const time = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
       // 评论也需要持久化：先 ensurePersisted 再操作
       const p = ensurePersisted(t);
-      p.comments.unshift({ user: '你', rating, text, time });
+      p.comments.unshift({ user: getUserNick(), rating, text, time });
+      incrUserContribution('comments');
       const sum = p.comments.reduce((a, c) => a + c.rating, 0);
       p.rating = sum / p.comments.length;
       p.last_update = Date.now();
@@ -865,7 +870,7 @@ async function openAddToiletPanel() {
       name, desc, lat: parseFloat(lat), lng: parseFloat(lng),
       source: 'user', status: newStatus,
       accessible: newTags.accessible, family: newTags.family, water: newTags.water,
-      rating: 0, last_update: Date.now(), created_by: 'you',
+      rating: 0, last_update: Date.now(), created_by: getUserNick(),
       // 上报者自己是第一个确认人：confirm_count=1（pending→suspected）
       // 报"不存在"也走疑似拆除链路（confirm_count=1，removedTier 判定 suspected）
       confirm_count: 1, last_confirm_time: Date.now(),
@@ -875,6 +880,7 @@ async function openAddToiletPanel() {
     };
 
     addUserToilet(newToilet);
+    incrUserContribution('reports');
     incrReportCount();
     // 先退出拾取模式再渲染（避免图钉被 renderMarkers 误清）
     clearPickMode();
@@ -1001,3 +1007,100 @@ window.updateNavBarPosition = updateNavBarPosition;
 // 初始调用：页面加载时 nearby-list 默认展开，MutationObserver 不会触发初始状态
 // 延迟一帧确保 DOM 布局完成
 requestAnimationFrame(() => updateNavBarPosition());
+
+/* ============ 「我的」面板（用户身份 + 贡献统计） ============ */
+
+/* 打开「我的」面板：复用现有 panel DOM，展示昵称/头像/贡献统计 */
+function openProfilePanel() {
+  const profile = getUserProfile();
+  // 先清理现有面板状态
+  closePanel();
+  clearMarkerHighlight();
+  document.getElementById('nearbyList').style.display = 'none';
+
+  const panel = document.getElementById('panel');
+  const body = document.getElementById('panelBody');
+
+  // 贡献统计：从 localStorage 实时读取
+  const totalContrib = (profile.reports || 0) + (profile.confirms || 0) + (profile.comments || 0) + (profile.tags || 0);
+
+  // 注册天数
+  const daysActive = Math.max(1, Math.floor((Date.now() - (profile.createdAt || Date.now())) / 86400000));
+
+  body.innerHTML = `
+    <div class="profile-panel">
+      <div class="profile-panel__header">
+        <div class="profile-panel__avatar">${profile.avatar}</div>
+        <div class="profile-panel__info">
+          <div class="profile-panel__nick">${profile.nick}</div>
+          <div class="profile-panel__sub">已加入 ${daysActive} 天</div>
+        </div>
+      </div>
+      <div class="profile-panel__stats">
+        <div class="profile-stat">
+          <div class="profile-stat__num">${profile.reports || 0}</div>
+          <div class="profile-stat__label">上报厕所</div>
+        </div>
+        <div class="profile-stat">
+          <div class="profile-stat__num">${profile.confirms || 0}</div>
+          <div class="profile-stat__label">状态确认</div>
+        </div>
+        <div class="profile-stat">
+          <div class="profile-stat__num">${profile.comments || 0}</div>
+          <div class="profile-stat__label">评论评价</div>
+        </div>
+        <div class="profile-stat">
+          <div class="profile-stat__num">${profile.tags || 0}</div>
+          <div class="profile-stat__label">标签补充</div>
+        </div>
+      </div>
+      <div class="profile-panel__total">
+        <span>总贡献值</span>
+        <span class="profile-panel__total-num">${totalContrib}</span>
+      </div>
+      <div class="profile-panel__edit">
+        <input type="text" id="profileNickInput" class="profile-panel__input" value="${profile.nick}" maxlength="20" placeholder="自定义昵称" />
+        <button id="profileNickSave" class="profile-panel__btn">保存</button>
+      </div>
+      <div class="profile-panel__avatars">
+        ${USER_AVATAR_POOL.map(a => `<button class="profile-avatar-btn ${a === profile.avatar ? 'is-selected' : ''}" data-avatar="${a}">${a}</button>`).join('')}
+      </div>
+      <div class="panel__divider"></div>
+      <div class="panel__hint" style="font-size:12px;color:var(--text-hint);text-align:center;padding:8px 0;">
+        💡 纯本地身份，数据存储在本设备浏览器中
+      </div>
+    </div>
+  `;
+
+  // 保存昵称按钮
+  document.getElementById('profileNickSave').addEventListener('click', () => {
+    const input = document.getElementById('profileNickInput');
+    const newNick = input.value.trim();
+    if (!newNick) {
+      showToast('昵称不能为空');
+      return;
+    }
+    profile.nick = newNick;
+    saveUserProfile(profile);
+    showToast('昵称已更新');
+    openProfilePanel(); // 刷新面板
+  });
+
+  // 头像选择
+  document.querySelectorAll('.profile-avatar-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      profile.avatar = btn.dataset.avatar;
+      saveUserProfile(profile);
+      updateNavAvatar();
+      showToast('头像已更新');
+      openProfilePanel(); // 刷新面板
+    });
+  });
+
+  // 显示面板
+  panel.classList.add('is-show', 'is-half');
+  panel.style.transform = '';
+  if (window.innerWidth < 768 && window._setPanelSnap) {
+    window._setPanelSnap('half', false);
+  }
+}
